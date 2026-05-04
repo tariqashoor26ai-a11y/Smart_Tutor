@@ -111,7 +111,7 @@ HTML_PAGE = """
         #englishText {
             font-size: 24px;
             font-weight: bold;
-            color: #ecf0f1; /* مخفي مبدئياً */
+            color: #ecf0f1;
             line-height: 1.6;
             direction: ltr;
             text-align: left;
@@ -120,7 +120,7 @@ HTML_PAGE = """
         .word {
             display: inline-block;
             margin-right: 5px;
-            color: transparent; /* الكلمات مخفية حتى يتم نطقها */
+            color: transparent;
             transition: color 0.1s ease-in;
         }
         
@@ -139,8 +139,8 @@ HTML_PAGE = """
             <option value="child">وضع الأطفال (مرح)</option>
         </select>
         <select id="micLang">
-            <option value="en-US">تحدث بالإنجليزية 🇬🇧</option>
-            <option value="ar-SA">تحدث بالعربية 🇸🇦</option>
+            <option value="en-US">تحدث بالإنجليزية</option>
+            <option value="ar-SA">تحدث بالعربية</option>
         </select>
     </div>
     
@@ -176,7 +176,6 @@ HTML_PAGE = """
             }
         }
 
-        // إعداد الإدخال الصوتي
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = false;
@@ -192,15 +191,12 @@ HTML_PAGE = """
             recognition.onend = function() { stopMic(); };
         }
 
-        // خاصية المقاطعة والتحدث
         function toggleMic() {
             let audioPlayer = document.getElementById("audioPlayer");
             
-            // المقاطعة: إذا كان المعلم يتحدث، أوقفه فوراً
             if (!audioPlayer.paused) {
                 audioPlayer.pause();
                 clearInterval(wordInterval);
-                // إظهار باقي الكلمات فجأة عند المقاطعة
                 let wordsElements = document.querySelectorAll(".word");
                 wordsElements.forEach(el => el.classList.add("spoken"));
             }
@@ -266,7 +262,6 @@ HTML_PAGE = """
                 
                 arabicBox.innerText = data.arabic;
                 
-                // تجهيز الكلمات وعرضها مخفية
                 let words = data.english.split(" ");
                 engBox.innerHTML = "";
                 words.forEach(word => {
@@ -279,7 +274,6 @@ HTML_PAGE = """
                 if(data.audio) {
                     audioPlayer.src = "data:audio/mp3;base64," + data.audio;
                     
-                    // التزامن: تشغيل الصوت وحساب الوقت لظهور الكلمات
                     audioPlayer.oncanplay = function() {
                         audioPlayer.play();
                         let duration = audioPlayer.duration * 1000; 
@@ -290,11 +284,9 @@ HTML_PAGE = """
                         
                         wordInterval = setInterval(() => {
                             if (i < spans.length) {
-                                // تلوين الكلمة الحالية باللون الأحمر/البرتقالي
                                 spans[i].style.color = "#e74c3c";
                                 spans[i].style.transform = "scale(1.1)";
                                 
-                                // إعادة الكلمة للون الداكن بعد نطقها
                                 if (i > 0) {
                                     spans[i-1].style.color = "#2c3e50";
                                     spans[i-1].style.transform = "scale(1)";
@@ -322,7 +314,6 @@ HTML_PAGE = """
 """
 
 async def generate_audio(text, voice):
-    # إزالة أي رموز تعبيرية أو فواصل غريبة قد تعيق النطق
     clean_text = re.sub(r'[^\w\s.,!?\']', '', text)
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save("response.mp3")
@@ -344,13 +335,12 @@ def chat():
         mode = data.get("mode", "adult")
         user_msg = data.get("message", "")
 
-        # توجيهات صارمة جداً للنموذج لإخراج بيانات مهيكلة (JSON) لحل مشكلة اللغات نهائياً
         if mode == "child":
             sys_msg = '''You are a very fun and patient English teacher for kids. 
             You MUST respond ONLY in valid JSON format exactly like this:
             {
                 "english": "Write a very simple, short English response here. Max 10 words. End with a simple question.",
-                "arabic": "اكتب الترجمة العربية المرحة والمبسطة هنا مع رموز تعبيرية"
+                "arabic": "اكتب الترجمة العربية المرحة والمبسطة هنا"
             }
             Do not add any other text outside the JSON block.'''
             voice_model = "en-US-AnaNeural"
@@ -370,12 +360,11 @@ def chat():
                 {"role": "system", "content": sys_msg},
                 {"role": "user", "content": user_msg}
             ],
-            response_format={"type": "json_object"} # إجبار النموذج على إرجاع JSON
+            response_format={"type": "json_object"}
         )
         
         reply_content = completion.choices[0].message.content
         
-        # تحليل استجابة الذكاء الاصطناعي
         try:
             parsed_reply = json.loads(reply_content)
             eng_text = parsed_reply.get("english", "Hello! Let's continue.")
@@ -384,7 +373,6 @@ def chat():
             eng_text = "Sorry, I had a small error. Let's try again!"
             ar_text = "عذراً، حدث خطأ بسيط. لنجرب مرة أخرى!"
         
-        # توليد الصوت للنص الإنجليزي فقط لضمان طلاقة المتحدث البشري
         audio_base64 = asyncio.run(generate_audio(eng_text, voice_model))
 
         return jsonify({"english": eng_text, "arabic": ar_text, "audio": audio_base64})
