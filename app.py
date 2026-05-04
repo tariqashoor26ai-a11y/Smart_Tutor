@@ -42,19 +42,19 @@ HTML_PAGE = """
         .curriculum-info a { color: #2980b9; text-decoration: none; font-weight: bold; margin-left: 10px; }
         .curriculum-info a:hover { text-decoration: underline; }
 
-        .top-bar { display: flex; justify-content: space-between; align-items: center; width: 80%; max-width: 600px; margin: 0 auto 15px auto; }
+        .top-bar { display: flex; justify-content: center; align-items: center; width: 80%; max-width: 600px; margin: 0 auto 15px auto; gap: 15px;}
         .controls { display: flex; gap: 10px; }
         select { padding: 8px; font-size: 14px; border-radius: 8px; border: 2px solid #3498db; cursor: pointer; }
         
-        .upload-section { display: flex; align-items: center; gap: 10px; }
-        .action-btn { background-color: #27ae60; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 5px;}
+        .action-btn { background-color: #27ae60; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background-color 0.2s;}
         .action-btn:hover { background-color: #219653; }
-        .start-btn { background-color: #8e44ad; }
+        .start-btn { background-color: #8e44ad; font-weight: bold; padding: 10px 20px; font-size: 16px;}
         .start-btn:hover { background-color: #9b59b6; }
 
         .input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-        input[type="text"] { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #bdc3c7; width: 60%; max-width: 500px; outline: none; }
-        button.send-btn { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer; }
+        input[type="text"] { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #bdc3c7; width: 60%; max-width: 500px; outline: none; transition: border-color 0.3s;}
+        input[type="text"]:focus { border-color: #3498db; }
+        button.send-btn { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer; transition: background-color 0.2s;}
         button.send-btn:hover { background-color: #2980b9; }
         
         .circle-btn {
@@ -64,34 +64,40 @@ HTML_PAGE = """
         }
         .circle-btn:active { transform: scale(0.9); }
         #micBtn { background-color: #e74c3c; color: white;}
+        #micBtn.recording { animation: pulse 1.5s infinite; background-color: #ff4757; }
         
-        /* قسم التحكم بالصوت الجديد */
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+
         #audioControls {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
-            background: white;
-            padding: 10px;
-            border-radius: 25px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
+            display: none; justify-content: center; align-items: center; gap: 15px; margin-top: 20px;
+            background: white; padding: 10px; border-radius: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: fit-content; margin-left: auto; margin-right: auto;
         }
         .control-btn { background-color: #f39c12; color: white; }
         .download-btn { background-color: #34495e; color: white; }
 
         #chatBox { width: 80%; max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); min-height: 150px; text-align: right; border-top: 5px solid #2ecc71; }
-        #arabicTranslation { color: #7f8c8d; font-size: 16px; margin-bottom: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 10px; }
-        #englishText { font-size: 24px; font-weight: bold; color: #ecf0f1; line-height: 1.6; direction: ltr; text-align: left; }
+        
+        /* التنسيقات الجديدة للردود المهيكلة */
+        .response-section { margin-bottom: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 15px;}
+        .response-section:last-child { border-bottom: none; padding-bottom: 0;}
+        .section-title { font-size: 12px; font-weight: bold; color: #95a5a6; text-transform: uppercase; margin-bottom: 5px;}
+        
+        #arabicTranslation { color: #7f8c8d; font-size: 16px; }
+        #englishText { font-size: 24px; font-weight: bold; color: #2c3e50; line-height: 1.6; direction: ltr; text-align: left; }
+        .structured-data { color: #34495e; font-size: 14px; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; }
         
         .word { display: inline-block; margin-right: 5px; color: #bdc3c7; transition: color 0.1s ease-in; }
         .word.active { color: #e74c3c; transform: scale(1.05); font-weight: 900;}
         .word.spoken { color: #2c3e50; }
 
         #audioPlayer { display: none; }
+        
+        /* نقل المنهج للأسفل */
+        .bottom-controls { display: flex; flex-direction: column; align-items: center; margin-top: 40px; gap: 10px; padding-top: 20px; border-top: 1px solid #bdc3c7; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto;}
         #curriculumStatus { color: #27ae60; font-size: 12px; font-weight: bold; }
     </style>
 </head>
@@ -115,14 +121,8 @@ HTML_PAGE = """
                 <option value="ar-SA">إدخال: عربي</option>
             </select>
         </div>
-        
-        <div class="upload-section">
-            <button class="action-btn start-btn" onclick="startLesson()" title="ابدأ محادثة جديدة">👋 ابدأ الدرس</button>
-            <button class="action-btn" onclick="triggerUpload()" title="رفع منهج مخصص (TXT)">📂 رفع منهج</button>
-            <input type="file" id="fileUpload" accept=".txt" style="display: none;" onchange="handleFileUpload(event)">
-        </div>
+        <button class="action-btn start-btn" onclick="startLesson()" title="ابدأ محادثة جديدة">👋 ابدأ الدرس</button>
     </div>
-    <div id="curriculumStatus" style="text-align: left; width: 80%; max-width: 600px; margin: 0 auto;"></div>
     
     <div class="input-container">
         <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="تحدث الآن / مقاطعة المعلم">🎤</button>
@@ -130,7 +130,6 @@ HTML_PAGE = """
         <button class="send-btn" onclick="sendMsg()">إرسال</button>
     </div>
 
-    <!-- أزرار التحكم بالصوت الجديدة (تقديم، تأخير، حفظ) -->
     <div id="audioControls">
         <button class="circle-btn control-btn" onclick="skipAudio(-5)" title="تأخير 5 ثواني">⏪</button>
         <button id="pauseBtn" class="circle-btn control-btn" onclick="togglePauseAudio()" title="إيقاف / استئناف">⏸️</button>
@@ -140,11 +139,23 @@ HTML_PAGE = """
     </div>
     
     <div id="chatBox">
-        <div id="arabicTranslation">مرحباً! اضغط على "ابدأ الدرس" لبدء محادثة مع المعلم...</div>
-        <div id="englishText"></div>
+        <div class="response-section">
+            <div class="section-title">Message</div>
+            <div id="englishText"></div>
+            <div id="arabicTranslation" style="margin-top: 10px;">مرحباً! اضغط على "ابدأ الدرس" لبدء محادثة...</div>
+        </div>
+        <!-- سيتم إضافة الأقسام الأخرى (الكلمات المفتاحية، الملخص، الخ) هنا ديناميكياً -->
+        <div id="structuredDetails"></div>
     </div>
     
     <audio id="audioPlayer"></audio>
+
+    <!-- تم نقل زر إدراج المنهج للأسفل -->
+    <div class="bottom-controls">
+        <button class="action-btn" onclick="triggerUpload()" title="رفع منهج مخصص (TXT)">📂 إدراج منهج مخصص للمتعلم</button>
+        <input type="file" id="fileUpload" accept=".txt" style="display: none;" onchange="handleFileUpload(event)">
+        <div id="curriculumStatus"></div>
+    </div>
 
     <script>
         let isRecording = false;
@@ -164,7 +175,6 @@ HTML_PAGE = """
             }
         }
 
-        // بدء درس جديد مباشرة برسالة ترحيبية
         function startLesson() {
             document.getElementById("userMsg").value = "Hello, I am ready to start the lesson. Please introduce yourself and ask me a question.";
             sendMsg();
@@ -187,23 +197,19 @@ HTML_PAGE = """
             event.target.value = '';
         }
 
-        // وظائف الصوت الجديدة (تقديم، تأخير، حفظ)
         function skipAudio(seconds) {
             let audioPlayer = document.getElementById("audioPlayer");
-            if (audioPlayer.src) {
-                audioPlayer.currentTime += seconds;
-            }
+            if (audioPlayer.src) { audioPlayer.currentTime += seconds; }
         }
 
         function downloadAudio() {
             let audioPlayer = document.getElementById("audioPlayer");
             if (!audioPlayer.src || audioPlayer.src === window.location.href) {
-                alert("لا يوجد صوت حالياً لتحميله.");
-                return;
+                alert("لا يوجد صوت حالياً لتحميله."); return;
             }
             let a = document.createElement("a");
             a.href = audioPlayer.src;
-            a.download = "SmartTutor_Lesson.mp3"; // اسم الملف المحفوظ
+            a.download = "SmartTutor_Lesson.mp3"; 
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -247,17 +253,46 @@ HTML_PAGE = """
             wordsElements.forEach(span => { span.classList.remove("active"); span.classList.add("spoken"); });
         };
 
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.onresult = function(event) {
-                document.getElementById("userMsg").value = event.results[0][0].transcript;
-                stopMic();
-            };
-            recognition.onerror = function() { stopMic(); };
-            recognition.onend = function() { stopMic(); };
+        // تحسين كود الميكروفون
+        function initSpeechRecognition() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (window.SpeechRecognition) {
+                recognition = new window.SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onstart = function() {
+                    isRecording = true;
+                    let micBtn = document.getElementById("micBtn");
+                    micBtn.classList.add("recording");
+                    document.getElementById("userMsg").placeholder = "جاري الاستماع... (تحدث بوضوح)";
+                };
+
+                recognition.onresult = function(event) {
+                    document.getElementById("userMsg").value = event.results[0][0].transcript;
+                    stopMic();
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error("Speech Recognition Error: ", event.error);
+                    stopMic();
+                    if(event.error === 'not-allowed') {
+                        alert("يرجى السماح للمتصفح باستخدام الميكروفون من إعدادات الخصوصية.");
+                    } else if (event.error === 'no-speech') {
+                        alert("لم يتم التقاط أي صوت، يرجى المحاولة مرة أخرى.");
+                    }
+                };
+                
+                recognition.onend = function() { stopMic(); };
+                return true;
+            } else {
+                console.warn("Speech Recognition API not supported in this browser.");
+                return false;
+            }
         }
+
+        // تهيئة الميكروفون عند تحميل الصفحة
+        let isSpeechSupported = initSpeechRecognition();
 
         function toggleMic() {
             if (!audioPlayer.paused) {
@@ -266,22 +301,28 @@ HTML_PAGE = """
                 wordsElements.forEach(span => span.classList.add("spoken"));
             }
 
-            if (!recognition) return alert("المتصفح لا يدعم الصوت.");
+            if (!isSpeechSupported) return alert("متصفحك الحالي لا يدعم ميزة الميكروفون المدمجة. يرجى استخدام Google Chrome.");
             
             if (isRecording) {
                 recognition.stop();
-                stopMic();
             } else {
                 recognition.lang = document.getElementById("micLang").value; 
-                recognition.start();
-                isRecording = true;
-                document.getElementById("micBtn").style.backgroundColor = "#ff4757";
+                try {
+                    recognition.start();
+                } catch(e) {
+                    // في حال كان الميكروفون قيد التشغيل بالفعل أو حدث خطأ داخلي
+                    console.error(e);
+                    recognition.stop();
+                    setTimeout(() => recognition.start(), 300);
+                }
             }
         }
 
         function stopMic() {
             isRecording = false;
-            document.getElementById("micBtn").style.backgroundColor = "#e74c3c";
+            let micBtn = document.getElementById("micBtn");
+            micBtn.classList.remove("recording");
+            document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون...";
         }
 
         document.getElementById("userMsg").addEventListener("keypress", function(event) {
@@ -294,16 +335,18 @@ HTML_PAGE = """
             let mode = document.getElementById("mode").value;
             let arabicBox = document.getElementById("arabicTranslation");
             let engBox = document.getElementById("englishText");
+            let structuredDetails = document.getElementById("structuredDetails");
             let controlsDiv = document.getElementById("audioControls");
             
             if(!msg) return;
-            if(isRecording) recognition.stop();
+            if(isRecording && recognition) recognition.stop();
             
             audioPlayer.pause();
-            controlsDiv.style.display = "none"; // إخفاء الأزرار أثناء التحميل
+            controlsDiv.style.display = "none";
             
             arabicBox.innerText = "جاري التفكير...";
             engBox.innerHTML = "";
+            structuredDetails.innerHTML = "";
             inputField.value = ""; 
             
             try {
@@ -327,10 +370,19 @@ HTML_PAGE = """
                     engBox.appendChild(span);
                     wordsElements.push(span);
                 });
+
+                // عرض البنود المهيكلة (الكلمات المفتاحية، الملخص، الخ)
+                let detailsHTML = "";
+                if(data.keywords) detailsHTML += `<div class="structured-data"><span class="section-title">🔑 Keywords:</span> ${data.keywords}</div>`;
+                if(data.summary) detailsHTML += `<div class="structured-data"><span class="section-title">📝 Summary:</span> ${data.summary}</div>`;
+                if(data.previous_topic) detailsHTML += `<div class="structured-data"><span class="section-title">🔙 Previous:</span> ${data.previous_topic}</div>`;
+                if(data.next_topic) detailsHTML += `<div class="structured-data"><span class="section-title">🔜 Next:</span> ${data.next_topic}</div>`;
+                
+                structuredDetails.innerHTML = detailsHTML;
                 
                 if(data.audio) {
                     audioPlayer.src = "data:audio/mp3;base64," + data.audio;
-                    controlsDiv.style.display = "flex"; // إظهار أزرار التقديم والتأخير والتحميل
+                    controlsDiv.style.display = "flex";
                     document.getElementById("pauseBtn").innerText = "⏸️";
                     audioPlayer.play();
                 }
@@ -367,37 +419,34 @@ def chat():
         user_msg = data.get("message", "")
         custom_curriculum = data.get("custom_curriculum", "")
 
-        # إجبار النموذج على أن يكون تفاعلياً (يسأل دائماً)
         core_rules = """
         CRITICAL RULES: 
-        1. MUST STRICTLY adhere to Islamic Sharia and local laws. Absolutely NO mentions of alcohol, dating, gambling, explicit content, pork, or illegal activities.
+        1. MUST STRICTLY adhere to Islamic Sharia and local laws. NO mentions of alcohol, dating, gambling, explicit content, pork, or illegal activities.
         2. Base language progression on the CEFR.
-        3. YOU MUST ACT LIKE A REAL HUMAN TUTOR. ENGAGE IN A CONTINUOUS BACK-AND-FORTH CONVERSATION.
-        4. YOU MUST ALWAYS END YOUR ENGLISH RESPONSE WITH A QUESTION PROMPTING THE USER TO REPLY. Never leave the conversation hanging.
+        3. YOU MUST ACT LIKE A REAL HUMAN TUTOR. ENGAGE IN A CONTINUOUS BACK-AND-FORTH CONVERSATION. ALWAYS END 'english' WITH A QUESTION.
         """
         
         if custom_curriculum:
-            core_rules += f"\\n5. Incorporate this provided curriculum text into your teaching: {custom_curriculum[:1500]}"
+            core_rules += f"\\n4. Incorporate this provided curriculum text into your teaching: {custom_curriculum[:1500]}"
+
+        # توجيهات JSON المنقحة لتشمل البنود المطلوبة
+        json_structure = '''
+        Respond ONLY in valid JSON format with exactly these keys:
+        {
+            "english": "Your spoken English response (Must end with a question)",
+            "arabic": "الترجمة العربية للرسالة السابقة",
+            "keywords": "3-5 key vocabulary words from the lesson in English and Arabic",
+            "summary": "ملخص قصير للدرس الحالي بالعربية",
+            "previous_topic": "موضوع الخطوة السابقة بالعربية",
+            "next_topic": "اقتراح للخطوة التالية بالعربية"
+        }
+        '''
 
         if mode == "child":
-            sys_msg = core_rules + '''
-            You are a fun English teacher for kids. 
-            Respond ONLY in valid JSON format:
-            {
-                "english": "Natural, fun English response (Max 15 words). MUST end with a question for the kid.",
-                "arabic": "الترجمة العربية المرحة هنا"
-            }
-            '''
+            sys_msg = core_rules + "\\nYou are a fun English teacher for kids. Keep 'english' simple (Max 20 words)." + json_structure
             voice_model = "en-US-AnaNeural"
         else:
-            sys_msg = core_rules + '''
-            You are a professional English coach for adults. 
-            Respond ONLY in valid JSON format:
-            {
-                "english": "Natural, professional English conversation. MUST end with a relevant follow-up question.",
-                "arabic": "الترجمة العربية الدقيقة هنا"
-            }
-            '''
+            sys_msg = core_rules + "\\nYou are a professional English coach for adults." + json_structure
             voice_model = "en-US-GuyNeural"
 
         completion = client.chat.completions.create(
@@ -415,13 +464,26 @@ def chat():
             parsed_reply = json.loads(reply_content)
             eng_text = parsed_reply.get("english", "Hello! Are you ready to start?")
             ar_text = parsed_reply.get("arabic", "مرحباً! هل أنت مستعد للبدء؟")
+            keywords = parsed_reply.get("keywords", "")
+            summary = parsed_reply.get("summary", "")
+            prev_topic = parsed_reply.get("previous_topic", "")
+            next_topic = parsed_reply.get("next_topic", "")
         except Exception:
             eng_text = "Sorry, error parsing response. Shall we try again?"
             ar_text = "عذراً، حدث خطأ. هل نجرب مرة أخرى؟"
+            keywords = summary = prev_topic = next_topic = ""
         
         audio_base64 = asyncio.run(generate_audio(eng_text, voice_model))
 
-        return jsonify({"english": eng_text, "arabic": ar_text, "audio": audio_base64})
+        return jsonify({
+            "english": eng_text, 
+            "arabic": ar_text, 
+            "keywords": keywords,
+            "summary": summary,
+            "previous_topic": prev_topic,
+            "next_topic": next_topic,
+            "audio": audio_base64
+        })
     
     except Exception as e:
         return jsonify({"error": str(e)})
