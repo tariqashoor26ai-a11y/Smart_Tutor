@@ -16,7 +16,7 @@ HTML_PAGE = """
     <style>
         body { font-family: Arial; text-align: center; margin-top: 50px; background: #f4f4f9;}
         input, select, button { padding: 10px; font-size: 16px; margin: 5px; }
-        #chatBox { width: 80%; max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); min-height: 100px; white-space: pre-wrap;}
+        #chatBox { width: 80%; max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); min-height: 100px; white-space: pre-wrap; text-align: right; line-height: 1.6;}
         #audioPlayer { margin-top: 20px; display: none; outline: none; }
     </style>
 </head>
@@ -27,24 +27,36 @@ HTML_PAGE = """
         <option value="child">وضع الأطفال (مرح وبسيط)</option>
     </select>
     <br><br>
-    <input type="text" id="userMsg" placeholder="اكتب رسالتك بالإنجليزية أو العربية..." style="width: 60%;">
+    <input type="text" id="userMsg" placeholder="اكتب رسالتك ثم اضغط Enter..." style="width: 60%;">
     <button onclick="sendMsg()">إرسال</button>
     
     <div id="chatBox">الرد سيظهر هنا...</div>
     <audio id="audioPlayer" controls></audio>
 
     <script>
+        // تفعيل الإرسال عند الضغط على زر Enter
+        document.getElementById("userMsg").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // منع تحديث الصفحة
+                sendMsg();
+            }
+        });
+
         async function sendMsg() {
-            let msg = document.getElementById("userMsg").value;
+            let inputField = document.getElementById("userMsg");
+            let msg = inputField.value;
             let mode = document.getElementById("mode").value;
             let chatBox = document.getElementById("chatBox");
             let audioPlayer = document.getElementById("audioPlayer");
             
             if(!msg) return;
             
-            chatBox.innerText = "جاري التفكير وتجهيز الصوت (قد يستغرق بضع ثوانٍ)...";
+            chatBox.innerText = "جاري التفكير وتجهيز الصوت...";
             audioPlayer.style.display = "none";
             audioPlayer.pause();
+            
+            // تفريغ مربع النص بعد الإرسال لراحة المستخدم
+            inputField.value = ""; 
             
             try {
                 let res = await fetch("/chat", {
@@ -68,7 +80,7 @@ HTML_PAGE = """
                     audioPlayer.play();
                 }
             } catch (e) {
-                chatBox.innerText = "⚠️ حدث خطأ في الاتصال بالسيرفر. يرجى التأكد من أن السيرفر يعمل.";
+                chatBox.innerText = "⚠️ حدث خطأ في الاتصال بالسيرفر.";
             }
         }
     </script>
@@ -91,18 +103,19 @@ def chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key:
-            return jsonify({"error": "مفتاح GROQ_API_KEY مفقود في إعدادات Render."})
+            return jsonify({"error": "مفتاح GROQ_API_KEY مفقود."})
 
         client = Groq(api_key=api_key)
         data = request.json
         mode = data.get("mode", "adult")
         user_msg = data.get("message", "")
 
+        # توجيهات صارمة بخصوص اللغة والتفاعل
         if mode == "child":
-            sys_msg = "You are a fun English teacher for kids. Speak ONLY in simple English so the kid can listen and learn. Be highly encouraging."
+            sys_msg = "أنت مدرس لغة إنجليزية مرح للأطفال. تواصل حصرياً باللغتين الإنجليزية والعربية فقط. يمنع استخدام أي لغة أخرى. أجب على الطفل بكلمات بسيطة، اقترح عليه كلمة جديدة ليتعلمها، وفي نهاية ردك اطرح عليه سؤالاً بسيطاً جداً بالإنجليزية لتشجيعه على الرد."
             voice_model = "en-US-AnaNeural"
         else:
-            sys_msg = "You are a professional English coach for adults. Focus on practical conversation and corrections. Speak ONLY in clear English."
+            sys_msg = "أنت مدرب لغة إنجليزية محترف للبالغين. تواصل حصرياً باللغتين الإنجليزية والعربية فقط. يمنع استخدام أي لغة أخرى. أجب على المستخدم، قدم له تصحيحاً أو اقتراحاً عملياً لتحسين لغته، وفي نهاية ردك اسأله دائماً 'What is the next step?' أو اطرح سؤالاً متعلقاً بالموضوع لتوجيه المحادثة للخطوة التالية."
             voice_model = "en-US-GuyNeural"
 
         completion = client.chat.completions.create(
