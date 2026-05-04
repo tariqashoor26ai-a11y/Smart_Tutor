@@ -7,7 +7,6 @@ import edge_tts
 
 app = Flask(__name__)
 
-# واجهة الموقع المطورة (تحتوي على مشغل صوت وإظهار للأخطاء)
 HTML_PAGE = """
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -56,7 +55,6 @@ HTML_PAGE = """
                 
                 let data = await res.json();
                 
-                // إذا كان هناك خطأ، اعرضه فوراً
                 if(data.error) {
                     chatBox.innerText = "⚠️ يوجد خطأ يمنع الاستجابة: " + data.error;
                     return;
@@ -64,7 +62,6 @@ HTML_PAGE = """
                 
                 chatBox.innerText = data.reply;
                 
-                // تشغيل الصوت
                 if(data.audio) {
                     audioPlayer.src = "data:audio/mp3;base64," + data.audio;
                     audioPlayer.style.display = "inline";
@@ -79,7 +76,6 @@ HTML_PAGE = """
 </html>
 """
 
-# وظيفة تحويل النص إلى صوت
 async def generate_audio(text, voice):
     communicate = edge_tts.Communicate(text, voice)
     await communicate.save("response.mp3")
@@ -93,7 +89,6 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        # التأكد من وجود المفتاح
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key:
             return jsonify({"error": "مفتاح GROQ_API_KEY مفقود في إعدادات Render."})
@@ -103,15 +98,13 @@ def chat():
         mode = data.get("mode", "adult")
         user_msg = data.get("message", "")
 
-        # تخصيص الشخصية والصوت
         if mode == "child":
             sys_msg = "You are a fun English teacher for kids. Speak ONLY in simple English so the kid can listen and learn. Be highly encouraging."
-            voice_model = "en-US-AnaNeural" # صوت مرح للأطفال
+            voice_model = "en-US-AnaNeural"
         else:
             sys_msg = "You are a professional English coach for adults. Focus on practical conversation and corrections. Speak ONLY in clear English."
-            voice_model = "en-US-GuyNeural" # صوت احترافي للكبار
+            voice_model = "en-US-GuyNeural"
 
-        # استدعاء الذكاء الاصطناعي
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
@@ -122,13 +115,11 @@ def chat():
         
         reply_text = completion.choices[0].message.content
         
-        # إنشاء المقطع الصوتي
         audio_base64 = asyncio.run(generate_audio(reply_text, voice_model))
 
         return jsonify({"reply": reply_text, "audio": audio_base64})
     
     except Exception as e:
-        # التقاط أي خطأ وإرساله للواجهة لتسهيل الحل
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
