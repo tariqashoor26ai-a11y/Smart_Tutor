@@ -21,76 +21,118 @@ HTML_PAGE = """
             text-align: center; 
             margin: 0; 
             padding: 20px; 
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
         }
         h2 { color: #2c3e50; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin-bottom: 5px; }
         
         .curriculum-info {
-            background-color: #e8f4f8; border: 1px solid #bde0ec; border-radius: 8px; padding: 12px;
+            background-color: rgba(255, 255, 255, 0.8); border: 1px solid #bde0ec; border-radius: 12px; padding: 12px;
             width: 80%; max-width: 600px; margin: 10px auto 20px auto; font-size: 14px; color: #2c3e50; text-align: right; line-height: 1.6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         .curriculum-info a { color: #2980b9; text-decoration: none; font-weight: bold; margin-left: 10px; }
 
         .top-bar { display: flex; justify-content: center; align-items: center; width: 80%; max-width: 600px; margin: 0 auto 15px auto; gap: 15px;}
         .controls { display: flex; gap: 10px; }
-        select { padding: 8px; font-size: 14px; border-radius: 8px; border: 2px solid #3498db; cursor: pointer; }
+        select { padding: 8px 12px; font-size: 14px; border-radius: 8px; border: 1px solid #bdc3c7; outline: none; cursor: pointer; background: white;}
         
-        .action-btn { background-color: #27ae60; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background-color 0.2s;}
-        .action-btn:hover { background-color: #219653; }
-        .start-btn { background-color: #8e44ad; font-weight: bold; padding: 10px 20px; font-size: 16px;}
-        .start-btn:hover { background-color: #9b59b6; }
+        .start-btn { 
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); font-weight: bold; padding: 10px 20px; font-size: 15px;
+            border-radius: 8px; border: none; color: white; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);
+        }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(142, 68, 173, 0.4); }
         
         #liveIndicator { display: none; color: #e74c3c; font-weight: bold; font-size: 15px; margin-top: 10px; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        .input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-        input[type="text"] { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #bdc3c7; width: 60%; max-width: 500px; outline: none; transition: border-color 0.3s;}
-        input[type="text"]:focus { border-color: #3498db; }
-        button.send-btn { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer;}
-        
+        /* تجميل أزرار الصوت والميكروفون */
         .circle-btn {
-            border-radius: 50%; width: 45px; height: 45px; padding: 0; 
-            display: flex; justify-content: center; align-items: center; font-size: 20px; border: none; cursor: pointer; transition: transform 0.1s;
+            border-radius: 50%; width: 50px; height: 50px; padding: 0; 
+            display: flex; justify-content: center; align-items: center; font-size: 22px; border: none; cursor: pointer; 
+            transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
         .circle-btn:active { transform: scale(0.9); }
-        #micBtn { background-color: #e74c3c; color: white;}
-        #micBtn.recording { animation: pulse 1.5s infinite; background-color: #ff4757; }
+        .circle-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
         
+        #micBtn { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); color: white;}
+        #micBtn.recording { animation: pulse 1.5s infinite; }
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 65, 108, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(255, 65, 108, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 65, 108, 0); }
         }
 
-        #audioControls { display: none; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; background: white; padding: 10px; border-radius: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); width: fit-content; margin-left: auto; margin-right: auto; }
-        .control-btn { background-color: #f39c12; color: white; }
-        .download-btn { background-color: #34495e; color: white; }
+        .input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
+        input[type="text"] { 
+            padding: 14px 20px; font-size: 16px; border-radius: 25px; border: 1px solid #bdc3c7; width: 60%; max-width: 500px; 
+            outline: none; transition: border-color 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        input[type="text"]:focus { border-color: #3498db; }
+        button.send-btn { 
+            padding: 12px 25px; font-size: 16px; border-radius: 25px; border: none; color: white; cursor: pointer;
+            background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%); box-shadow: 0 4px 10px rgba(91, 134, 229, 0.3);
+            transition: all 0.3s ease;
+        }
+        button.send-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(91, 134, 229, 0.4); }
 
-        #chatBox { width: 80%; max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); min-height: 150px; text-align: right; border-top: 5px solid #2ecc71; }
-        .response-section { margin-bottom: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 15px;}
-        .response-section:last-child { border-bottom: none; padding-bottom: 0;}
-        .section-title { font-size: 12px; font-weight: bold; color: #95a5a6; text-transform: uppercase; margin-bottom: 5px;}
+        #audioControls { display: none; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; background: rgba(255,255,255,0.9); padding: 10px 20px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: fit-content; margin-left: auto; margin-right: auto; }
+        .control-btn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: white; width: 45px; height: 45px; font-size: 18px;}
+        .download-btn { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: #2c3e50; width: 45px; height: 45px; font-size: 18px;}
+
+        /* تنسيق صندوق المحادثة الجديد (Chat History) */
+        #chatBox { 
+            width: 85%; max-width: 700px; margin: 30px auto; background: rgba(255, 255, 255, 0.95); padding: 25px; 
+            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); height: 400px; overflow-y: auto; 
+            display: flex; flex-direction: column; gap: 15px; border-top: 5px solid #3498db; scroll-behavior: smooth;
+        }
         
-        #arabicTranslation { color: #7f8c8d; font-size: 16px; }
-        #englishText { font-size: 24px; font-weight: bold; color: #2c3e50; line-height: 1.6; direction: ltr; text-align: left; }
-        .structured-data { color: #34495e; font-size: 14px; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-top: 10px; }
+        .chat-bubble { max-width: 80%; padding: 15px 20px; border-radius: 20px; position: relative; font-size: 16px; line-height: 1.5; animation: fadeIn 0.3s ease-in;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .word { display: inline-block; margin-right: 5px; color: #bdc3c7; transition: color 0.1s ease-in; }
-        .word.active { color: #e74c3c; transform: scale(1.05); font-weight: 900;}
+        .user-bubble { background: linear-gradient(135deg, #E2E2E2 0%, #C9D6FF 100%); color: #2c3e50; align-self: flex-start; border-bottom-left-radius: 5px; text-align: left; direction: ltr;}
+        .ai-bubble { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px solid #e0e0e0; color: #2c3e50; align-self: flex-end; border-bottom-right-radius: 5px; text-align: right; box-shadow: 0 4px 6px rgba(0,0,0,0.02);}
+        
+        .english-text { font-size: 22px; font-weight: bold; color: #2c3e50; direction: ltr; text-align: left; margin-bottom: 8px;}
+        .arabic-translation { color: #7f8c8d; font-size: 15px; border-top: 1px dashed #bdc3c7; padding-top: 8px;}
+        .structured-data { color: #34495e; font-size: 13px; background-color: #f0f4f8; padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: left; direction: ltr;}
+        .section-title { font-size: 11px; font-weight: bold; color: #7f8c8d; text-transform: uppercase;}
+        
+        .word { display: inline-block; margin-right: 5px; color: #95a5a6; transition: color 0.1s ease-in; }
+        .word.active { color: #e74c3c; transform: scale(1.1); font-weight: 900;}
         .word.spoken { color: #2c3e50; }
 
+        /* القائمة العائمة (Floating Menu) */
+        .floating-menu {
+            position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 15px; z-index: 1000;
+        }
+        .float-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; border-radius: 50px;
+            padding: 15px 20px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+        }
+        .float-btn:hover { transform: scale(1.05) translateX(-5px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        .float-btn.test-btn { background: linear-gradient(135deg, #f12711 0%, #f5af19 100%); }
+
         #audioPlayer { display: none; }
-        .bottom-controls { display: flex; flex-direction: column; align-items: center; margin-top: 40px; gap: 10px; padding-top: 20px; border-top: 1px solid #bdc3c7; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto;}
+        .bottom-controls { display: flex; flex-direction: column; align-items: center; margin-top: 20px; gap: 10px; padding-top: 20px; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto;}
+        .upload-btn { background: transparent; border: 1px dashed #7f8c8d; color: #7f8c8d; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s;}
+        .upload-btn:hover { background: #ecf0f1; border-color: #2c3e50; color: #2c3e50; }
         #curriculumStatus { color: #27ae60; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
+    <!-- القائمة العائمة الجديدة -->
+    <div class="floating-menu">
+        <button class="float-btn" onclick="requestStudyPlan()">📅 الخطة الدراسية</button>
+        <button class="float-btn test-btn" onclick="requestEvaluation()">📝 التدريبات والتقييم</button>
+    </div>
+
     <h2>المدرس الذكي 🎓</h2>
     
     <div class="curriculum-info">
         📚 <strong>المنهج المعتمد:</strong> الإطار الأوروبي المرجعي المشترك للغات (CEFR).<br>
-        <a href="https://www.coe.int/en/web/common-european-framework-reference-languages" target="_blank">🔗 الموقع الرسمي</a>
     </div>
 
     <div class="top-bar">
@@ -104,14 +146,14 @@ HTML_PAGE = """
                 <option value="ar-SA">إدخال: عربي</option>
             </select>
         </div>
-        <button class="action-btn start-btn" onclick="startLiveLesson()" title="بدء محادثة مستمرة وتلقائية">📞 ابدأ المكالمة الحية</button>
+        <button class="start-btn" onclick="startLiveLesson()">🎓 ابدأ الدرس والمحادثة</button>
     </div>
     
-    <div id="liveIndicator">🔴 المكالمة الحية نشطة: المدرس يستمع إليك دائماً.. (تحدث للمقاطعة أو الإجابة)</div>
+    <div id="liveIndicator">🔴 جلسة التدريب نشطة: المدرس يستمع إليك دائماً.. (تحدث بحرية)</div>
     
     <div class="input-container">
-        <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="إيقاف/تشغيل الميكروفون">🎤</button>
-        <input type="text" id="userMsg" placeholder="اضغط ابدأ المكالمة أو اكتب رسالتك...">
+        <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="الميكروفون للمقاطعة">🎤</button>
+        <input type="text" id="userMsg" placeholder="اضغط ابدأ الدرس أو اكتب رسالتك هنا...">
         <button class="send-btn" onclick="sendMsg()">إرسال</button>
     </div>
 
@@ -120,22 +162,20 @@ HTML_PAGE = """
         <button id="pauseBtn" class="circle-btn control-btn" onclick="togglePauseAudio()">⏸️</button>
         <button class="circle-btn control-btn" onclick="skipAudio(5)">⏩</button>
         <div style="border-left: 2px solid #ecf0f1; height: 30px; margin: 0 5px;"></div>
-        <button class="circle-btn download-btn" onclick="downloadAudio()">💾</button>
+        <button class="circle-btn download-btn" onclick="downloadAudio()" title="حفظ الدرس">💾</button>
     </div>
     
+    <!-- صندوق المحادثة التراكمي -->
     <div id="chatBox">
-        <div class="response-section">
-            <div class="section-title">Message</div>
-            <div id="englishText"></div>
-            <div id="arabicTranslation" style="margin-top: 10px;">مرحباً! اضغط على "ابدأ المكالمة الحية" لبدء التفاعل...</div>
+        <div class="chat-bubble ai-bubble">
+            <div class="arabic-translation" style="border: none; padding: 0;">مرحباً! اضغط على "ابدأ الدرس" أو اختر من القائمة العائمة لتبدأ...</div>
         </div>
-        <div id="structuredDetails"></div>
     </div>
     
     <audio id="audioPlayer"></audio>
 
     <div class="bottom-controls">
-        <button class="action-btn" onclick="triggerUpload()">📂 إدراج منهج مخصص للمتعلم</button>
+        <button class="upload-btn" onclick="triggerUpload()">📂 إدراج منهج مخصص (TXT)</button>
         <input type="file" id="fileUpload" accept=".txt" style="display: none;" onchange="handleFileUpload(event)">
         <div id="curriculumStatus"></div>
     </div>
@@ -145,11 +185,12 @@ HTML_PAGE = """
         let recognition;
         let customCurriculumContent = "";
         let wordsElements = [];
-        
-        // المتغيرات الخاصة بالاستماع والمقاطعة
         let isLiveMode = false; 
         let silenceTimer;
         let final_transcript = '';
+        
+        // ذاكرة المحادثة الجديدة
+        let chatHistory = [];
 
         function changeStyle() {
             let mode = document.getElementById("mode").value;
@@ -158,12 +199,18 @@ HTML_PAGE = """
                 document.body.style.background = "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)";
                 chatBox.style.borderTopColor = "#ff6b81";
             } else {
-                document.body.style.background = "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)";
-                chatBox.style.borderTopColor = "#2ecc71";
+                document.body.style.background = "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)";
+                chatBox.style.borderTopColor = "#3498db";
             }
         }
 
-        function startLiveLesson() {
+        async function startLiveLesson() {
+            try {
+                window.localStream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                });
+            } catch (e) {}
+
             isLiveMode = true;
             document.getElementById("liveIndicator").style.display = "block";
             final_transcript = '';
@@ -172,13 +219,19 @@ HTML_PAGE = """
                 recognition.lang = document.getElementById("micLang").value; 
                 try { recognition.start(); } catch(e) {}
             }
-            
-            document.getElementById("userMsg").value = "Hello! I am ready. Please introduce yourself and ask me the first question.";
-            sendMsg();
+            sendMsg("Hello! I am ready. Please introduce yourself and ask me the first question.");
+        }
+
+        // أوامر القائمة العائمة
+        function requestStudyPlan() {
+            sendMsg("I need a comprehensive study plan tailored to my level based on CEFR. Please suggest one.");
+        }
+        function requestEvaluation() {
+            sendMsg("Please give me a short test, exercise, or evaluation to check my current English skills.");
         }
 
         function triggerUpload() {
-            if(confirm("تحذير قانوني: يمنع رفع ما يخالف الشريعة أو حقوق الملكية. موافق؟")) { document.getElementById("fileUpload").click(); }
+            if(confirm("تحذير: يمنع رفع مواد تخالف الشريعة أو حقوق الملكية. موافق؟")) { document.getElementById("fileUpload").click(); }
         }
         function handleFileUpload(event) {
             let file = event.target.files[0];
@@ -186,7 +239,7 @@ HTML_PAGE = """
             let reader = new FileReader();
             reader.onload = function(e) {
                 customCurriculumContent = e.target.result;
-                document.getElementById("curriculumStatus").innerText = "✅ تم دمج المنهج بنجاح.";
+                document.getElementById("curriculumStatus").innerText = "✅ تم دمج المنهج في ذاكرة المعلم.";
             };
             reader.readAsText(file);
             event.target.value = '';
@@ -202,7 +255,7 @@ HTML_PAGE = """
             if (!audioPlayer.src) return;
             let a = document.createElement("a");
             a.href = audioPlayer.src;
-            a.download = "Lesson_Audio.mp3"; 
+            a.download = "SmartAcademy_Audio.mp3"; 
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -238,13 +291,12 @@ HTML_PAGE = """
             wordsElements.forEach(span => { span.classList.remove("active"); span.classList.add("spoken"); });
         };
 
-        // إعداد الميكروفون المتقدم (الاستماع المستمر والمقاطعة الفورية)
         function initSpeechRecognition() {
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (window.SpeechRecognition) {
                 recognition = new window.SpeechRecognition();
-                recognition.continuous = true; // استماع مستمر
-                recognition.interimResults = true; // التقاط الكلمات فور النطق بها
+                recognition.continuous = true; 
+                recognition.interimResults = true; 
                 
                 recognition.onstart = function() {
                     isRecording = true;
@@ -263,34 +315,28 @@ HTML_PAGE = """
                     
                     let currentSpeech = (final_transcript + interim_transcript).trim();
                     
-                    // إذا التقط الميكروفون أي صوت من المستخدم
                     if (currentSpeech.length > 0) {
-                        
-                        // 1. المقاطعة الفورية: إسكات المعلم فوراً إذا كان يتحدث
                         if (!audioPlayer.paused) {
                             audioPlayer.pause();
                             document.getElementById("pauseBtn").innerText = "▶️";
                             wordsElements.forEach(span => span.classList.add("spoken"));
                         }
                         
-                        // 2. إظهار الكلام في مربع النص مباشرة
                         document.getElementById("userMsg").value = currentSpeech;
                         
-                        // 3. مؤقت الصمت: الانتظار ثانيتين بعد آخر كلمة للرد
                         clearTimeout(silenceTimer);
                         silenceTimer = setTimeout(() => {
                             if (isLiveMode && currentSpeech.length > 0) {
-                                sendMsg(); // الإرسال التلقائي
+                                sendMsg(); 
                             }
-                        }, 2000); // 2000 ملي ثانية = ثانيتين صمت
+                        }, 2500); 
                     }
                 };
                 
-                recognition.onerror = function(event) { console.error("Speech Error: ", event.error); };
+                recognition.onerror = function(event) {};
                 
                 recognition.onend = function() { 
                     if (isLiveMode) {
-                        // إعادة تشغيل الميكروفون فوراً ليظل مفتوحاً في وضع المكالمة
                         try { recognition.start(); } catch(e) {}
                     } else {
                         isRecording = false;
@@ -304,22 +350,29 @@ HTML_PAGE = """
 
         let isSpeechSupported = initSpeechRecognition();
 
-        function toggleMic() {
+        async function toggleMic() {
             if (!isSpeechSupported) return alert("المتصفح لا يدعم الميكروفون.");
             
             if (isLiveMode || isRecording) {
-                // إيقاف المكالمة الحية
                 isLiveMode = false;
                 isRecording = false;
                 recognition.stop();
                 document.getElementById("liveIndicator").style.display = "none";
-                document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون...";
+                document.getElementById("userMsg").placeholder = "اكتب رسالتك هنا...";
+                if(window.localStream) {
+                    window.localStream.getTracks().forEach(track => track.stop());
+                }
             } else {
-                // تشغيل المكالمة الحية
+                try {
+                    window.localStream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                    });
+                } catch (e) {}
+
                 isLiveMode = true;
                 final_transcript = '';
                 document.getElementById("liveIndicator").style.display = "block";
-                document.getElementById("userMsg").placeholder = "الميكروفون نشط.. تحدث في أي وقت.";
+                document.getElementById("userMsg").placeholder = "الميكروفون نشط.. تحدث للرد أو المقاطعة.";
                 recognition.lang = document.getElementById("micLang").value; 
                 try { recognition.start(); } catch(e) {}
             }
@@ -329,57 +382,110 @@ HTML_PAGE = """
             if (event.key === "Enter") { event.preventDefault(); sendMsg(); }
         });
 
-        async function sendMsg() {
+        function appendUserBubble(text) {
+            let box = document.getElementById("chatBox");
+            let div = document.createElement("div");
+            div.className = "chat-bubble user-bubble";
+            div.innerText = text;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function appendAIBubble(data) {
+            let box = document.getElementById("chatBox");
+            let container = document.createElement("div");
+            container.className = "chat-bubble ai-bubble";
+            
+            // النص الإنجليزي (مع إعداد التزامن)
+            let engDiv = document.createElement("div");
+            engDiv.className = "english-text";
+            let words = data.english.split(" ");
+            wordsElements = [];
+            words.forEach(word => {
+                let span = document.createElement("span");
+                span.className = "word";
+                span.innerText = word;
+                engDiv.appendChild(span);
+                wordsElements.push(span);
+            });
+            container.appendChild(engDiv);
+
+            // الترجمة العربية
+            let arDiv = document.createElement("div");
+            arDiv.className = "arabic-translation";
+            arDiv.innerText = data.arabic;
+            container.appendChild(arDiv);
+
+            // البنية الإضافية (خطة، كلمات، الخ)
+            let detailsHTML = "";
+            if(data.keywords) detailsHTML += `<div class="structured-data"><span class="section-title">🔑 Keywords:</span><br>${data.keywords}</div>`;
+            if(data.summary) detailsHTML += `<div class="structured-data"><span class="section-title">📝 Summary/Plan:</span><br>${data.summary}</div>`;
+            
+            if (detailsHTML !== "") {
+                let detailsDiv = document.createElement("div");
+                detailsDiv.innerHTML = detailsHTML;
+                container.appendChild(detailsDiv);
+            }
+
+            box.appendChild(container);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendMsg(overrideMsg = null) {
             let inputField = document.getElementById("userMsg");
-            let msg = inputField.value;
+            let msg = overrideMsg || inputField.value;
             let mode = document.getElementById("mode").value;
-            let arabicBox = document.getElementById("arabicTranslation");
-            let engBox = document.getElementById("englishText");
-            let structuredDetails = document.getElementById("structuredDetails");
             let controlsDiv = document.getElementById("audioControls");
             
             if(!msg.trim()) return;
             
-            // تصفير مؤقتات الصوت والنصوص استعداداً للدورة القادمة
+            // إضافة رسالة المستخدم للواجهة والذاكرة
+            appendUserBubble(msg);
+            chatHistory.push({"role": "user", "content": msg});
+            
             final_transcript = '';
             clearTimeout(silenceTimer);
             audioPlayer.pause();
             controlsDiv.style.display = "none";
-            
-            arabicBox.innerText = "جاري معالجة الرد...";
-            engBox.innerHTML = "";
-            structuredDetails.innerHTML = "";
             inputField.value = ""; 
+            
+            // فقاعة انتظار
+            let box = document.getElementById("chatBox");
+            let loadingDiv = document.createElement("div");
+            loadingDiv.className = "chat-bubble ai-bubble";
+            loadingDiv.id = "loadingBubble";
+            loadingDiv.innerHTML = "<div class='arabic-translation' style='border:none;'>جاري التفكير وتجهيز الرد...</div>";
+            box.appendChild(loadingDiv);
+            box.scrollTop = box.scrollHeight;
             
             try {
                 let res = await fetch("/chat", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({ message: msg, mode: mode, custom_curriculum: customCurriculumContent })
+                    // إرسال آخر 8 رسائل فقط للحفاظ على الذاكرة
+                    body: JSON.stringify({ 
+                        history: chatHistory.slice(-8), 
+                        mode: mode, 
+                        custom_curriculum: customCurriculumContent 
+                    })
                 });
                 
                 let data = await res.json();
-                if(data.error) { arabicBox.innerText = "⚠️ خطأ: " + data.error; return; }
                 
-                arabicBox.innerText = data.arabic;
-                
-                let words = data.english.split(" ");
-                wordsElements = [];
-                words.forEach(word => {
-                    let span = document.createElement("span");
-                    span.className = "word";
-                    span.innerText = word;
-                    engBox.appendChild(span);
-                    wordsElements.push(span);
-                });
+                // إزالة فقاعة الانتظار
+                let loadBub = document.getElementById("loadingBubble");
+                if(loadBub) loadBub.remove();
 
-                let detailsHTML = "";
-                if(data.keywords) detailsHTML += `<div class="structured-data"><span class="section-title">🔑 Keywords:</span> ${data.keywords}</div>`;
-                if(data.summary) detailsHTML += `<div class="structured-data"><span class="section-title">📝 Summary:</span> ${data.summary}</div>`;
-                if(data.previous_topic) detailsHTML += `<div class="structured-data"><span class="section-title">🔙 Previous:</span> ${data.previous_topic}</div>`;
-                if(data.next_topic) detailsHTML += `<div class="structured-data"><span class="section-title">🔜 Next:</span> ${data.next_topic}</div>`;
+                if(data.error) { 
+                    alert("⚠️ خطأ: " + data.error); 
+                    return; 
+                }
                 
-                structuredDetails.innerHTML = detailsHTML;
+                // حفظ رد المدرس في الذاكرة
+                chatHistory.push({"role": "assistant", "content": data.english});
+                
+                // عرض فقاعة المدرس
+                appendAIBubble(data);
                 
                 if(data.audio) {
                     audioPlayer.src = "data:audio/mp3;base64," + data.audio;
@@ -388,7 +494,9 @@ HTML_PAGE = """
                     audioPlayer.play();
                 }
             } catch (e) {
-                arabicBox.innerText = "⚠️ حدث خطأ.";
+                let loadBub = document.getElementById("loadingBubble");
+                if(loadBub) loadBub.remove();
+                alert("⚠️ حدث خطأ في الاتصال.");
             }
         }
         changeStyle();
@@ -417,44 +525,46 @@ def chat():
         client = Groq(api_key=api_key)
         data = request.json
         mode = data.get("mode", "adult")
-        user_msg = data.get("message", "")
+        history = data.get("history", [])
         custom_curriculum = data.get("custom_curriculum", "")
 
         core_rules = """
         CRITICAL RULES: 
         1. MUST STRICTLY adhere to Islamic Sharia and local laws. NO mentions of alcohol, dating, gambling, explicit content, pork, or illegal activities.
         2. Base language progression on the CEFR.
-        3. YOU MUST ACT LIKE A REAL HUMAN TUTOR. ENGAGE IN A CONTINUOUS BACK-AND-FORTH CONVERSATION. ALWAYS END 'english' WITH A QUESTION.
+        3. YOU ARE A REAL HUMAN TUTOR. ENGAGE IN A CONTINUOUS BACK-AND-FORTH CONVERSATION. 
+        4. REMEMBER the conversation context provided in the messages.
+        5. If the user asks for a 'Study Plan' or 'Test/Exercise', provide it clearly within the JSON output.
         """
         
         if custom_curriculum:
-            core_rules += f"\\n4. Incorporate this provided curriculum text into your teaching: {custom_curriculum[:1500]}"
+            core_rules += f"\\n6. Incorporate this provided curriculum text into your teaching: {custom_curriculum[:1500]}"
 
         json_structure = '''
         Respond ONLY in valid JSON format with exactly these keys:
         {
-            "english": "Your spoken English response (Must end with a question)",
+            "english": "Your spoken English response. (Ask a question if it's a normal chat, or provide the test/plan in English).",
             "arabic": "الترجمة العربية للرسالة السابقة",
-            "keywords": "3-5 key vocabulary words from the lesson in English and Arabic",
-            "summary": "ملخص قصير للدرس الحالي بالعربية",
-            "previous_topic": "موضوع الخطوة السابقة بالعربية",
-            "next_topic": "اقتراح للخطوة التالية بالعربية"
+            "keywords": "3-5 key vocabulary words from this message",
+            "summary": "إذا طلب الطالب خطة دراسية أو تقييم، اكتب الملخص أو التعليمات هنا بالعربية. وإلا اتركها فارغة."
         }
         '''
 
         if mode == "child":
-            sys_msg = core_rules + "\\nYou are a fun English teacher for kids. Keep 'english' simple (Max 20 words)." + json_structure
+            sys_msg = core_rules + "\\nYou are a fun English teacher for kids. Keep 'english' simple." + json_structure
             voice_model = "en-US-AnaNeural"
         else:
             sys_msg = core_rules + "\\nYou are a professional English coach for adults." + json_structure
             voice_model = "en-US-GuyNeural"
 
+        # بناء الرسائل شاملة الذاكرة
+        messages = [{"role": "system", "content": sys_msg}]
+        for h in history:
+            messages.append({"role": h["role"], "content": h["content"]})
+
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": sys_msg},
-                {"role": "user", "content": user_msg}
-            ],
+            messages=messages,
             response_format={"type": "json_object"}
         )
         
@@ -462,16 +572,14 @@ def chat():
         
         try:
             parsed_reply = json.loads(reply_content)
-            eng_text = parsed_reply.get("english", "Hello! Are you ready to start?")
-            ar_text = parsed_reply.get("arabic", "مرحباً! هل أنت مستعد للبدء؟")
+            eng_text = parsed_reply.get("english", "Hello! Let's continue.")
+            ar_text = parsed_reply.get("arabic", "مرحباً! دعنا نكمل.")
             keywords = parsed_reply.get("keywords", "")
             summary = parsed_reply.get("summary", "")
-            prev_topic = parsed_reply.get("previous_topic", "")
-            next_topic = parsed_reply.get("next_topic", "")
         except Exception:
             eng_text = "Sorry, error parsing response. Shall we try again?"
             ar_text = "عذراً، حدث خطأ. هل نجرب مرة أخرى؟"
-            keywords = summary = prev_topic = next_topic = ""
+            keywords = summary = ""
         
         audio_base64 = asyncio.run(generate_audio(eng_text, voice_model))
 
@@ -480,8 +588,6 @@ def chat():
             "arabic": ar_text, 
             "keywords": keywords,
             "summary": summary,
-            "previous_topic": prev_topic,
-            "next_topic": next_topic,
             "audio": audio_base64
         })
     
