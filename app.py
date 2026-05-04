@@ -14,30 +14,184 @@ HTML_PAGE = """
     <meta charset="UTF-8">
     <title>المدرس الذكي</title>
     <style>
-        body { font-family: Arial; text-align: center; margin-top: 50px; background: #f4f4f9;}
-        input, select, button { padding: 10px; font-size: 16px; margin: 5px; }
-        #chatBox { width: 80%; max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); min-height: 100px; white-space: pre-wrap; text-align: right; line-height: 1.6;}
-        #audioPlayer { margin-top: 20px; display: none; outline: none; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            min-height: 100vh;
+        }
+        h2 { color: #2c3e50; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        select { 
+            padding: 10px; 
+            font-size: 16px; 
+            border-radius: 8px; 
+            border: 2px solid #3498db; 
+            background-color: white; 
+            color: #2c3e50;
+            cursor: pointer;
+        }
+        .input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        input { 
+            padding: 12px; 
+            font-size: 16px; 
+            border-radius: 25px; 
+            border: 2px solid #bdc3c7; 
+            width: 50%; 
+            max-width: 500px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: #3498db; }
+        button { 
+            padding: 12px 20px; 
+            font-size: 16px; 
+            border-radius: 25px; 
+            border: none; 
+            background-color: #3498db; 
+            color: white; 
+            cursor: pointer; 
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover { background-color: #2980b9; }
+        #micBtn {
+            background-color: #e74c3c;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+        }
+        #micBtn:hover { background-color: #c0392b; }
+        #micBtn.recording { animation: pulse 1.5s infinite; background-color: #ff4757; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+        }
+
+        #chatBox { 
+            width: 80%; 
+            max-width: 600px; 
+            margin: 30px auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+            min-height: 120px; 
+            white-space: pre-wrap; 
+            text-align: right; 
+            line-height: 1.8;
+            font-size: 18px;
+            color: #34495e;
+            border-top: 5px solid #2ecc71;
+        }
+        #audioPlayer { margin-top: 20px; display: none; outline: none; width: 80%; max-width: 600px; }
     </style>
 </head>
 <body>
-    <h2>🇬🇧 مدرس اللغة الإنجليزية الذكي (يدعم الصوت)</h2>
-    <select id="mode">
+    <h2>🇬🇧 مدرس اللغة الإنجليزية الذكي 🎙️</h2>
+    
+    <select id="mode" onchange="changeStyle()">
         <option value="adult">وضع الكبار (احترافي وعملي)</option>
         <option value="child">وضع الأطفال (مرح وبسيط)</option>
     </select>
-    <br><br>
-    <input type="text" id="userMsg" placeholder="اكتب رسالتك ثم اضغط Enter..." style="width: 60%;">
-    <button onclick="sendMsg()">إرسال</button>
+    
+    <div class="input-container">
+        <button id="micBtn" onclick="toggleMic()" title="تحدث الآن">🎤</button>
+        <input type="text" id="userMsg" placeholder="اكتب رسالتك أو اضغط الميكروفون للتحدث...">
+        <button onclick="sendMsg()">إرسال</button>
+    </div>
     
     <div id="chatBox">الرد سيظهر هنا...</div>
     <audio id="audioPlayer" controls></audio>
 
     <script>
+        // تغيير الألوان بناءً على الوضع المختار
+        function changeStyle() {
+            let mode = document.getElementById("mode").value;
+            let chatBox = document.getElementById("chatBox");
+            if(mode === "child") {
+                document.body.style.background = "linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)";
+                chatBox.style.borderTopColor = "#ff6b81";
+                chatBox.style.fontFamily = "'Comic Sans MS', cursive, sans-serif";
+            } else {
+                document.body.style.background = "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)";
+                chatBox.style.borderTopColor = "#2ecc71";
+                chatBox.style.fontFamily = "'Segoe UI', sans-serif";
+            }
+        }
+
+        // إعداد الإدخال الصوتي (Speech Recognition)
+        let recognition;
+        let isRecording = false;
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            // يمكن تعيين لغة التعرف هنا، حالياً نتركه يتعرف على الإنجليزية والعربية
+            recognition.lang = 'en-US'; 
+            
+            recognition.onresult = function(event) {
+                let transcript = event.results[0][0].transcript;
+                document.getElementById("userMsg").value = transcript;
+                stopMic();
+                // يمكن تفعيل الإرسال التلقائي بعد التحدث بفك التعليق عن السطر التالي:
+                // sendMsg(); 
+            };
+            
+            recognition.onerror = function(event) {
+                console.error("Speech recognition error", event.error);
+                stopMic();
+            };
+            
+            recognition.onend = function() {
+                stopMic();
+            };
+        } else {
+            document.getElementById("micBtn").style.display = "none";
+            console.log("Speech Recognition Not Available in this browser.");
+        }
+
+        function toggleMic() {
+            if (!recognition) return alert("متصفحك لا يدعم الإدخال الصوتي.");
+            
+            if (isRecording) {
+                recognition.stop();
+                stopMic();
+            } else {
+                // محاولة التعرف على لغة الإدخال بناءً على الوضع
+                // إذا أردت التعرف على العربية بشكل أفضل، يمكنك استخدام 'ar-SA'
+                recognition.lang = document.getElementById("mode").value === "adult" ? 'en-US' : 'en-US'; 
+                recognition.start();
+                isRecording = true;
+                document.getElementById("micBtn").classList.add("recording");
+                document.getElementById("userMsg").placeholder = "جاري الاستماع... 🔴";
+            }
+        }
+
+        function stopMic() {
+            isRecording = false;
+            document.getElementById("micBtn").classList.remove("recording");
+            document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون للتحدث...";
+        }
+
         // تفعيل الإرسال عند الضغط على زر Enter
         document.getElementById("userMsg").addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
-                event.preventDefault(); // منع تحديث الصفحة
+                event.preventDefault();
                 sendMsg();
             }
         });
@@ -51,11 +205,12 @@ HTML_PAGE = """
             
             if(!msg) return;
             
+            if(isRecording) recognition.stop();
+            
             chatBox.innerText = "جاري التفكير وتجهيز الصوت...";
             audioPlayer.style.display = "none";
             audioPlayer.pause();
             
-            // تفريغ مربع النص بعد الإرسال لراحة المستخدم
             inputField.value = ""; 
             
             try {
@@ -83,6 +238,9 @@ HTML_PAGE = """
                 chatBox.innerText = "⚠️ حدث خطأ في الاتصال بالسيرفر.";
             }
         }
+        
+        // تشغيل النمط المبدئي
+        changeStyle();
     </script>
 </body>
 </html>
@@ -110,7 +268,6 @@ def chat():
         mode = data.get("mode", "adult")
         user_msg = data.get("message", "")
 
-        # توجيهات صارمة بخصوص اللغة والتفاعل
         if mode == "child":
             sys_msg = "أنت مدرس لغة إنجليزية مرح للأطفال. تواصل حصرياً باللغتين الإنجليزية والعربية فقط. يمنع استخدام أي لغة أخرى. أجب على الطفل بكلمات بسيطة، اقترح عليه كلمة جديدة ليتعلمها، وفي نهاية ردك اطرح عليه سؤالاً بسيطاً جداً بالإنجليزية لتشجيعه على الرد."
             voice_model = "en-US-AnaNeural"
