@@ -24,7 +24,30 @@ HTML_PAGE = """
             background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
             min-height: 100vh;
         }
-        h2 { color: #2c3e50; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin-bottom: 5px; }
+        
+        /* تصميم صندوق المنهج */
+        .curriculum-info {
+            background-color: #e8f4f8;
+            border: 1px solid #bde0ec;
+            border-radius: 8px;
+            padding: 12px;
+            width: 80%;
+            max-width: 600px;
+            margin: 10px auto 20px auto;
+            font-size: 14px;
+            color: #2c3e50;
+            text-align: right;
+            line-height: 1.6;
+        }
+        .curriculum-info a {
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .curriculum-info a:hover { text-decoration: underline; }
+
         select { padding: 10px; font-size: 16px; border-radius: 8px; border: 2px solid #3498db; cursor: pointer; margin: 5px; }
         .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;}
         .input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
@@ -54,7 +77,14 @@ HTML_PAGE = """
 </head>
 <body>
     <h2>مدرس اللغة الإنجليزية الذكي 🎓</h2>
-    <p style="font-size: 14px; color: #7f8c8d;">منهج معتمد دولياً (CEFR) - متوافق مع الشريعة والقوانين</p>
+    
+    <!-- قسم المنهج المعتمد والروابط -->
+    <div class="curriculum-info">
+        📚 <strong>المنهج المعتمد:</strong> الإطار الأوروبي المرجعي المشترك للغات (CEFR) للتقييم والتوجيه.<br>
+        هذا المعيار عالمي، مفتوح المصدر، ومتوافق مع القوانين وحقوق الملكية الفكرية.<br>
+        <a href="https://www.coe.int/en/web/common-european-framework-reference-languages" target="_blank">🔗 الموقع الرسمي (مجلس أوروبا)</a>
+        <a href="https://www.cambridgeenglish.org/exams-and-tests/cefr/" target="_blank">🔗 دليل المستويات (Cambridge)</a>
+    </div>
 
     <div class="controls">
         <select id="mode" onchange="changeStyle()">
@@ -102,7 +132,6 @@ HTML_PAGE = """
             }
         }
 
-        // رفع المنهج المخصص
         function triggerUpload() {
             let warning = "⚠️ تحذير قانوني ⚠️\\n\\nأنت مسؤول قانونياً عن حقوق الملكية الفكرية للملف المرفوع. يجب ألا يحتوي الملف على أي مواد مقرصنة أو ما يخالف القوانين أو الشريعة الإسلامية.\\n\\nهل تتعهد بذلك وتوافق على الاستمرار؟";
             if(confirm(warning)) {
@@ -117,12 +146,11 @@ HTML_PAGE = """
             let reader = new FileReader();
             reader.onload = function(e) {
                 customCurriculumContent = e.target.result;
-                document.getElementById("curriculumStatus").innerText = "✅ تم تحميل المنهج المخصص بنجاح!";
+                document.getElementById("curriculumStatus").innerText = "✅ تم تحميل المنهج المخصص بنجاح وسيتم دمجه مع معايير CEFR.";
             };
             reader.readAsText(file);
         }
 
-        // إيقاف واستئناف الصوت
         function togglePauseAudio() {
             let audioPlayer = document.getElementById("audioPlayer");
             let pauseBtn = document.getElementById("pauseBtn");
@@ -137,7 +165,6 @@ HTML_PAGE = """
             }
         }
 
-        // نظام التزامن الجديد (Karaoke) يعتمد على وقت الصوت الفعلي
         let audioPlayer = document.getElementById("audioPlayer");
         audioPlayer.ontimeupdate = function() {
             if (wordsElements.length === 0 || isNaN(audioPlayer.duration)) return;
@@ -166,7 +193,6 @@ HTML_PAGE = """
             });
         };
 
-        // الميكروفون
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = false;
@@ -241,7 +267,6 @@ HTML_PAGE = """
                 
                 arabicBox.innerText = data.arabic;
                 
-                // تجهيز الكلمات
                 let words = data.english.split(" ");
                 wordsElements = [];
                 words.forEach(word => {
@@ -291,7 +316,6 @@ def chat():
         user_msg = data.get("message", "")
         custom_curriculum = data.get("custom_curriculum", "")
 
-        # القواعد الصارمة (الشريعة والقانون والمنهج)
         core_rules = """
         CRITICAL RULES: 
         1. MUST STRICTLY adhere to Islamic Sharia and local laws. Absolutely NO mentions of alcohol, dating, gambling, explicit content, pork, or illegal activities.
@@ -299,7 +323,7 @@ def chat():
         """
         
         if custom_curriculum:
-            core_rules += f"\\n3. IMPORTANT: The user has provided a custom curriculum text. Incorporate this context into your teaching: {custom_curriculum[:1500]}"
+            core_rules += f"\\n3. IMPORTANT: The user has provided a custom curriculum text. Incorporate this context into your teaching while respecting CEFR levels: {custom_curriculum[:1500]}"
 
         if mode == "child":
             sys_msg = core_rules + '''
