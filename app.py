@@ -26,7 +26,6 @@ HTML_PAGE = """
         }
         h2 { color: #2c3e50; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin-bottom: 5px; }
         
-        /* تصميم صندوق المنهج */
         .curriculum-info {
             background-color: #e8f4f8;
             border: 1px solid #bde0ec;
@@ -40,28 +39,36 @@ HTML_PAGE = """
             text-align: right;
             line-height: 1.6;
         }
-        .curriculum-info a {
-            color: #2980b9;
-            text-decoration: none;
-            font-weight: bold;
-            margin-left: 10px;
-        }
+        .curriculum-info a { color: #2980b9; text-decoration: none; font-weight: bold; margin-left: 10px; }
         .curriculum-info a:hover { text-decoration: underline; }
 
-        select { padding: 10px; font-size: 16px; border-radius: 8px; border: 2px solid #3498db; cursor: pointer; margin: 5px; }
-        .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;}
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 80%;
+            max-width: 600px;
+            margin: 0 auto 15px auto;
+        }
+        
+        .controls { display: flex; gap: 10px; }
+        select { padding: 8px; font-size: 14px; border-radius: 8px; border: 2px solid #3498db; cursor: pointer; }
+        
+        .upload-section { display: flex; align-items: center; gap: 10px; }
+        #uploadBtn { background-color: #27ae60; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: none; color: white; cursor: pointer; display: flex; align-items: center; gap: 5px;}
+        #uploadBtn:hover { background-color: #219653; }
+
         .input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-        input[type="text"] { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #bdc3c7; width: 50%; max-width: 500px; outline: none; }
-        button { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer; }
-        button:hover { background-color: #2980b9; }
+        input[type="text"] { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #bdc3c7; width: 60%; max-width: 500px; outline: none; }
+        button.send-btn { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer; }
+        button.send-btn:hover { background-color: #2980b9; }
         
         .circle-btn {
             border-radius: 50%; width: 45px; height: 45px; padding: 0; 
-            display: flex; justify-content: center; align-items: center; font-size: 20px;
+            display: flex; justify-content: center; align-items: center; font-size: 20px; border: none; cursor: pointer;
         }
-        #micBtn { background-color: #e74c3c; }
-        #pauseBtn { background-color: #f39c12; display: none; }
-        #uploadBtn { background-color: #27ae60; }
+        #micBtn { background-color: #e74c3c; color: white;}
+        #pauseBtn { background-color: #f39c12; color: white; display: none; }
         
         #chatBox { width: 80%; max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); min-height: 150px; text-align: right; border-top: 5px solid #2ecc71; }
         #arabicTranslation { color: #7f8c8d; font-size: 16px; margin-bottom: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 10px; }
@@ -72,44 +79,50 @@ HTML_PAGE = """
         .word.spoken { color: #2c3e50; }
 
         #audioPlayer { display: none; }
-        #curriculumStatus { color: #27ae60; font-size: 14px; margin-top: 10px; font-weight: bold;}
+        #curriculumStatus { color: #27ae60; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
     <h2>مدرس اللغة الإنجليزية الذكي 🎓</h2>
     
-    <!-- قسم المنهج المعتمد والروابط -->
     <div class="curriculum-info">
-        📚 <strong>المنهج المعتمد:</strong> الإطار الأوروبي المرجعي المشترك للغات (CEFR) للتقييم والتوجيه.<br>
-        هذا المعيار عالمي، مفتوح المصدر، ومتوافق مع القوانين وحقوق الملكية الفكرية.<br>
-        <a href="https://www.coe.int/en/web/common-european-framework-reference-languages" target="_blank">🔗 الموقع الرسمي (مجلس أوروبا)</a>
-        <a href="https://www.cambridgeenglish.org/exams-and-tests/cefr/" target="_blank">🔗 دليل المستويات (Cambridge)</a>
+        📚 <strong>المنهج المعتمد:</strong> الإطار الأوروبي المرجعي المشترك للغات (CEFR).<br>
+        <a href="https://www.coe.int/en/web/common-european-framework-reference-languages" target="_blank">🔗 الموقع الرسمي</a>
+        <a href="https://www.cambridgeenglish.org/exams-and-tests/cefr/" target="_blank">🔗 دليل المستويات</a>
     </div>
 
-    <div class="controls">
-        <select id="mode" onchange="changeStyle()">
-            <option value="adult">وضع الكبار (احترافي)</option>
-            <option value="child">وضع الأطفال (مرح)</option>
-        </select>
-        <select id="micLang">
-            <option value="en-US">تحدث بالإنجليزية</option>
-            <option value="ar-SA">تحدث بالعربية</option>
-        </select>
-        <button id="uploadBtn" class="circle-btn" onclick="triggerUpload()" title="رفع منهج مخصص (TXT)">📂</button>
-        <input type="file" id="fileUpload" accept=".txt" style="display: none;" onchange="handleFileUpload(event)">
+    <!-- شريط التحكم العلوي -->
+    <div class="top-bar">
+        <div class="controls">
+            <select id="mode" onchange="changeStyle()">
+                <option value="adult">وضع الكبار (احترافي)</option>
+                <option value="child">وضع الأطفال (مرح)</option>
+            </select>
+            <select id="micLang">
+                <option value="en-US">إدخال: إنجليزي</option>
+                <option value="ar-SA">إدخال: عربي</option>
+            </select>
+        </div>
+        
+        <div class="upload-section">
+            <button id="uploadBtn" onclick="triggerUpload()" title="رفع منهج مخصص (TXT)">
+                📂 رفع منهج
+            </button>
+            <input type="file" id="fileUpload" accept=".txt" style="display: none;" onchange="handleFileUpload(event)">
+            <span id="curriculumStatus"></span>
+        </div>
     </div>
-    <div id="curriculumStatus"></div>
     
     <div class="input-container">
         <button id="pauseBtn" class="circle-btn" onclick="togglePauseAudio()" title="إيقاف / استئناف النطق">⏸️</button>
         <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="تحدث الآن / مقاطعة">🎤</button>
         <input type="text" id="userMsg" placeholder="اكتب رسالتك أو اضغط الميكروفون...">
-        <button onclick="sendMsg()">إرسال</button>
+        <button class="send-btn" onclick="sendMsg()">إرسال</button>
     </div>
     
     <div id="chatBox">
         <div id="arabicTranslation">الترجمة العربية ستظهر هنا...</div>
-        <div id="englishText">النص الإنجليزي سيظهر هنا بشكل متزامن...</div>
+        <div id="englishText">النص الإنجليزي سيظهر هنا...</div>
     </div>
     
     <audio id="audioPlayer"></audio>
@@ -132,8 +145,9 @@ HTML_PAGE = """
             }
         }
 
+        // يظهر التحذير في كل مرة يتم فيها النقر
         function triggerUpload() {
-            let warning = "⚠️ تحذير قانوني ⚠️\\n\\nأنت مسؤول قانونياً عن حقوق الملكية الفكرية للملف المرفوع. يجب ألا يحتوي الملف على أي مواد مقرصنة أو ما يخالف القوانين أو الشريعة الإسلامية.\\n\\nهل تتعهد بذلك وتوافق على الاستمرار؟";
+            let warning = "⚠️ تحذير قانوني وشرعي ⚠️\\n\\nأنت مسؤول بالكامل عن محتوى الملف المرفوع.\\nيمنع منعاً باتاً رفع أي مواد تخالف الشريعة الإسلامية، القوانين المحلية، أو تنتهك حقوق الملكية الفكرية والنشر.\\n\\nهل تتعهد بالالتزام وتوافق على الاستمرار؟";
             if(confirm(warning)) {
                 document.getElementById("fileUpload").click();
             }
@@ -146,9 +160,11 @@ HTML_PAGE = """
             let reader = new FileReader();
             reader.onload = function(e) {
                 customCurriculumContent = e.target.result;
-                document.getElementById("curriculumStatus").innerText = "✅ تم تحميل المنهج المخصص بنجاح وسيتم دمجه مع معايير CEFR.";
+                document.getElementById("curriculumStatus").innerText = "✅ تم الرفع";
             };
             reader.readAsText(file);
+            // تصفير قيمة المدخل ليسمح برفع نفس الملف مرة أخرى إذا لزم الأمر
+            event.target.value = '';
         }
 
         function togglePauseAudio() {
@@ -318,12 +334,12 @@ def chat():
 
         core_rules = """
         CRITICAL RULES: 
-        1. MUST STRICTLY adhere to Islamic Sharia and local laws. Absolutely NO mentions of alcohol, dating, gambling, explicit content, pork, or illegal activities.
+        1. MUST STRICTLY adhere to Islamic Sharia and local laws. Absolutely NO mentions of alcohol, dating, gambling, explicit content, pork, or illegal activities. If the user asks for something violating these rules, politely decline.
         2. Base language progression on the CEFR (Common European Framework of Reference for Languages).
         """
         
         if custom_curriculum:
-            core_rules += f"\\n3. IMPORTANT: The user has provided a custom curriculum text. Incorporate this context into your teaching while respecting CEFR levels: {custom_curriculum[:1500]}"
+            core_rules += f"\\n3. The user has provided a custom curriculum text. Incorporate this context into your teaching while respecting CEFR levels and Sharia rules: {custom_curriculum[:1500]}"
 
         if mode == "child":
             sys_msg = core_rules + '''
