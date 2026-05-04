@@ -14,7 +14,7 @@ HTML_PAGE = """
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>المدرس الذكي</title>
+    <title>Smart Academy - المدرس الذكي</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -27,17 +27,8 @@ HTML_PAGE = """
         h2 { color: #2c3e50; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin-bottom: 5px; }
         
         .curriculum-info {
-            background-color: #e8f4f8;
-            border: 1px solid #bde0ec;
-            border-radius: 8px;
-            padding: 12px;
-            width: 80%;
-            max-width: 600px;
-            margin: 10px auto 20px auto;
-            font-size: 14px;
-            color: #2c3e50;
-            text-align: right;
-            line-height: 1.6;
+            background-color: #e8f4f8; border: 1px solid #bde0ec; border-radius: 8px; padding: 12px;
+            width: 80%; max-width: 600px; margin: 10px auto 20px auto; font-size: 14px; color: #2c3e50; text-align: right; line-height: 1.6;
         }
         .curriculum-info a { color: #2980b9; text-decoration: none; font-weight: bold; margin-left: 10px; }
 
@@ -50,19 +41,17 @@ HTML_PAGE = """
         .start-btn { background-color: #8e44ad; font-weight: bold; padding: 10px 20px; font-size: 16px;}
         .start-btn:hover { background-color: #9b59b6; }
         
-        /* مؤشر المحادثة الحية */
-        #liveIndicator { display: none; color: #e74c3c; font-weight: bold; font-size: 14px; margin-top: 10px; animation: blink 1.5s infinite; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #liveIndicator { display: none; color: #e74c3c; font-weight: bold; font-size: 15px; margin-top: 10px; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
         .input-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
         input[type="text"] { padding: 12px; font-size: 16px; border-radius: 25px; border: 2px solid #bdc3c7; width: 60%; max-width: 500px; outline: none; transition: border-color 0.3s;}
         input[type="text"]:focus { border-color: #3498db; }
-        button.send-btn { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer; transition: background-color 0.2s;}
+        button.send-btn { padding: 12px 20px; font-size: 16px; border-radius: 25px; border: none; background-color: #3498db; color: white; cursor: pointer;}
         
         .circle-btn {
             border-radius: 50%; width: 45px; height: 45px; padding: 0; 
-            display: flex; justify-content: center; align-items: center; font-size: 20px; border: none; cursor: pointer;
-            transition: transform 0.1s;
+            display: flex; justify-content: center; align-items: center; font-size: 20px; border: none; cursor: pointer; transition: transform 0.1s;
         }
         .circle-btn:active { transform: scale(0.9); }
         #micBtn { background-color: #e74c3c; color: white;}
@@ -79,7 +68,6 @@ HTML_PAGE = """
         .download-btn { background-color: #34495e; color: white; }
 
         #chatBox { width: 80%; max-width: 600px; margin: 30px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); min-height: 150px; text-align: right; border-top: 5px solid #2ecc71; }
-        
         .response-section { margin-bottom: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 15px;}
         .response-section:last-child { border-bottom: none; padding-bottom: 0;}
         .section-title { font-size: 12px; font-weight: bold; color: #95a5a6; text-transform: uppercase; margin-bottom: 5px;}
@@ -93,13 +81,12 @@ HTML_PAGE = """
         .word.spoken { color: #2c3e50; }
 
         #audioPlayer { display: none; }
-        
         .bottom-controls { display: flex; flex-direction: column; align-items: center; margin-top: 40px; gap: 10px; padding-top: 20px; border-top: 1px solid #bdc3c7; width: 80%; max-width: 600px; margin-left: auto; margin-right: auto;}
         #curriculumStatus { color: #27ae60; font-size: 12px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h2>مدرس اللغة الإنجليزية الذكي 🎓</h2>
+    <h2>المدرس الذكي 🎓</h2>
     
     <div class="curriculum-info">
         📚 <strong>المنهج المعتمد:</strong> الإطار الأوروبي المرجعي المشترك للغات (CEFR).<br>
@@ -120,11 +107,11 @@ HTML_PAGE = """
         <button class="action-btn start-btn" onclick="startLiveLesson()" title="بدء محادثة مستمرة وتلقائية">📞 ابدأ المكالمة الحية</button>
     </div>
     
-    <div id="liveIndicator">🔴 وضع المحادثة الحية مفعل (تحدث بحرية أو اضغط الميكروفون للمقاطعة)</div>
+    <div id="liveIndicator">🔴 المكالمة الحية نشطة: المدرس يستمع إليك دائماً.. (تحدث للمقاطعة أو الإجابة)</div>
     
     <div class="input-container">
-        <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="تحدث الآن / مقاطعة المعلم">🎤</button>
-        <input type="text" id="userMsg" placeholder="اكتب رسالتك أو اضغط الميكروفون...">
+        <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="إيقاف/تشغيل الميكروفون">🎤</button>
+        <input type="text" id="userMsg" placeholder="اضغط ابدأ المكالمة أو اكتب رسالتك...">
         <button class="send-btn" onclick="sendMsg()">إرسال</button>
     </div>
 
@@ -140,7 +127,7 @@ HTML_PAGE = """
         <div class="response-section">
             <div class="section-title">Message</div>
             <div id="englishText"></div>
-            <div id="arabicTranslation" style="margin-top: 10px;">مرحباً! اضغط على "ابدأ المكالمة الحية" لبدء محادثة صوتية مستمرة...</div>
+            <div id="arabicTranslation" style="margin-top: 10px;">مرحباً! اضغط على "ابدأ المكالمة الحية" لبدء التفاعل...</div>
         </div>
         <div id="structuredDetails"></div>
     </div>
@@ -158,7 +145,11 @@ HTML_PAGE = """
         let recognition;
         let customCurriculumContent = "";
         let wordsElements = [];
-        let isLiveMode = false; // متغير للتحكم في وضع المحادثة المستمرة
+        
+        // المتغيرات الخاصة بالاستماع والمقاطعة
+        let isLiveMode = false; 
+        let silenceTimer;
+        let final_transcript = '';
 
         function changeStyle() {
             let mode = document.getElementById("mode").value;
@@ -172,20 +163,23 @@ HTML_PAGE = """
             }
         }
 
-        // بدء المكالمة الحية
         function startLiveLesson() {
             isLiveMode = true;
             document.getElementById("liveIndicator").style.display = "block";
-            document.getElementById("userMsg").value = "Hello, let's start our live conversation. Ask me a question.";
+            final_transcript = '';
+            
+            if (!isRecording && recognition) {
+                recognition.lang = document.getElementById("micLang").value; 
+                try { recognition.start(); } catch(e) {}
+            }
+            
+            document.getElementById("userMsg").value = "Hello! I am ready. Please introduce yourself and ask me the first question.";
             sendMsg();
         }
 
         function triggerUpload() {
-            if(confirm("تحذير قانوني: أنت مسؤول عن المحتوى ويمنع رفع ما يخالف الشريعة أو حقوق الملكية. موافق؟")) { 
-                document.getElementById("fileUpload").click(); 
-            }
+            if(confirm("تحذير قانوني: يمنع رفع ما يخالف الشريعة أو حقوق الملكية. موافق؟")) { document.getElementById("fileUpload").click(); }
         }
-
         function handleFileUpload(event) {
             let file = event.target.files[0];
             if (!file) return;
@@ -200,7 +194,7 @@ HTML_PAGE = """
 
         function skipAudio(seconds) {
             let audioPlayer = document.getElementById("audioPlayer");
-            if (audioPlayer.src) { audioPlayer.currentTime += seconds; }
+            if (audioPlayer.src) audioPlayer.currentTime += seconds;
         }
 
         function downloadAudio() {
@@ -208,7 +202,7 @@ HTML_PAGE = """
             if (!audioPlayer.src) return;
             let a = document.createElement("a");
             a.href = audioPlayer.src;
-            a.download = "SmartTutor_Lesson.mp3"; 
+            a.download = "Lesson_Audio.mp3"; 
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -230,96 +224,105 @@ HTML_PAGE = """
             
             wordsElements.forEach((span, i) => {
                 if (i === activeIndex) {
-                    span.classList.add("active");
-                    span.classList.remove("spoken");
+                    span.classList.add("active"); span.classList.remove("spoken");
                 } else if (i < activeIndex) {
-                    span.classList.remove("active");
-                    span.classList.add("spoken");
+                    span.classList.remove("active"); span.classList.add("spoken");
                 } else {
                     span.classList.remove("active", "spoken");
                 }
             });
         };
 
-        // عندما ينتهي المدرس من الحديث، استمع تلقائياً إذا كان الوضع الحي مفعلاً
         audioPlayer.onended = function() {
             document.getElementById("pauseBtn").innerText = "▶️";
             wordsElements.forEach(span => { span.classList.remove("active"); span.classList.add("spoken"); });
-            
-            if (isLiveMode) {
-                setTimeout(() => {
-                    if (!isRecording) toggleMic();
-                }, 500); // تأخير نصف ثانية لضمان انتهاء صدى الصوت
-            }
         };
 
+        // إعداد الميكروفون المتقدم (الاستماع المستمر والمقاطعة الفورية)
         function initSpeechRecognition() {
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (window.SpeechRecognition) {
                 recognition = new window.SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
+                recognition.continuous = true; // استماع مستمر
+                recognition.interimResults = true; // التقاط الكلمات فور النطق بها
                 
                 recognition.onstart = function() {
                     isRecording = true;
-                    let micBtn = document.getElementById("micBtn");
-                    micBtn.classList.add("recording");
-                    document.getElementById("userMsg").placeholder = "أنا أستمع إليك الآن... (تحدث)";
+                    document.getElementById("micBtn").classList.add("recording");
                 };
 
-                // عند الانتهاء من الحديث، أرسل الرسالة تلقائياً
                 recognition.onresult = function(event) {
-                    document.getElementById("userMsg").value = event.results[0][0].transcript;
-                    stopMic();
-                    if (isLiveMode) sendMsg(); // إرسال تلقائي بدون النقر على زر إرسال
+                    let interim_transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            final_transcript += event.results[i][0].transcript + " ";
+                        } else {
+                            interim_transcript += event.results[i][0].transcript;
+                        }
+                    }
+                    
+                    let currentSpeech = (final_transcript + interim_transcript).trim();
+                    
+                    // إذا التقط الميكروفون أي صوت من المستخدم
+                    if (currentSpeech.length > 0) {
+                        
+                        // 1. المقاطعة الفورية: إسكات المعلم فوراً إذا كان يتحدث
+                        if (!audioPlayer.paused) {
+                            audioPlayer.pause();
+                            document.getElementById("pauseBtn").innerText = "▶️";
+                            wordsElements.forEach(span => span.classList.add("spoken"));
+                        }
+                        
+                        // 2. إظهار الكلام في مربع النص مباشرة
+                        document.getElementById("userMsg").value = currentSpeech;
+                        
+                        // 3. مؤقت الصمت: الانتظار ثانيتين بعد آخر كلمة للرد
+                        clearTimeout(silenceTimer);
+                        silenceTimer = setTimeout(() => {
+                            if (isLiveMode && currentSpeech.length > 0) {
+                                sendMsg(); // الإرسال التلقائي
+                            }
+                        }, 2000); // 2000 ملي ثانية = ثانيتين صمت
+                    }
                 };
                 
-                recognition.onerror = function(event) {
-                    console.error("Speech Error: ", event.error);
-                    stopMic();
-                    if(event.error === 'not-allowed') alert("يرجى السماح باستخدام الميكروفون.");
-                };
+                recognition.onerror = function(event) { console.error("Speech Error: ", event.error); };
                 
-                recognition.onend = function() { stopMic(); };
+                recognition.onend = function() { 
+                    if (isLiveMode) {
+                        // إعادة تشغيل الميكروفون فوراً ليظل مفتوحاً في وضع المكالمة
+                        try { recognition.start(); } catch(e) {}
+                    } else {
+                        isRecording = false;
+                        document.getElementById("micBtn").classList.remove("recording");
+                    }
+                };
                 return true;
-            } else {
-                return false;
             }
+            return false;
         }
 
         let isSpeechSupported = initSpeechRecognition();
 
-        // زر الميكروفون أصبح يستخدم للمقاطعة أو البدء اليدوي
         function toggleMic() {
-            // المقاطعة الذكية: إذا كان المعلم يتحدث، أوقفه فوراً وابدأ بالاستماع
-            if (!audioPlayer.paused) {
-                audioPlayer.pause();
-                document.getElementById("pauseBtn").innerText = "▶️";
-                wordsElements.forEach(span => span.classList.add("spoken"));
-            }
-
             if (!isSpeechSupported) return alert("المتصفح لا يدعم الميكروفون.");
             
-            if (isRecording) {
+            if (isLiveMode || isRecording) {
+                // إيقاف المكالمة الحية
+                isLiveMode = false;
+                isRecording = false;
                 recognition.stop();
-                isLiveMode = false; // إيقاف الوضع الحي إذا أوقف الطالب الميكروفون يدوياً
                 document.getElementById("liveIndicator").style.display = "none";
+                document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون...";
             } else {
+                // تشغيل المكالمة الحية
+                isLiveMode = true;
+                final_transcript = '';
+                document.getElementById("liveIndicator").style.display = "block";
+                document.getElementById("userMsg").placeholder = "الميكروفون نشط.. تحدث في أي وقت.";
                 recognition.lang = document.getElementById("micLang").value; 
-                try {
-                    recognition.start();
-                } catch(e) {
-                    recognition.stop();
-                    setTimeout(() => recognition.start(), 300);
-                }
+                try { recognition.start(); } catch(e) {}
             }
-        }
-
-        function stopMic() {
-            isRecording = false;
-            let micBtn = document.getElementById("micBtn");
-            micBtn.classList.remove("recording");
-            document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون...";
         }
 
         document.getElementById("userMsg").addEventListener("keypress", function(event) {
@@ -335,13 +338,15 @@ HTML_PAGE = """
             let structuredDetails = document.getElementById("structuredDetails");
             let controlsDiv = document.getElementById("audioControls");
             
-            if(!msg) return;
-            if(isRecording && recognition) recognition.stop();
+            if(!msg.trim()) return;
             
+            // تصفير مؤقتات الصوت والنصوص استعداداً للدورة القادمة
+            final_transcript = '';
+            clearTimeout(silenceTimer);
             audioPlayer.pause();
             controlsDiv.style.display = "none";
             
-            arabicBox.innerText = "جاري التفكير...";
+            arabicBox.innerText = "جاري معالجة الرد...";
             engBox.innerHTML = "";
             structuredDetails.innerHTML = "";
             inputField.value = ""; 
