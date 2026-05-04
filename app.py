@@ -1,6 +1,8 @@
 import os
 import asyncio
 import base64
+import json
+import re
 from flask import Flask, request, jsonify, render_template_string
 from groq import Groq
 import edge_tts
@@ -31,7 +33,9 @@ HTML_PAGE = """
             background-color: white; 
             color: #2c3e50;
             cursor: pointer;
+            margin: 5px;
         }
+        .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;}
         .input-container {
             display: flex;
             justify-content: center;
@@ -72,8 +76,9 @@ HTML_PAGE = """
             justify-content: center;
             align-items: center;
             font-size: 20px;
+            transition: transform 0.2s;
         }
-        #micBtn:hover { background-color: #c0392b; }
+        #micBtn:hover { background-color: #c0392b; transform: scale(1.05); }
         #micBtn.recording { animation: pulse 1.5s infinite; background-color: #ff4757; }
         
         @keyframes pulse {
@@ -90,36 +95,73 @@ HTML_PAGE = """
             padding: 25px; 
             border-radius: 15px; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
-            min-height: 120px; 
-            white-space: pre-wrap; 
+            min-height: 150px; 
             text-align: right; 
-            line-height: 1.8;
-            font-size: 18px;
-            color: #34495e;
             border-top: 5px solid #2ecc71;
         }
-        #audioPlayer { margin-top: 20px; display: none; outline: none; width: 80%; max-width: 600px; }
+        
+        #arabicTranslation {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #ecf0f1;
+            padding-bottom: 10px;
+        }
+        
+        #englishText {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ecf0f1; /* مخفي مبدئياً */
+            line-height: 1.6;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .word {
+            display: inline-block;
+            margin-right: 5px;
+            color: transparent; /* الكلمات مخفية حتى يتم نطقها */
+            transition: color 0.1s ease-in;
+        }
+        
+        .word.active { color: #e74c3c; transform: scale(1.05); }
+        .word.spoken { color: #2c3e50; }
+
+        #audioPlayer { display: none; }
     </style>
 </head>
 <body>
-    <h2>🇬🇧 مدرس اللغة الإنجليزية الذكي 🎙️</h2>
+    <h2>مدرس اللغة الإنجليزية الذكي 🎙️</h2>
     
-    <select id="mode" onchange="changeStyle()">
-        <option value="adult">وضع الكبار (احترافي وعملي)</option>
-        <option value="child">وضع الأطفال (مرح وبسيط)</option>
-    </select>
+    <div class="controls">
+        <select id="mode" onchange="changeStyle()">
+            <option value="adult">وضع الكبار (احترافي)</option>
+            <option value="child">وضع الأطفال (مرح)</option>
+        </select>
+        <select id="micLang">
+            <option value="en-US">تحدث بالإنجليزية 🇬🇧</option>
+            <option value="ar-SA">تحدث بالعربية 🇸🇦</option>
+        </select>
+    </div>
     
     <div class="input-container">
-        <button id="micBtn" onclick="toggleMic()" title="تحدث الآن">🎤</button>
-        <input type="text" id="userMsg" placeholder="اكتب رسالتك أو اضغط الميكروفون للتحدث...">
+        <button id="micBtn" onclick="toggleMic()" title="تحدث الآن / مقاطعة المعلم">🎤</button>
+        <input type="text" id="userMsg" placeholder="اكتب رسالتك أو اضغط الميكروفون...">
         <button onclick="sendMsg()">إرسال</button>
     </div>
     
-    <div id="chatBox">الرد سيظهر هنا...</div>
-    <audio id="audioPlayer" controls></audio>
+    <div id="chatBox">
+        <div id="arabicTranslation">الترجمة العربية ستظهر هنا...</div>
+        <div id="englishText">النص الإنجليزي سيظهر هنا بشكل متزامن...</div>
+    </div>
+    
+    <audio id="audioPlayer"></audio>
 
     <script>
-        // تغيير الألوان بناءً على الوضع المختار
+        let wordInterval;
+        let isRecording = false;
+        let recognition;
+
         function changeStyle() {
             let mode = document.getElementById("mode").value;
             let chatBox = document.getElementById("chatBox");
@@ -134,61 +176,55 @@ HTML_PAGE = """
             }
         }
 
-        // إعداد الإدخال الصوتي (Speech Recognition)
-        let recognition;
-        let isRecording = false;
+        // إعداد الإدخال الصوتي
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = false;
-            // يمكن تعيين لغة التعرف هنا، حالياً نتركه يتعرف على الإنجليزية والعربية
-            recognition.lang = 'en-US'; 
             
             recognition.onresult = function(event) {
                 let transcript = event.results[0][0].transcript;
                 document.getElementById("userMsg").value = transcript;
                 stopMic();
-                // يمكن تفعيل الإرسال التلقائي بعد التحدث بفك التعليق عن السطر التالي:
-                // sendMsg(); 
             };
             
-            recognition.onerror = function(event) {
-                console.error("Speech recognition error", event.error);
-                stopMic();
-            };
-            
-            recognition.onend = function() {
-                stopMic();
-            };
-        } else {
-            document.getElementById("micBtn").style.display = "none";
-            console.log("Speech Recognition Not Available in this browser.");
+            recognition.onerror = function(event) { stopMic(); };
+            recognition.onend = function() { stopMic(); };
         }
 
+        // خاصية المقاطعة والتحدث
         function toggleMic() {
+            let audioPlayer = document.getElementById("audioPlayer");
+            
+            // المقاطعة: إذا كان المعلم يتحدث، أوقفه فوراً
+            if (!audioPlayer.paused) {
+                audioPlayer.pause();
+                clearInterval(wordInterval);
+                // إظهار باقي الكلمات فجأة عند المقاطعة
+                let wordsElements = document.querySelectorAll(".word");
+                wordsElements.forEach(el => el.classList.add("spoken"));
+            }
+
             if (!recognition) return alert("متصفحك لا يدعم الإدخال الصوتي.");
             
             if (isRecording) {
                 recognition.stop();
                 stopMic();
             } else {
-                // محاولة التعرف على لغة الإدخال بناءً على الوضع
-                // إذا أردت التعرف على العربية بشكل أفضل، يمكنك استخدام 'ar-SA'
-                recognition.lang = document.getElementById("mode").value === "adult" ? 'en-US' : 'en-US'; 
+                recognition.lang = document.getElementById("micLang").value; 
                 recognition.start();
                 isRecording = true;
                 document.getElementById("micBtn").classList.add("recording");
-                document.getElementById("userMsg").placeholder = "جاري الاستماع... 🔴";
+                document.getElementById("userMsg").placeholder = "جاري الاستماع... يمكنك التحدث الآن 🔴";
             }
         }
 
         function stopMic() {
             isRecording = false;
             document.getElementById("micBtn").classList.remove("recording");
-            document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون للتحدث...";
+            document.getElementById("userMsg").placeholder = "اكتب رسالتك أو اضغط الميكروفون...";
         }
 
-        // تفعيل الإرسال عند الضغط على زر Enter
         document.getElementById("userMsg").addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
@@ -200,17 +236,18 @@ HTML_PAGE = """
             let inputField = document.getElementById("userMsg");
             let msg = inputField.value;
             let mode = document.getElementById("mode").value;
-            let chatBox = document.getElementById("chatBox");
+            let arabicBox = document.getElementById("arabicTranslation");
+            let engBox = document.getElementById("englishText");
             let audioPlayer = document.getElementById("audioPlayer");
             
             if(!msg) return;
-            
             if(isRecording) recognition.stop();
             
-            chatBox.innerText = "جاري التفكير وتجهيز الصوت...";
-            audioPlayer.style.display = "none";
             audioPlayer.pause();
+            clearInterval(wordInterval);
             
+            arabicBox.innerText = "جاري التفكير...";
+            engBox.innerHTML = "";
             inputField.value = ""; 
             
             try {
@@ -223,23 +260,61 @@ HTML_PAGE = """
                 let data = await res.json();
                 
                 if(data.error) {
-                    chatBox.innerText = "⚠️ يوجد خطأ يمنع الاستجابة: " + data.error;
+                    arabicBox.innerText = "⚠️ خطأ: " + data.error;
                     return;
                 }
                 
-                chatBox.innerText = data.reply;
+                arabicBox.innerText = data.arabic;
+                
+                // تجهيز الكلمات وعرضها مخفية
+                let words = data.english.split(" ");
+                engBox.innerHTML = "";
+                words.forEach(word => {
+                    let span = document.createElement("span");
+                    span.className = "word";
+                    span.innerText = word;
+                    engBox.appendChild(span);
+                });
                 
                 if(data.audio) {
                     audioPlayer.src = "data:audio/mp3;base64," + data.audio;
-                    audioPlayer.style.display = "inline";
-                    audioPlayer.play();
+                    
+                    // التزامن: تشغيل الصوت وحساب الوقت لظهور الكلمات
+                    audioPlayer.oncanplay = function() {
+                        audioPlayer.play();
+                        let duration = audioPlayer.duration * 1000; 
+                        let wordTime = duration / words.length;
+                        
+                        let spans = document.querySelectorAll(".word");
+                        let i = 0;
+                        
+                        wordInterval = setInterval(() => {
+                            if (i < spans.length) {
+                                // تلوين الكلمة الحالية باللون الأحمر/البرتقالي
+                                spans[i].style.color = "#e74c3c";
+                                spans[i].style.transform = "scale(1.1)";
+                                
+                                // إعادة الكلمة للون الداكن بعد نطقها
+                                if (i > 0) {
+                                    spans[i-1].style.color = "#2c3e50";
+                                    spans[i-1].style.transform = "scale(1)";
+                                }
+                                i++;
+                            } else {
+                                clearInterval(wordInterval);
+                                if (spans.length > 0) {
+                                    spans[spans.length-1].style.color = "#2c3e50";
+                                    spans[spans.length-1].style.transform = "scale(1)";
+                                }
+                            }
+                        }, wordTime);
+                    };
                 }
             } catch (e) {
-                chatBox.innerText = "⚠️ حدث خطأ في الاتصال بالسيرفر.";
+                arabicBox.innerText = "⚠️ حدث خطأ في الاتصال بالسيرفر.";
             }
         }
         
-        // تشغيل النمط المبدئي
         changeStyle();
     </script>
 </body>
@@ -247,7 +322,9 @@ HTML_PAGE = """
 """
 
 async def generate_audio(text, voice):
-    communicate = edge_tts.Communicate(text, voice)
+    # إزالة أي رموز تعبيرية أو فواصل غريبة قد تعيق النطق
+    clean_text = re.sub(r'[^\w\s.,!?\']', '', text)
+    communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save("response.mp3")
     with open("response.mp3", "rb") as f:
         return base64.b64encode(f.read()).decode('utf-8')
@@ -260,19 +337,31 @@ def home():
 def chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key:
-            return jsonify({"error": "مفتاح GROQ_API_KEY مفقود."})
+        if not api_key: return jsonify({"error": "مفتاح GROQ_API_KEY مفقود."})
 
         client = Groq(api_key=api_key)
         data = request.json
         mode = data.get("mode", "adult")
         user_msg = data.get("message", "")
 
+        # توجيهات صارمة جداً للنموذج لإخراج بيانات مهيكلة (JSON) لحل مشكلة اللغات نهائياً
         if mode == "child":
-            sys_msg = "أنت مدرس لغة إنجليزية مرح للأطفال. تواصل حصرياً باللغتين الإنجليزية والعربية فقط. يمنع استخدام أي لغة أخرى. أجب على الطفل بكلمات بسيطة، اقترح عليه كلمة جديدة ليتعلمها، وفي نهاية ردك اطرح عليه سؤالاً بسيطاً جداً بالإنجليزية لتشجيعه على الرد."
+            sys_msg = '''You are a very fun and patient English teacher for kids. 
+            You MUST respond ONLY in valid JSON format exactly like this:
+            {
+                "english": "Write a very simple, short English response here. Max 10 words. End with a simple question.",
+                "arabic": "اكتب الترجمة العربية المرحة والمبسطة هنا مع رموز تعبيرية"
+            }
+            Do not add any other text outside the JSON block.'''
             voice_model = "en-US-AnaNeural"
         else:
-            sys_msg = "أنت مدرب لغة إنجليزية محترف للبالغين. تواصل حصرياً باللغتين الإنجليزية والعربية فقط. يمنع استخدام أي لغة أخرى. أجب على المستخدم، قدم له تصحيحاً أو اقتراحاً عملياً لتحسين لغته، وفي نهاية ردك اسأله دائماً 'What is the next step?' أو اطرح سؤالاً متعلقاً بالموضوع لتوجيه المحادثة للخطوة التالية."
+            sys_msg = '''You are a professional English coach for adults. 
+            You MUST respond ONLY in valid JSON format exactly like this:
+            {
+                "english": "Write your professional English response, correction, or advice here. Keep it concise.",
+                "arabic": "اكتب الترجمة العربية الدقيقة هنا"
+            }
+            Do not add any other text outside the JSON block.'''
             voice_model = "en-US-GuyNeural"
 
         completion = client.chat.completions.create(
@@ -280,14 +369,25 @@ def chat():
             messages=[
                 {"role": "system", "content": sys_msg},
                 {"role": "user", "content": user_msg}
-            ]
+            ],
+            response_format={"type": "json_object"} # إجبار النموذج على إرجاع JSON
         )
         
-        reply_text = completion.choices[0].message.content
+        reply_content = completion.choices[0].message.content
         
-        audio_base64 = asyncio.run(generate_audio(reply_text, voice_model))
+        # تحليل استجابة الذكاء الاصطناعي
+        try:
+            parsed_reply = json.loads(reply_content)
+            eng_text = parsed_reply.get("english", "Hello! Let's continue.")
+            ar_text = parsed_reply.get("arabic", "مرحباً! دعنا نكمل.")
+        except Exception:
+            eng_text = "Sorry, I had a small error. Let's try again!"
+            ar_text = "عذراً، حدث خطأ بسيط. لنجرب مرة أخرى!"
+        
+        # توليد الصوت للنص الإنجليزي فقط لضمان طلاقة المتحدث البشري
+        audio_base64 = asyncio.run(generate_audio(eng_text, voice_model))
 
-        return jsonify({"reply": reply_text, "audio": audio_base64})
+        return jsonify({"english": eng_text, "arabic": ar_text, "audio": audio_base64})
     
     except Exception as e:
         return jsonify({"error": str(e)})
