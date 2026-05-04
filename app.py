@@ -4,7 +4,8 @@ from groq import Groq
 
 app = Flask(__name__)
 # جلب المفتاح السري الذي سنضعه في الخادم لاحقاً
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+client = Groq(api_key=os.environ.get("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
+"))
 
 # واجهة الموقع (HTML & JavaScript)
 HTML_PAGE = """
