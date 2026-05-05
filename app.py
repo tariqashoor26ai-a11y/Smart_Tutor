@@ -3,11 +3,23 @@ import asyncio
 import base64
 import json
 import re
+import sqlite3
 from flask import Flask, request, jsonify, render_template_string
 from groq import Groq
 import edge_tts
 
 app = Flask(__name__)
+
+# --- إعداد قاعدة البيانات ---
+def init_db():
+    with sqlite3.connect('academy.db') as conn:
+        conn.execute('''CREATE TABLE IF NOT EXISTS chat_history (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            role TEXT,
+                            content TEXT,
+                            arabic TEXT
+                        )''')
+init_db()
 
 HTML_PAGE = """
 <!DOCTYPE html>
@@ -16,18 +28,10 @@ HTML_PAGE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Academy - المدرس الذكي</title>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
-    
     <style>
-        :root { 
-            --primary: #3498db; --secondary: #2c3e50; --accent: #8e44ad; --danger: #e74c3c; --success: #2ecc71; --bg: #f5f7fa;
-            --user-bg: #d5f5e3; --ai-bg: #e1f5fe; --chat-color: #2c3e50; --chat-size: 16px;
-            --chat-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --soft-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-        }
-        
+        :root { --primary: #3498db; --secondary: #2c3e50; --accent: #8e44ad; --danger: #e74c3c; --success: #2ecc71; --bg: #f5f7fa; --user-bg: #d5f5e3; --ai-bg: #e1f5fe; --chat-color: #2c3e50; --chat-size: 16px; --chat-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --soft-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         body { font-family: var(--chat-font); text-align: center; margin: 0; padding: 20px; background: linear-gradient(135deg, var(--bg) 0%, #c3cfe2 100%); min-height: 100vh; overflow-x: hidden;}
         h2 { color: var(--secondary); text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin-bottom: 5px;}
         
@@ -35,35 +39,16 @@ HTML_PAGE = """
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
         @keyframes pulseMic { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
 
-        /* زر القائمة الجانبية (Hamburger) */
-        .hamburger-btn {
-            position: fixed; top: 20px; right: 20px; z-index: 1002;
-            background: white; color: var(--secondary); padding: 10px 18px; border-radius: 12px;
-            border: 1px solid #bdc3c7; font-size: 16px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
-        }
+        .hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 1002; background: white; color: var(--secondary); padding: 10px 18px; border-radius: 12px; border: 1px solid #bdc3c7; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;}
         .hamburger-btn:hover { background: #f8f9fa; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); color: var(--primary);}
 
-        /* القائمة الجانبية المخفية (Drawer) بالألوان الهادئة */
-        .drawer {
-            position: fixed; top: 0; right: -320px; width: 280px; height: 100%;
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1);
-            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1001;
-            padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px;
-            overflow-y: auto;
-        }
+        .drawer { position: fixed; top: 0; right: -320px; width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1); transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1001; padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px; overflow-y: auto;}
         .drawer.open { right: 0; }
         
-        .drawer-btn { 
-            border-radius: 15px; padding: 14px 18px; font-size: 14px; font-weight: bold; cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.2s ease; display: flex; align-items: center; 
-            justify-content: flex-start; gap: 12px; border: 1px solid rgba(255,255,255,0.5); text-align: right;
-            color: #2c3e50; /* لون نص داكن ليتناسب مع الألوان الهادئة */
-        }
+        .drawer-btn { border-radius: 15px; padding: 14px 18px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.2s ease; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border: 1px solid rgba(255,255,255,0.5); text-align: right; color: #2c3e50;}
         .drawer-btn:hover { transform: translateX(-5px); box-shadow: 0 6px 15px rgba(0,0,0,0.1);}
         .drawer-btn .icon { font-size: 18px; background: rgba(255,255,255,0.4); border-radius: 50%; padding: 6px;}
 
-        /* ألوان الباستيل الهادئة (Pastel Colors) */
         .drawer-btn.plan { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
         .drawer-btn.test { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
         .drawer-btn.topics { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
@@ -71,7 +56,6 @@ HTML_PAGE = """
         .drawer-btn.settings { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
         .drawer-btn.about { background: white; border: 1px solid #e0e0e0; }
 
-        /* باقي التنسيقات */
         .curriculum-info { background: rgba(255, 255, 255, 0.9); border-radius: 15px; padding: 10px; width: 80%; max-width: 700px; margin: 10px auto; font-size: 13px; color: var(--secondary); box-shadow: var(--soft-shadow); border: 1px solid rgba(255,255,255,0.5);}
         .curriculum-info a { color: var(--primary); text-decoration: none; font-weight: bold; margin: 0 10px;}
 
@@ -126,43 +110,25 @@ HTML_PAGE = """
 
         #audioPlayer { display: none; }
         #curriculumStatus { color: var(--success); font-size: 13px; font-weight: bold; margin-top: 5px; text-align: center;}
-        
-        /* غطاء أسود خفيف عند فتح القائمة الجانبية */
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index: 1000; backdrop-filter: blur(2px);}
         #overlay.active { display: block; }
     </style>
 </head>
 <body>
 
-    <!-- زر القائمة الجانبية (Hamburger) -->
     <button class="hamburger-btn" onclick="toggleDrawer()">
         <span style="font-size: 20px;">☰</span> الخيارات
     </button>
-
-    <!-- الغطاء الخلفي -->
     <div id="overlay" onclick="toggleDrawer()"></div>
 
-    <!-- القائمة الجانبية المخفية -->
     <div id="sideDrawer" class="drawer">
         <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-top: 0;">الخدمات الأكاديمية</h3>
-        <button class="drawer-btn plan" onclick="requestFeature('study_plan')">
-            <span class="icon">📅</span><span>الخطة الدراسية</span>
-        </button>
-        <button class="drawer-btn test" onclick="requestFeature('test')">
-            <span class="icon">📝</span><span>التقييم والتدريب</span>
-        </button>
-        <button class="drawer-btn topics" onclick="openModal('topicsModal')">
-            <span class="icon">🗂️</span><span>المواضيع والقصص</span>
-        </button>
-        <button class="drawer-btn upload" onclick="triggerUpload()">
-            <span class="icon">📂</span><span>رفع منهج PDF/Word</span>
-        </button>
-        <button class="drawer-btn settings" onclick="openModal('settingsModal')">
-            <span class="icon">🎨</span><span>تخصيص المظهر</span>
-        </button>
-        <button class="drawer-btn about" onclick="openModal('aboutModal')">
-            <span class="icon">🏫</span><span>نبذة عن الأكاديمية</span>
-        </button>
+        <button class="drawer-btn plan" onclick="requestFeature('study_plan')"><span class="icon">📅</span><span>الخطة الدراسية</span></button>
+        <button class="drawer-btn test" onclick="requestFeature('test')"><span class="icon">📝</span><span>التقييم والتدريب</span></button>
+        <button class="drawer-btn topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span><span>المواضيع والقصص</span></button>
+        <button class="drawer-btn upload" onclick="triggerUpload()"><span class="icon">📂</span><span>رفع منهج PDF</span></button>
+        <button class="drawer-btn settings" onclick="openModal('settingsModal')"><span class="icon">🎨</span><span>تخصيص المظهر</span></button>
+        <button class="drawer-btn about" onclick="openModal('aboutModal')"><span class="icon">🏫</span><span>نبذة عنا</span></button>
     </div>
     
     <input type="file" id="fileUpload" accept=".txt,.pdf,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)">
@@ -179,23 +145,10 @@ HTML_PAGE = """
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('settingsModal')">&times;</span>
             <h2 style="text-align:center; color: var(--primary);">🎨 تخصيص مظهر الأكاديمية</h2>
-            <div class="settings-group">
-                <label>صندوق المتدرب (أخضر بازيلي):</label>
-                <input type="color" id="userBgColor" value="#d5f5e3" onchange="applySettings()">
-            </div>
-            <div class="settings-group">
-                <label>صندوق المدرب (سماوي خفيف):</label>
-                <input type="color" id="aiBgColor" value="#e1f5fe" onchange="applySettings()">
-            </div>
-            <div class="settings-group">
-                <label>لون نصوص المحادثة:</label>
-                <input type="color" id="fontColor" value="#2c3e50" onchange="applySettings()">
-            </div>
-            <div class="settings-group">
-                <label>حجم الخط:</label>
-                <input type="range" id="fontSize" min="12" max="24" value="16" oninput="applySettings()">
-                <span id="fontSizeVal">16px</span>
-            </div>
+            <div class="settings-group"><label>صندوق المتدرب:</label><input type="color" id="userBgColor" value="#d5f5e3" onchange="applySettings()"></div>
+            <div class="settings-group"><label>صندوق المدرب:</label><input type="color" id="aiBgColor" value="#e1f5fe" onchange="applySettings()"></div>
+            <div class="settings-group"><label>لون النصوص:</label><input type="color" id="fontColor" value="#2c3e50" onchange="applySettings()"></div>
+            <div class="settings-group"><label>حجم الخط:</label><input type="range" id="fontSize" min="12" max="24" value="16" oninput="applySettings()"><span id="fontSizeVal">16px</span></div>
             <div class="settings-group">
                 <label>نوع الخط:</label>
                 <select id="fontFamily" onchange="applySettings()">
@@ -211,9 +164,8 @@ HTML_PAGE = """
     <div id="aboutModal" class="modal">
         <div class="modal-content" style="line-height: 1.8;">
             <span class="close-btn" onclick="closeModal('aboutModal')">&times;</span>
-            <h2 style="text-align:center; color: #8e44ad;">🏫 Smart Academy V 4.0</h2>
-            <p><strong>المعلم التفاعلي:</strong> يقترح خطة الدرس، يصحح الأخطاء، ويرحب بك في كل مرة تدخل فيها.</p>
-            <p><strong>التصميم الجديد:</strong> قائمة جانبية مخفية (Hamburger) بألوان الباستيل المريحة.</p>
+            <h2 style="text-align:center; color: #8e44ad;">🏫 Smart Academy V 5.0</h2>
+            <p><strong>المعلم التفاعلي:</strong> يقترح خطة الدرس، يصحح الأخطاء، ويحفظ المحادثات في قاعدة بيانات آمنة.</p>
         </div>
     </div>
 
@@ -252,9 +204,7 @@ HTML_PAGE = """
         <button class="circle-btn download-btn" onclick="downloadAudio()" title="حفظ الدرس">💾</button>
     </div>
     
-    <div id="chatBox">
-        <!-- سيتم تفريغ هذا المربع فوراً وطلب رسالة ترحيبية فريدة من الذكاء الاصطناعي -->
-    </div>
+    <div id="chatBox"></div>
     
     <audio id="audioPlayer"></audio>
 
@@ -264,18 +214,17 @@ HTML_PAGE = """
         let isRecording = false, recognition, customCurriculumContent = "", wordsElements = [];
         let isLiveMode = false, silenceTimer, final_transcript = '', chatHistory = [], isTeacherSpeaking = false;
 
-        // فتح وإغلاق القائمة الجانبية (Hamburger)
         function toggleDrawer() {
             document.getElementById('sideDrawer').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         }
 
         const topicsLibrary = {
-            "📱 تكنولوجيا": ["الذكاء الاصطناعي", "الأمن السيبراني", "تطور الهواتف", "إنترنت الأشياء", "البرمجة للمبتدئين"],
-            "⚽ رياضة": ["كرة القدم", "الألعاب الأولمبية", "كرة السلة", "الفورمولا 1", "الرياضات الإلكترونية"],
-            "🌍 علوم": ["الفضاء الخارجي", "التغير المناخي", "جسم الإنسان", "الحياة البحرية", "علم الوراثة"],
-            "✈️ سفر وثقافة": ["مصر القديمة", "الثقافة اليابانية", "السفر الاقتصادي", "المطابخ العالمية", "تعلم اللغات"],
-            "💼 حياة وعمل": ["مقابلات العمل", "إدارة الوقت", "التحدث للجمهور", "العمل عن بعد", "الذكاء العاطفي"]
+            "📱 تكنولوجيا": ["الذكاء الاصطناعي", "الأمن السيبراني", "تطور الهواتف", "إنترنت الأشياء"],
+            "⚽ رياضة": ["كرة القدم", "الألعاب الأولمبية", "كرة السلة", "الفورمولا 1"],
+            "🌍 علوم": ["الفضاء الخارجي", "التغير المناخي", "جسم الإنسان", "الحياة البحرية"],
+            "✈️ سفر وثقافة": ["مصر القديمة", "الثقافة اليابانية", "السفر الاقتصادي", "تعلم اللغات"],
+            "💼 حياة وعمل": ["مقابلات العمل", "إدارة الوقت", "التحدث للجمهور", "العمل عن بعد"]
         };
 
         function populateTopics() {
@@ -284,10 +233,7 @@ HTML_PAGE = """
                 let catDiv = document.createElement("div"); catDiv.className = "topic-category"; catDiv.innerText = category; container.appendChild(catDiv);
                 topics.forEach(topic => {
                     let btn = document.createElement("div"); btn.className = "topic-item"; btn.innerText = topic;
-                    btn.onclick = () => { 
-                        closeModal('topicsModal'); toggleDrawer();
-                        sendMsg(`Let's discuss: ${topic}. Explain it and ask me a question.`); 
-                    };
+                    btn.onclick = () => { closeModal('topicsModal'); toggleDrawer(); sendMsg(`Let's discuss: ${topic}. Explain it and ask me a question.`); };
                     container.appendChild(btn);
                 });
             }
@@ -341,15 +287,13 @@ HTML_PAGE = """
 
         function triggerUpload() {
             toggleDrawer();
-            let warning = "⚠️ تحذير قانوني وشرعي ⚠️\\n\\nأنت مسؤول بالكامل عن محتوى الملف المرفوع.\\nيمنع منعاً باتاً رفع أي مواد تخالف الشريعة الإسلامية، القوانين المحلية، أو تنتهك حقوق الملكية الفكرية والنشر.\\n\\nهل تتعهد بالالتزام وتوافق على الاستمرار؟";
-            if(confirm(warning)) { document.getElementById("fileUpload").click(); }
+            if(confirm("⚠️ تحذير قانوني: أنت مسؤول بالكامل عن محتوى الملف المرفوع. يمنع منعاً باتاً رفع أي مواد تخالف الشريعة، القوانين، أو حقوق الملكية. موافق؟")) { document.getElementById("fileUpload").click(); }
         }
 
         function handleFileUpload(event) {
             let file = event.target.files[0];
             if (!file) return;
-            let status = document.getElementById("curriculumStatus");
-            status.innerText = "⏳ جاري قراءة الملف...";
+            let status = document.getElementById("curriculumStatus"); status.innerText = "⏳ جاري قراءة الملف...";
             let ext = file.name.split('.').pop().toLowerCase();
 
             if (ext === 'txt') {
@@ -455,6 +399,7 @@ HTML_PAGE = """
             else {
                 let engDiv = document.createElement("div"); engDiv.className = "english-text";
                 wordsElements = [];
+                // استخراج الكلمات الانجليزية للنطق دون التاثير بالكود البرمجي (في حال وجوده)
                 data.english.split(" ").forEach(word => {
                     let span = document.createElement("span"); span.className = "word"; span.innerText = word;
                     engDiv.appendChild(span); wordsElements.push(span);
@@ -471,7 +416,35 @@ HTML_PAGE = """
             box.appendChild(container); setTimeout(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }), 100);
         }
 
-        // إرسال رسالة (عادية أو خفية للترحيب)
+        // --- جلب المحادثات السابقة من قاعدة البيانات عند فتح الصفحة ---
+        window.onload = async function() {
+            document.getElementById('chatBox').innerHTML = '';
+            try {
+                let res = await fetch("/get_history");
+                let history = await res.json();
+                
+                if (history.length > 0) {
+                    history.forEach(item => {
+                        if(item.role === 'user') {
+                            appendBubble(item.content, true);
+                            chatHistory.push({"role": "user", "content": item.content});
+                        } else if(item.role === 'assistant') {
+                            appendBubble("", false, {english: item.content, arabic: item.arabic});
+                            chatHistory.push({"role": "assistant", "content": item.content});
+                        }
+                    });
+                    document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
+                } else {
+                    // إذا لم يكن هناك تاريخ (مستخدم جديد)، اطلب الترحيب
+                    let prompt = "Generate a unique, warm welcome message for a new student. Include a brief overview of what we can learn today. Ask them how they want to start.";
+                    sendMsg(prompt, true);
+                }
+            } catch(e) {
+                let prompt = "Generate a unique, warm welcome message for a new student...";
+                sendMsg(prompt, true);
+            }
+        };
+
         async function sendMsg(overrideMsg = null, isHidden = false) {
             let inputField = document.getElementById("userMsg"), msg = overrideMsg || inputField.value;
             if(!msg.trim()) return;
@@ -493,7 +466,7 @@ HTML_PAGE = """
             try {
                 let res = await fetch("/chat", {
                     method: "POST", headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({ history: chatHistory.slice(-10), mode: document.getElementById("mode").value, custom_curriculum: customCurriculumContent })
+                    body: JSON.stringify({ message: msg, mode: document.getElementById("mode").value, custom_curriculum: customCurriculumContent })
                 });
                 let data = await res.json();
                 document.getElementById("loadingBubble")?.remove();
@@ -506,22 +479,11 @@ HTML_PAGE = """
                     audioPlayer.src = "data:audio/mp3;base64," + data.audio;
                     document.getElementById("audioControls").style.display = "flex"; document.getElementById("pauseBtn").innerText = "⏸️";
                     isTeacherSpeaking = true; if(isRecording) recognition.stop();
-                    // محاولة التشغيل التلقائي للصوت (قد تمنعه بعض المتصفحات حتى يتفاعل المستخدم)
                     let playPromise = audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(error => { console.log("Auto-play blocked by browser. User needs to interact first."); });
-                    }
+                    if (playPromise !== undefined) playPromise.catch(error => { console.log("Auto-play blocked by browser."); });
                 }
             } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("⚠️ خطأ في الاتصال."); }
         }
-
-        // توليد رسالة ترحيبية تلقائية وفريدة عند تحميل الصفحة
-        window.onload = function() {
-            document.getElementById('chatBox').innerHTML = ''; // مسح الرسالة الافتراضية
-            // إرسال أمر مخفي للذكاء الاصطناعي للترحيب وطرح خطة
-            let prompt = "Generate a unique, warm welcome message for a new student entering the academy. Include a very brief, encouraging overview of what we can learn today (a short lesson plan preview). Ask them how they want to start. Make it sound completely natural and human.";
-            sendMsg(prompt, true);
-        };
     </script>
 </body>
 </html>
@@ -538,6 +500,18 @@ async def generate_audio(text, voice):
 def home():
     return render_template_string(HTML_PAGE)
 
+# --- استرجاع السجل من قاعدة البيانات ---
+@app.route("/get_history", methods=["GET"])
+def get_history():
+    try:
+        with sqlite3.connect('academy.db') as conn:
+            cursor = conn.execute("SELECT role, content, arabic FROM chat_history ORDER BY id ASC")
+            rows = cursor.fetchall()
+            history = [{"role": r[0], "content": r[1], "arabic": r[2]} for r in rows]
+        return jsonify(history)
+    except Exception as e:
+        return jsonify([])
+
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
@@ -547,24 +521,28 @@ def chat():
         client = Groq(api_key=api_key)
         data = request.json
         mode = data.get("mode", "adult")
-        history = data.get("history", [])
+        user_msg = data.get("message", "")
         custom_curriculum = data.get("custom_curriculum", "")
 
-        # توجيهات متقدمة تجعل المدرس تفاعلياً، يضع خططاً ويصحح الأخطاء بلطف
+        # استرجاع آخر 8 رسائل من قاعدة البيانات للسياق (لتجنب استهلاك الـ Tokens)
+        with sqlite3.connect('academy.db') as conn:
+            cursor = conn.execute("SELECT role, content FROM chat_history ORDER BY id DESC LIMIT 8")
+            recent_rows = cursor.fetchall()[::-1]
+            history = [{"role": r[0], "content": r[1]} for r in recent_rows]
+
         core_rules = """
         CRITICAL RULES: 
         1. MUST STRICTLY adhere to Islamic Sharia and local laws.
         2. Base language progression on the CEFR.
         3. ACT EXACTLY LIKE A REAL, EMPATHETIC HUMAN TUTOR. Provide proactive guidance.
-        4. PROACTIVE PEDAGOGY: If the user makes a grammar mistake, gently and encouragingly correct it. Before starting a deep topic, briefly outline the lesson plan.
-        5. Make your 'english' response sound 100% natural, using conversational fillers (Well, You know, Ah, Hmm) and emotion.
+        4. Make your 'english' response sound 100% natural, using conversational fillers.
         """
-        if custom_curriculum: core_rules += f"\\n6. Context from uploaded files: {custom_curriculum[:2500]}"
+        if custom_curriculum: core_rules += f"\\n5. Context from uploaded files: {custom_curriculum[:2500]}"
 
         json_structure = '''
         Respond ONLY in JSON format:
         {
-            "english": "Natural, human-like spoken English response with fillers and emotion.",
+            "english": "Natural, human-like spoken English response.",
             "arabic": "Arabic translation",
             "keywords": "Keywords",
             "summary": "Notes / Lesson Plan / Corrections (if any)"
@@ -578,15 +556,25 @@ def chat():
             sys_msg = core_rules + "\\nYou are a professional, friendly English coach. Act as an interactive mentor." + json_structure
             voice_model = "en-US-ChristopherNeural" 
 
-        messages = [{"role": "system", "content": sys_msg}] + history
+        # إضافة رسالة المستخدم الحالية
+        messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
+        
         completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, response_format={"type": "json_object"})
         
         parsed = json.loads(completion.choices[0].message.content)
         eng_text = parsed.get("english", "Hello there!")
+        ar_text = parsed.get("arabic", "")
         
+        # --- حفظ الرسائل في قاعدة البيانات للأبد ---
+        with sqlite3.connect('academy.db') as conn:
+            # إذا لم تكن رسالة مخفية (System) نحفظها
+            if "Generate a unique, warm welcome message" not in user_msg:
+                conn.execute("INSERT INTO chat_history (role, content, arabic) VALUES (?, ?, ?)", ("user", user_msg, ""))
+            conn.execute("INSERT INTO chat_history (role, content, arabic) VALUES (?, ?, ?)", ("assistant", eng_text, ar_text))
+            
         audio_base64 = asyncio.run(generate_audio(eng_text, voice_model))
 
-        return jsonify({ "english": eng_text, "arabic": parsed.get("arabic", ""), "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio_base64 })
+        return jsonify({ "english": eng_text, "arabic": ar_text, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio_base64 })
     except Exception as e: return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
