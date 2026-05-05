@@ -14,7 +14,7 @@ import edge_tts
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "smart-academy-super-secret-key-2026")
 
-# === ضع الأرقام التعريفية الخاصة بك هنا (سنشرح كيف تحصل عليها لاحقاً) ===
+# === ضع الأرقام التعريفية الخاصة بك هنا ===
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
 FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "YOUR_FACEBOOK_APP_ID")
 
@@ -37,7 +37,7 @@ def init_db():
 init_db()
 
 # ==========================================
-# 1. واجهة بوابة الدخول (بإضافة مكتبات Google و Facebook الفعلية)
+# 1. واجهة بوابة الدخول (Landing & Login)
 # ==========================================
 LOGIN_PAGE = """
 <!DOCTYPE html>
@@ -88,14 +88,11 @@ LOGIN_PAGE = """
         .social-btn.guest { background: #95a5a6; color: white; margin-bottom: 0;}
         .social-btn.guest:hover { background: #7f8c8d; }
 
-        /* حاوية زر جوجل الرسمي */
         #googleBtnContainer { margin-bottom: 10px; display: flex; justify-content: center; width: 100%;}
-
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
     </style>
 </head>
 <body>
-    <!-- تهيئة مكتبة Facebook -->
     <script>
       window.fbAsyncInit = function() {
         FB.init({
@@ -142,12 +139,8 @@ LOGIN_PAGE = """
             
             <div class="divider">أو عبر المنصات</div>
             
-            <!-- زر Google الفعلي -->
             <div id="googleBtnContainer"></div>
-            
-            <!-- زر Facebook الفعلي -->
             <button class="social-btn facebook" onclick="loginWithFacebook()">📘 الدخول بحساب Facebook</button>
-            
             <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة سريعة)</button>
         </div>
     </div>
@@ -163,7 +156,6 @@ LOGIN_PAGE = """
             document.getElementById('errorMsg').innerText = '';
         }
 
-        // --- المعالجة الخلفية للدخول بجميع أنواعه ---
         async function executeAuth(action, username, password, provider='local') {
             let err = document.getElementById('errorMsg');
             err.innerText = "جاري التحقق والمصادقة..."; err.style.color = "#3498db";
@@ -181,7 +173,6 @@ LOGIN_PAGE = """
             } catch(e) { err.style.color = "#e74c3c"; err.innerText = "خطأ في الاتصال بالسيرفر."; }
         }
 
-        // 1. الدخول العادي
         async function submitAuth() {
             let user = document.getElementById('username').value;
             let pass = document.getElementById('password').value;
@@ -189,10 +180,8 @@ LOGIN_PAGE = """
             executeAuth(isLogin ? 'login' : 'register', user, pass);
         }
 
-        // 2. الدخول كضيف
         async function guestLogin() { executeAuth('guest', '', ''); }
 
-        // 3. برمجة Google Login الحقيقية
         window.onload = function () {
             google.accounts.id.initialize({
                 client_id: "{{ google_id }}",
@@ -205,20 +194,17 @@ LOGIN_PAGE = """
         };
 
         function handleGoogleResponse(response) {
-            // فك تشفير التوكن الخاص بجوجل لاستخراج البيانات
             const responsePayload = JSON.parse(atob(response.credential.split('.')[1]));
             let email = responsePayload.email;
             let name = responsePayload.name;
-            // تسجيل الدخول عبر الباك إند كمستخدم اجتماعي
             executeAuth('social', email, name, 'google');
         }
 
-        // 4. برمجة Facebook Login الحقيقية
         function loginWithFacebook() {
             FB.login(function(response) {
                 if (response.authResponse) {
                     FB.api('/me', {fields: 'name,email'}, function(res) {
-                        let email = res.email || res.id; // بعض الحسابات لا تعطي إيميل فنأخذ الـ ID
+                        let email = res.email || res.id; 
                         let name = res.name;
                         executeAuth('social', email, name, 'facebook');
                     });
@@ -228,7 +214,6 @@ LOGIN_PAGE = """
             }, {scope: 'public_profile,email'});
         }
 
-        // تشغيل الصوت الترحيبي
         async function playIntroAudio() {
             let btn = document.getElementById('introAudioBtn'), icon = document.getElementById('audioIcon'), player = document.getElementById('introPlayer');
             if(!player.src) {
@@ -249,12 +234,8 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# (باقي كود واجهة الأكاديمية لم يتغير، نستخدم نفس MAIN_PAGE من الخطوة السابقة)
-# سأقوم بتضمينه هنا ليكون الكود مكتملاً للنسخ
+# 2. واجهة الأكاديمية الرئيسية (Main App)
 # ==========================================
-with open('templates_cache.py', 'w') as f:
-    f.write('pass')
-
 MAIN_PAGE = """
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -396,7 +377,6 @@ def auth():
     with sqlite3.connect('academy.db') as conn:
         cursor = conn.cursor()
         
-        # 1. الدخول كضيف
         if action == 'guest':
             guest_name = f"ضيف_{random.randint(1000, 9999)}"
             cursor.execute("INSERT INTO users (username, password_hash, auth_provider) VALUES (?, ?, ?)", (guest_name, "GUEST", "guest"))
@@ -406,16 +386,13 @@ def auth():
             session['username'] = guest_name
             return jsonify({"success": True})
 
-        # 2. الدخول عبر السوشيال ميديا (جوجل أو فيسبوك)
         elif action == 'social':
-            # الإيميل سيُستخدم كاسم مستخدم فريد للحسابات الاجتماعية
             email = username 
-            name = password # في الواجهة قمنا بإرسال الاسم في خانة الباسورد لسهولة النقل
+            name = password 
             cursor.execute("SELECT id FROM users WHERE username = ?", (email,))
             user = cursor.fetchone()
             
             if not user:
-                # حساب جديد عبر السوشيال
                 random_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
                 hashed_pw = generate_password_hash(random_pass)
                 cursor.execute("INSERT INTO users (username, password_hash, auth_provider) VALUES (?, ?, ?)", (email, hashed_pw, provider))
@@ -426,10 +403,9 @@ def auth():
                 user_id = user[0]
                 
             session['user_id'] = user_id
-            session['username'] = name.split()[0] if name else email.split('@')[0] # نعرض الاسم الأول فقط
+            session['username'] = name.split()[0] if name else email.split('@')[0]
             return jsonify({"success": True})
 
-        # 3. تسجيل حساب جديد (محلي)
         elif action == 'register':
             cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
             if cursor.fetchone(): return jsonify({"success": False, "error": "الاسم مستخدم مسبقاً."})
@@ -441,7 +417,6 @@ def auth():
             session['username'] = username
             return jsonify({"success": True})
             
-        # 4. تسجيل دخول (محلي)
         elif action == 'login':
             cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,))
             user = cursor.fetchone()
