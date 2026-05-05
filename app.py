@@ -27,7 +27,6 @@ def init_db():
                             auth_provider TEXT DEFAULT 'local',
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
-        # جدول المحادثات الفردية
         conn.execute('''CREATE TABLE IF NOT EXISTS academy_chats (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             user_id INTEGER NOT NULL,
@@ -37,7 +36,6 @@ def init_db():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             FOREIGN KEY(user_id) REFERENCES users(id)
                         )''')
-        # جدول الفصل الافتراضي المشترك (جديد)
         conn.execute('''CREATE TABLE IF NOT EXISTS classroom_chats (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             user_id INTEGER NOT NULL,
@@ -47,8 +45,6 @@ def init_db():
                             arabic TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
-        
-        # محاولة إضافة عمود الوقت للجداول القديمة إن لم يكن موجوداً لتجنب الأخطاء
         try: conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         except: pass
 init_db()
@@ -232,7 +228,6 @@ MAIN_PAGE = """
     <title>Smart Academy - المدرس الذكي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
-    <!-- مكتبة Chart.js للرسومات الملونة -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #3498db; --secondary: #2c3e50; --accent: #8e44ad; --danger: #e74c3c; --success: #2ecc71; --bg: #f5f7fa; --user-bg: #d5f5e3; --ai-bg: #e1f5fe; --chat-color: #2c3e50; --chat-size: 16px; --chat-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --soft-shadow: 0 10px 30px rgba(0,0,0,0.08); }
@@ -247,7 +242,7 @@ MAIN_PAGE = """
         .drawer-btn { border-radius: 15px; padding: 14px 18px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.2s ease; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border: 1px solid rgba(255,255,255,0.5); text-align: right; color: #2c3e50;}
         .drawer-btn .icon { font-size: 18px; background: rgba(255,255,255,0.4); border-radius: 50%; padding: 6px;}
         
-        .drawer-btn.classroom { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); color: #c0392b;} /* لون الفصل */
+        .drawer-btn.classroom { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); color: #c0392b;} 
         .drawer-btn.stats { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .drawer-btn.downloads { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .drawer-btn.plan { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
@@ -267,7 +262,6 @@ MAIN_PAGE = """
         .user-bubble { background: var(--user-bg); align-self: flex-start; border-bottom-left-radius: 5px; text-align: left; direction: ltr;}
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; border-bottom-right-radius: 5px; text-align: right;}
         
-        /* اسم المرسل في الفصل الافتراضي */
         .sender-name { font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; display: block; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 3px;}
         
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px;}
@@ -278,7 +272,6 @@ MAIN_PAGE = """
         .modal-content { background: rgba(255,255,255,0.98); margin: 5vh auto; padding: 35px; border-radius: 25px; width: 85%; max-width: 750px; max-height: 85vh; overflow-y: auto; text-align: right; box-shadow: 0 25px 50px rgba(0,0,0,0.3);}
         .close-btn { color: #aaa; float: left; font-size: 32px; font-weight: bold; cursor: pointer; transition: color 0.2s;}
         
-        /* جداول الإحصاءات */
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         .stats-table th, .stats-table td { border: 1px solid #ecf0f1; padding: 12px; text-align: center; }
         .stats-table th { background: #3498db; color: white; }
@@ -287,7 +280,6 @@ MAIN_PAGE = """
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index: 1000;}
         #overlay.active { display: block; }
         
-        /* مؤشر الفصل الجماعي */
         #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; animation: pulseMic 2s infinite;}
     </style>
 </head>
@@ -298,42 +290,32 @@ MAIN_PAGE = """
     
     <div id="sideDrawer" class="drawer">
         <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-top: 0;">الخدمات الأكاديمية</h3>
-        
-        <!-- أزرار الفصل الجماعي والإحصاءات الجديدة -->
         <button class="drawer-btn classroom" onclick="toggleClassroomMode()"><span class="icon">🏫</span><span id="classroomBtnText">الدخول للفصل الجماعي</span></button>
         <button class="drawer-btn stats" onclick="openStatsModal()"><span class="icon">📊</span><span>إحصاءات الاستخدام</span></button>
-        
         <button class="drawer-btn downloads" onclick="openModal('downloadsModal')"><span class="icon">📚</span><span>مكتبة الموارد</span></button>
         <button class="drawer-btn plan" onclick="openModal('academicModal')"><span class="icon">🎓</span><span>المناهج والشهادات</span></button>
         <button class="drawer-btn logout" onclick="window.location.href='/logout'"><span class="icon">🚪</span><span>تسجيل الخروج</span></button>
     </div>
     
-    <!-- نافذة الإحصاءات والرسومات الملونة -->
     <div id="statsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
             <h2 style="text-align:center; color: var(--primary);">📊 إحصاءات الاستخدام الخاصة بك</h2>
-            
             <table class="stats-table" id="summaryTable">
                 <tr><th>إجمالي التفاعلات</th><th>الساعات التقديرية للتعلم</th><th>المستوى المقدر</th></tr>
                 <tr><td id="statTotal">0</td><td id="statHours">0</td><td style="color:#2ecc71; font-weight:bold;">A2 (مبتدئ متقدم)</td></tr>
             </table>
-            
             <h3 style="margin-top: 30px; text-align: center; color: #8e44ad;">نشاطك في آخر 7 أيام</h3>
-            <div style="position: relative; height:40vh; width:100%">
-                <canvas id="usageChart"></canvas>
-            </div>
+            <div style="position: relative; height:40vh; width:100%"><canvas id="usageChart"></canvas></div>
         </div>
     </div>
 
-    <!-- نافذة الموارد والمناهج (مخفية للاختصار في هذا الكود، موجودة كما هي في الخلفية) -->
-    <div id="downloadsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span><h2 style="text-align:center;">مكتبة قيد التحضير...</h2></div></div>
-    <div id="academicModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('academicModal')">&times;</span><h2 style="text-align:center;">مناهج قيد التحضير...</h2></div></div>
+    <div id="downloadsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span><h2 style="text-align:center;">مكتبة الموارد قيد التحديث...</h2></div></div>
+    <div id="academicModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('academicModal')">&times;</span><h2 style="text-align:center;">مناهج قيد التحديث...</h2></div></div>
 
     <h2>Smart Academy 🎓</h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
-    <!-- بانر الفصل الجماعي -->
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
     
     <div class="top-bar"><select id="mode" onchange="applySettings()"><option value="adult">وضع الكبار</option><option value="child">وضع الأطفال</option></select><select id="micLang"><option value="en-US">الميكروفون: إنجليزي</option><option value="ar-SA">الميكروفون: عربي</option></select></div>
@@ -351,15 +333,14 @@ MAIN_PAGE = """
         
         let isClassroomMode = false;
         let classroomPollingInterval = null;
-        let lastMessageCount = 0; // لمعرفة هل هناك رسائل جديدة في الفصل
+        let lastMessageCount = 0; 
         let chartInstance = null;
 
         function toggleDrawer() { document.getElementById('sideDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); }
         function openModal(id) { document.getElementById(id).style.display = "block"; toggleDrawer(); } 
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
-        function applySettings() { } // اختصار للألوان
+        function applySettings() { } 
         
-        // --- نظام الفصل الافتراضي المشترك (Multiplayer Classroom) ---
         function toggleClassroomMode() {
             toggleDrawer();
             isClassroomMode = !isClassroomMode;
@@ -369,11 +350,10 @@ MAIN_PAGE = """
             if (isClassroomMode) {
                 banner.style.display = "block";
                 btnText.innerText = "الخروج من الفصل الجماعي";
-                document.getElementById('chatBox').innerHTML = ''; // مسح الشات الشخصي
+                document.getElementById('chatBox').innerHTML = ''; 
                 chatHistory = [];
                 lastMessageCount = 0;
-                fetchClassroomChats(); // جلب تاريخ الفصل
-                // تشغيل المراقب (Polling) كل 3 ثواني لجلب رسائل الزملاء
+                fetchClassroomChats(); 
                 classroomPollingInterval = setInterval(fetchClassroomChats, 3000);
             } else {
                 banner.style.display = "none";
@@ -381,7 +361,7 @@ MAIN_PAGE = """
                 clearInterval(classroomPollingInterval);
                 document.getElementById('chatBox').innerHTML = '';
                 chatHistory = [];
-                loadPersonalChats(); // العودة للدردشة الخاصة
+                loadPersonalChats(); 
             }
         }
 
@@ -390,9 +370,8 @@ MAIN_PAGE = """
                 let res = await fetch("/get_classroom_history");
                 let history = await res.json();
                 
-                // إذا زاد عدد الرسائل في السيرفر (شخص آخر أرسل رسالة)
                 if (history.length > lastMessageCount) {
-                    document.getElementById('chatBox').innerHTML = ''; // إعادة بناء لتجنب التكرار (للبساطة)
+                    document.getElementById('chatBox').innerHTML = ''; 
                     chatHistory = [];
                     history.forEach(item => {
                         let isMe = (item.username === userName && item.role === 'user');
@@ -402,9 +381,8 @@ MAIN_PAGE = """
                             appendBubble("", false, {english: item.content, arabic: item.arabic}, "المعلم الذكي 🎓");
                             chatHistory.push({"role": "assistant", "content": item.content});
                         } else {
-                            // إذا كانت رسالتي أظهرها كالمعتاد، وإذا كانت لزميل أظهرها بشكل مختلف قليلاً
                             appendBubble(item.content, true, null, isMe ? "أنت" : "الزميل: " + item.username);
-                            chatHistory.push({"role": "user", "content": f"[{item.username}]: {item.content}"});
+                            chatHistory.push({"role": "user", "content": `[${item.username}]: ${item.content}`});
                         }
                     });
                     lastMessageCount = history.length;
@@ -413,7 +391,6 @@ MAIN_PAGE = """
             } catch(e) {}
         }
 
-        // --- نظام الإحصاءات والرسومات ---
         async function openStatsModal() {
             toggleDrawer();
             document.getElementById('statsModal').style.display = "block";
@@ -423,16 +400,15 @@ MAIN_PAGE = """
                 let data = await res.json();
                 
                 document.getElementById("statTotal").innerText = data.total_messages;
-                document.getElementById("statHours").innerText = (data.total_messages * 2 / 60).toFixed(1) + " ساعة"; // تقريبي: كل رسالة = دقيقتين دراسة
+                document.getElementById("statHours").innerText = (data.total_messages * 2 / 60).toFixed(1) + " ساعة"; 
                 
-                // رسم الـ Chart الملون
                 let ctx = document.getElementById('usageChart').getContext('2d');
                 if(chartInstance) chartInstance.destroy();
                 
                 chartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: data.labels, // الأيام
+                        labels: data.labels, 
                         datasets: [{
                             label: 'عدد التفاعلات (رسائل)',
                             data: data.values,
@@ -442,21 +418,15 @@ MAIN_PAGE = """
                             borderRadius: 5
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true } }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
                 });
             } catch (e) { alert("فشل تحميل الإحصاءات"); }
         }
 
-        // --- محرك الدردشة وإضافة الفقاعات ---
         function appendBubble(text, isUser, data=null, senderName=null) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
             
-            // إضافة اسم المرسل في وضع الفصل
             if (isClassroomMode && senderName) {
                 let nameLabel = document.createElement("span");
                 nameLabel.className = "sender-name";
@@ -504,7 +474,7 @@ MAIN_PAGE = """
             if(!isHidden){ 
                 appendBubble(msg, true, null, isClassroomMode ? "أنت" : null); 
                 chatHistory.push({"role": "user", "content": isClassroomMode ? `[${userName}]: ${msg}` : msg}); 
-                if(isClassroomMode) lastMessageCount++; // زيادة العداد مؤقتاً لتجنب تحميل رسالتي مرتين فورا
+                if(isClassroomMode) lastMessageCount++; 
             } else { 
                 chatHistory.push({"role": "system", "content": msg}); 
             } 
@@ -545,6 +515,7 @@ def home():
 
 @app.route("/intro_audio")
 def intro_audio():
+    # النص مشكل بالكامل لضمان نطق سليم 100%
     text = "مَرْحَبًا بِكَ فِي أَكَادِيمِيَّتِكَ الذَّكِيَّةِ لِتَعَلُّمِ اللُّغَةِ الْإِنْجِلِيزِيَّةِ. هُنَا نُقَدِّمُ لَكَ مُعَلِّمًا بِشَخْصِيَّةٍ حَقِيقِيَّةٍ يُصَحِّحُ أَخْطَاءَكَ، وَيُوَجِّهُكَ فِي مُحَادَثَاتٍ حَيَّةٍ وَمُمْتِعَةٍ تُغَطِّي مِئَاتِ الْمَوَاضِيعِ وَفْقَ الْمَعَايِيرِ الْعَالَمِيَّةِ. سَجِّلْ دُخُولَكَ الْآنَ لِتَبْدَأَ رِحْلَتَكَ."
     try:
         audio = asyncio.run(generate_audio(text, "ar-SA-HamedNeural")) 
@@ -585,42 +556,20 @@ def auth():
 @app.route("/logout")
 def logout(): session.clear(); return redirect(url_for('home'))
 
-# --- جلب الإحصاءات للاستخدام ---
 @app.route("/get_stats", methods=["GET"])
 def get_stats():
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
     try:
         user_id = session['user_id']
         with sqlite3.connect('academy.db') as conn:
-            # إجمالي الرسائل
             cursor = conn.execute("SELECT COUNT(*) FROM academy_chats WHERE user_id = ? AND role = 'user'", (user_id,))
             total_messages = cursor.fetchone()[0]
-            
-            # جلب نشاط آخر 7 أيام (تجميع حسب التاريخ)
-            # باستخدام SUBSTR(created_at, 1, 10) لاستخراج YYYY-MM-DD
-            cursor = conn.execute('''
-                SELECT SUBSTR(created_at, 1, 10) as date, COUNT(*) 
-                FROM academy_chats 
-                WHERE user_id = ? AND role = 'user' 
-                GROUP BY date 
-                ORDER BY date DESC LIMIT 7
-            ''', (user_id,))
-            
+            cursor = conn.execute('''SELECT SUBSTR(created_at, 1, 10) as date, COUNT(*) FROM academy_chats WHERE user_id = ? AND role = 'user' GROUP BY date ORDER BY date DESC LIMIT 7''', (user_id,))
             rows = cursor.fetchall()
-            
-            # تحضير البيانات للرسم (Chart.js)
-            labels = []
-            values = []
-            for row in reversed(rows): # عكس ليكون الأقدم أولاً على اليسار
-                labels.append(row[0])
-                values.append(row[1])
-                
-            # إذا كان المستخدم جديداً نضع بيانات وهمية صفرية لتوضيح الجدول
+            labels = []; values = []
+            for row in reversed(rows): labels.append(row[0]); values.append(row[1])
             if not labels:
-                today = datetime.now().strftime('%Y-%m-%d')
-                labels = [today]
-                values = [0]
-                
+                labels = [datetime.now().strftime('%Y-%m-%d')]; values = [0]
         return jsonify({"total_messages": total_messages, "labels": labels, "values": values})
     except Exception as e: return jsonify({"error": str(e)})
 
@@ -639,19 +588,18 @@ def get_classroom_history():
     if 'user_id' not in session: return jsonify([])
     try:
         with sqlite3.connect('academy.db') as conn:
-            # جلب آخر 50 رسالة في الفصل فقط لتجنب الضغط
             cursor = conn.execute("SELECT username, role, content, arabic FROM classroom_chats ORDER BY id DESC LIMIT 50")
             rows = cursor.fetchall()[::-1]
             return jsonify([{"username": r[0], "role": r[1], "content": r[2], "arabic": r[3]} for r in rows])
     except: return jsonify([])
 
 async def generate_audio(text, voice):
+    # فلتر آمن: يحذف رموز الماركدوان فقط ويحافظ على كل التشكيل العربي
     clean_text = re.sub(r'[*#_~`]', '', text) 
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save("response.mp3")
     with open("response.mp3", "rb") as f: return base64.b64encode(f.read()).decode('utf-8')
 
-# مسار المحادثة الفردية
 @app.route("/chat", methods=["POST"])
 def chat():
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
@@ -684,7 +632,6 @@ def chat():
         return jsonify({ "english": eng, "arabic": ar, "audio": audio })
     except Exception as e: return jsonify({"error": str(e)})
 
-# مسار المحادثة للفصل الجماعي (الجديد)
 @app.route("/classroom_chat", methods=["POST"])
 def classroom_chat():
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
@@ -696,13 +643,12 @@ def classroom_chat():
         username = session['username']
 
         with sqlite3.connect('academy.db') as conn:
-            # جلب سياق الفصل للجميع
             history = [{"role": r[0], "content": r[1]} for r in conn.execute("SELECT role, content FROM classroom_chats ORDER BY id DESC LIMIT 10").fetchall()[::-1]]
 
         sys_msg = """CRITICAL RULES: 
         1. You are teaching a VIRTUAL CLASSROOM full of multiple students.
         2. Students will speak to you in the format '[StudentName]: message'.
-        3. Address the specific student who spoke, but keep the rest of the class engaged. Be very brief and concise to allow others to speak.
+        3. Address the specific student who spoke, but keep the rest of the class engaged. Be very brief and concise.
         Respond ONLY in JSON: { "english": "Natural spoken English addressing the class.", "arabic": "Arabic translation", "keywords": "", "summary": "" }"""
         
         formatted_msg = f"[{username}]: {user_msg}"
