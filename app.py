@@ -14,7 +14,6 @@ import edge_tts
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "smart-academy-super-secret-key-2026")
 
-# === ضع الأرقام التعريفية الخاصة بك هنا ===
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
 FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "YOUR_FACEBOOK_APP_ID")
 
@@ -37,7 +36,7 @@ def init_db():
 init_db()
 
 # ==========================================
-# 1. واجهة بوابة الدخول (Landing & Login)
+# 1. بوابة الدخول التسويقية (Landing, SEO, Pricing)
 # ==========================================
 LOGIN_PAGE = """
 <!DOCTYPE html>
@@ -45,29 +44,42 @@ LOGIN_PAGE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة الدخول - Smart Academy</title>
     
-    <!-- مكتبة Google Identity الحقيقية -->
+    <!-- SEO & Social Media Meta Tags -->
+    <title>Smart Academy - تعلم الإنجليزية بالذكاء الاصطناعي</title>
+    <meta name="description" content="أكاديمية ذكية لتعلم اللغة الإنجليزية بمعايير CEFR. تدرب مع معلم ذكاء اصطناعي بشخصية حقيقية، محادثات صوتية حية، وتصحيح فوري.">
+    <meta name="keywords" content="تعلم الإنجليزية, ذكاء اصطناعي, محادثة, CEFR, توفل, آيلتس, كورس إنجليزي">
+    <meta property="og:title" content="Smart Academy - ثورة تعلم الإنجليزية">
+    <meta property="og:description" content="تدرب على المحادثة مع مدرس ذكاء اصطناعي تفاعلي على مدار الساعة.">
+    <meta property="og:type" content="website">
+    
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .wrapper { display: flex; flex-wrap: wrap; gap: 20px; width: 100%; max-width: 900px; justify-content: center; align-items: stretch; animation: popIn 0.6s ease-out;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); overflow-x: hidden; color: #2c3e50;}
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+        
         @keyframes popIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
         
-        .box { background: rgba(255, 255, 255, 0.9); padding: 30px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); flex: 1; min-width: 300px; }
+        /* قسم الهيرو (Hero Section) والـ Auth */
+        .hero-section { display: flex; flex-wrap: wrap; gap: 30px; align-items: stretch; margin-bottom: 60px; animation: popIn 0.6s ease-out;}
+        .box { background: rgba(255, 255, 255, 0.9); padding: 35px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); flex: 1; min-width: 320px; }
         
-        .intro-box { text-align: right; display: flex; flex-direction: column; justify-content: center;}
-        .intro-box h2 { color: #8e44ad; margin-top: 0; font-size: 26px;}
-        .intro-box p { color: #2c3e50; line-height: 1.8; font-size: 15px;}
-        .audio-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none; padding: 12px 20px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3); transition: all 0.3s; align-self: flex-start; margin-top: 10px;}
+        .intro-box { display: flex; flex-direction: column; justify-content: center;}
+        .intro-box h1 { color: #8e44ad; margin-top: 0; font-size: 32px; margin-bottom: 15px;}
+        .intro-box p { line-height: 1.8; font-size: 16px; margin-bottom: 20px;}
+        .features-list { list-style: none; padding: 0; margin-bottom: 25px;}
+        .features-list li { margin-bottom: 12px; font-weight: bold; display: flex; align-items: center; gap: 10px;}
+        .features-list li::before { content: '✅'; color: #2ecc71; }
+        
+        .audio-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none; padding: 12px 25px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3); transition: all 0.3s; align-self: flex-start;}
         .audio-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4); }
 
         .auth-box { text-align: center; }
         .auth-box h2 { color: #2c3e50; margin-top: 0; font-size: 24px; margin-bottom: 20px;}
         .input-group { margin-bottom: 15px; text-align: right; }
-        .input-group label { display: block; margin-bottom: 5px; color: #34495e; font-weight: bold; font-size: 13px;}
-        .input-group input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid #bdc3c7; font-size: 14px; outline: none; box-sizing: border-box; transition: all 0.3s; background: #f9f9f9;}
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px;}
+        .input-group input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid #bdc3c7; font-size: 14px; outline: none; box-sizing: border-box; background: #f9f9f9;}
         .input-group input:focus { border-color: #3498db; background: white; box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
         
         .main-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 15px; font-weight: bold; color: white; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);}
@@ -84,23 +96,36 @@ LOGIN_PAGE = """
 
         .social-btn { width: 100%; padding: 10px; border-radius: 10px; border: none; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;}
         .social-btn.facebook { background: #1877F2; color: white; box-shadow: 0 4px 10px rgba(24, 119, 242, 0.3);}
-        .social-btn.facebook:hover { background: #166fe5; }
         .social-btn.guest { background: #95a5a6; color: white; margin-bottom: 0;}
-        .social-btn.guest:hover { background: #7f8c8d; }
-
         #googleBtnContainer { margin-bottom: 10px; display: flex; justify-content: center; width: 100%;}
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
+
+        /* قسم خطط الأسعار (Pricing) التسويقي */
+        .pricing-section { text-align: center; margin-top: 40px; animation: popIn 0.8s ease-out;}
+        .pricing-section h2 { font-size: 28px; margin-bottom: 10px; color: #8e44ad;}
+        .pricing-section p { margin-bottom: 40px; color: #7f8c8d;}
+        .pricing-cards { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
+        
+        .card { background: white; border-radius: 20px; padding: 30px 20px; flex: 1; min-width: 280px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eee; transition: transform 0.3s; position: relative; overflow: hidden;}
+        .card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .card.popular { border: 2px solid #3498db; transform: scale(1.05); }
+        .card.popular:hover { transform: scale(1.05) translateY(-10px); }
+        .popular-badge { position: absolute; top: 15px; right: -35px; background: #e74c3c; color: white; padding: 5px 40px; transform: rotate(45deg); font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        
+        .card h3 { margin-top: 0; font-size: 22px; color: #2c3e50;}
+        .price { font-size: 36px; font-weight: bold; color: #3498db; margin: 15px 0;}
+        .price span { font-size: 16px; color: #95a5a6; font-weight: normal;}
+        .card ul { list-style: none; padding: 0; margin: 20px 0 30px 0; text-align: right;}
+        .card ul li { margin-bottom: 12px; font-size: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 8px;}
+        .card-btn { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #3498db; background: transparent; color: #3498db; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px;}
+        .card.popular .card-btn { background: #3498db; color: white; }
+        .card-btn:hover { background: #3498db; color: white; }
     </style>
 </head>
 <body>
     <script>
       window.fbAsyncInit = function() {
-        FB.init({
-          appId      : '{{ fb_id }}',
-          cookie     : true,
-          xfbml      : true,
-          version    : 'v19.0'
-        });
+        FB.init({ appId: '{{ fb_id }}', cookie: true, xfbml: true, version: 'v19.0' });
       };
       (function(d, s, id){
          var js, fjs = d.getElementsByTagName(s)[0];
@@ -111,37 +136,97 @@ LOGIN_PAGE = """
        }(document, 'script', 'facebook-jssdk'));
     </script>
 
-    <div class="wrapper">
-        <div class="box intro-box">
-            <h2>مرحباً بك في Smart Academy 🌟</h2>
-            <p>أكاديميتك الذكية لتعلم اللغة الإنجليزية بطريقة تفاعلية تحاكي الواقع. <br><br>نقدم لك <b>معلماً بشخصية حقيقية</b> يصحح أخطاءك ويقودك في محادثات حية وممتعة، وفق معايير <b>CEFR</b> العالمية.</p>
-            <button class="audio-btn" id="introAudioBtn" onclick="playIntroAudio()">
-                <span id="audioIcon">🔊</span> استمع لنبذة الأكاديمية
-            </button>
-            <audio id="introPlayer"></audio>
+    <div class="container">
+        <!-- الهيرو والتسجيل -->
+        <div class="hero-section">
+            <div class="box intro-box">
+                <h1>Smart Academy 🌟</h1>
+                <p>مستقبلك في إتقان اللغة الإنجليزية يبدأ من هنا. تدرّب مع معلم ذكاء اصطناعي متاح 24/7، يحاكي البشر، ويصحح أخطاءك فوراً.</p>
+                
+                <ul class="features-list">
+                    <li>محادثات صوتية حية (Full-Duplex).</li>
+                    <li>مناهج عالمية متوافقة مع CEFR.</li>
+                    <li>تقييم فوري وخطط دراسية مخصصة.</li>
+                    <li>دعم رفع المناهج والكتب بصيغ PDF و Word.</li>
+                </ul>
+
+                <button class="audio-btn" id="introAudioBtn" onclick="playIntroAudio()">
+                    <span id="audioIcon">🔊</span> استمع لنبذة الأكاديمية
+                </button>
+                <audio id="introPlayer"></audio>
+            </div>
+
+            <div class="box auth-box" id="loginBox">
+                <h2 id="authTitle">تسجيل الدخول</h2>
+                <div id="errorMsg"></div>
+                
+                <div class="input-group">
+                    <label>اسم المستخدم أو الإيميل</label>
+                    <input type="text" id="username" placeholder="أدخل بياناتك هنا...">
+                </div>
+                <div class="input-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور...">
+                </div>
+                <button class="main-btn" id="submitBtn" onclick="submitAuth()">دخول إلى الأكاديمية</button>
+                
+                <div class="toggle-text" id="toggleDiv">ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span></div>
+                
+                <div class="divider">أو عبر المنصات</div>
+                
+                <div id="googleBtnContainer"></div>
+                <button class="social-btn facebook" onclick="loginWithFacebook()">📘 الدخول بحساب Facebook</button>
+                <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة مجانية)</button>
+            </div>
         </div>
 
-        <div class="box auth-box" id="loginBox">
-            <h2 id="authTitle">تسجيل الدخول</h2>
-            <div id="errorMsg"></div>
+        <!-- قسم خطط الأسعار (للتسويق) -->
+        <div class="pricing-section">
+            <h2>استثمر في مستقبلك اللغوي 🚀</h2>
+            <p>اختر الباقة التي تناسب طموحك، وابدأ التحدث بطلاقة اليوم.</p>
             
-            <div class="input-group">
-                <label>اسم المستخدم أو الإيميل</label>
-                <input type="text" id="username" placeholder="أدخل بياناتك هنا...">
+            <div class="pricing-cards">
+                <!-- الباقة المجانية -->
+                <div class="card">
+                    <h3>باقة التجربة</h3>
+                    <div class="price">مجاناً <span>/ للأبد</span></div>
+                    <ul>
+                        <li>دخول كضيف بدون تسجيل</li>
+                        <li>15 دقيقة محادثة يومياً</li>
+                        <li>مواضيع محددة مسبقاً</li>
+                        <li>لا يتم حفظ السجل</li>
+                    </ul>
+                    <button class="card-btn" onclick="window.scrollTo(0,0); guestLogin();">ابدأ التجربة الآن</button>
+                </div>
+                
+                <!-- الباقة الأساسية -->
+                <div class="card popular">
+                    <div class="popular-badge">الأكثر طلباً</div>
+                    <h3>باقة المحترفين (Pro)</h3>
+                    <div class="price">$19 <span>/ شهرياً</span></div>
+                    <ul>
+                        <li>محادثات صوتية غير محدودة</li>
+                        <li>حفظ سجل المحادثات والتقدم</li>
+                        <li>رفع ملفات PDF لدراستها</li>
+                        <li>تصحيح قواعد ونطق فوري</li>
+                        <li>تقارير مستوى دورية</li>
+                    </ul>
+                    <button class="card-btn" onclick="window.scrollTo(0,0); toggleMode();">اشترك الآن</button>
+                </div>
+
+                <!-- الباقة السنوية -->
+                <div class="card">
+                    <h3>الباقة الماسية (VIP)</h3>
+                    <div class="price">$149 <span>/ سنوياً</span></div>
+                    <ul>
+                        <li><b>جميع ميزات باقة المحترفين</b></li>
+                        <li>توفير 35% من القيمة</li>
+                        <li>جلسات تحضير لاختبارات (IELTS/TOEFL)</li>
+                        <li>دعم فني وتوجيه أكاديمي خاص</li>
+                    </ul>
+                    <button class="card-btn" onclick="window.scrollTo(0,0); toggleMode();">احصل على الخصم</button>
+                </div>
             </div>
-            <div class="input-group">
-                <label>كلمة المرور</label>
-                <input type="password" id="password" placeholder="أدخل كلمة المرور...">
-            </div>
-            <button class="main-btn" id="submitBtn" onclick="submitAuth()">دخول إلى الأكاديمية</button>
-            
-            <div class="toggle-text" id="toggleDiv">ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span></div>
-            
-            <div class="divider">أو عبر المنصات</div>
-            
-            <div id="googleBtnContainer"></div>
-            <button class="social-btn facebook" onclick="loginWithFacebook()">📘 الدخول بحساب Facebook</button>
-            <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة سريعة)</button>
         </div>
     </div>
 
@@ -149,68 +234,56 @@ LOGIN_PAGE = """
         let isLogin = true;
         
         function toggleMode() {
-            isLogin = !isLogin;
-            document.getElementById('authTitle').innerText = isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد ✨';
-            document.getElementById('submitBtn').innerText = isLogin ? 'دخول إلى الأكاديمية' : 'تسجيل الحساب';
-            document.getElementById('toggleDiv').innerHTML = isLogin ? 'ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span>' : 'لديك حساب بالفعل؟ <span onclick="toggleMode()">تسجيل الدخول</span>';
+            if(!isLogin) return; // إذا كان بالفعل إنشاء حساب لا تفعل شيء
+            isLogin = false;
+            document.getElementById('authTitle').innerText = 'إنشاء حساب جديد ✨';
+            document.getElementById('submitBtn').innerText = 'تسجيل الحساب وبدء التعلم';
+            document.getElementById('toggleDiv').innerHTML = 'لديك حساب بالفعل؟ <span onclick="isLogin=true; toggleModeReal();">تسجيل الدخول</span>';
+            document.getElementById('errorMsg').innerText = '';
+        }
+        function toggleModeReal() {
+            document.getElementById('authTitle').innerText = 'تسجيل الدخول';
+            document.getElementById('submitBtn').innerText = 'دخول إلى الأكاديمية';
+            document.getElementById('toggleDiv').innerHTML = 'ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span>';
             document.getElementById('errorMsg').innerText = '';
         }
 
         async function executeAuth(action, username, password, provider='local') {
             let err = document.getElementById('errorMsg');
-            err.innerText = "جاري التحقق والمصادقة..."; err.style.color = "#3498db";
+            err.innerText = "جاري التحقق..."; err.style.color = "#3498db";
             try {
                 let res = await fetch("/auth", {
                     method: "POST", headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({ action: action, username: username, password: password, provider: provider })
                 });
                 let data = await res.json();
-                if(data.success) {
-                    window.location.href = "/?login=success"; 
-                } else {
-                    err.style.color = "#e74c3c"; err.innerText = data.error;
-                }
+                if(data.success) window.location.href = "/?login=success"; 
+                else { err.style.color = "#e74c3c"; err.innerText = data.error; }
             } catch(e) { err.style.color = "#e74c3c"; err.innerText = "خطأ في الاتصال بالسيرفر."; }
         }
 
         async function submitAuth() {
             let user = document.getElementById('username').value;
             let pass = document.getElementById('password').value;
-            if(!user || !pass) { document.getElementById('errorMsg').innerText = "يرجى تعبئة جميع الحقول."; return; }
+            if(!user || !pass) { document.getElementById('errorMsg').innerText = "يرجى تعبئة الحقول."; return; }
             executeAuth(isLogin ? 'login' : 'register', user, pass);
         }
 
         async function guestLogin() { executeAuth('guest', '', ''); }
 
         window.onload = function () {
-            google.accounts.id.initialize({
-                client_id: "{{ google_id }}",
-                callback: handleGoogleResponse
-            });
-            google.accounts.id.renderButton(
-                document.getElementById("googleBtnContainer"),
-                { theme: "outline", size: "large", width: "100%", text: "continue_with" }
-            );
+            google.accounts.id.initialize({ client_id: "{{ google_id }}", callback: handleGoogleResponse });
+            google.accounts.id.renderButton(document.getElementById("googleBtnContainer"), { theme: "outline", size: "large", width: "100%" });
         };
-
         function handleGoogleResponse(response) {
-            const responsePayload = JSON.parse(atob(response.credential.split('.')[1]));
-            let email = responsePayload.email;
-            let name = responsePayload.name;
-            executeAuth('social', email, name, 'google');
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            executeAuth('social', payload.email, payload.name, 'google');
         }
-
         function loginWithFacebook() {
             FB.login(function(response) {
                 if (response.authResponse) {
-                    FB.api('/me', {fields: 'name,email'}, function(res) {
-                        let email = res.email || res.id; 
-                        let name = res.name;
-                        executeAuth('social', email, name, 'facebook');
-                    });
-                } else {
-                    document.getElementById('errorMsg').innerText = "تم إلغاء الدخول بواسطة فيسبوك.";
-                }
+                    FB.api('/me', {fields: 'name,email'}, function(res) { executeAuth('social', res.email || res.id, res.name, 'facebook'); });
+                } else { document.getElementById('errorMsg').innerText = "تم إلغاء الدخول."; }
             }, {scope: 'public_profile,email'});
         }
 
@@ -221,7 +294,7 @@ LOGIN_PAGE = """
                 try {
                     let res = await fetch("/intro_audio"); let data = await res.json();
                     player.src = "data:audio/mp3;base64," + data.audio; player.play();
-                } catch(e) { alert("حدث خطأ في تحميل الصوت."); }
+                } catch(e) { alert("خطأ في التحميل."); }
                 btn.disabled = false;
             } else { if(player.paused) player.play(); else player.pause(); }
         }
@@ -234,7 +307,7 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# 2. واجهة الأكاديمية الرئيسية (Main App)
+# 2. واجهة الأكاديمية الرئيسية (لم تتغير عن الخطوة السابقة)
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -302,7 +375,7 @@ MAIN_PAGE = """
     </style>
 </head>
 <body>
-    <div id="loginToast" class="toast">✅ تم تسجيل الدخول بنجاح! يتم الآن تحضير خطة الدرس...</div>
+    <div id="loginToast" class="toast">✅ تم الدخول بنجاح! جاري تحضير خطة الدرس...</div>
     <button class="hamburger-btn" onclick="toggleDrawer()"><span>☰</span> الخيارات</button>
     <div id="overlay" onclick="toggleDrawer()"></div>
     <div id="sideDrawer" class="drawer">
@@ -318,7 +391,7 @@ MAIN_PAGE = """
     <div id="topicsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('topicsModal')">&times;</span><h2 style="text-align:center; color: var(--accent);">اختر موضوعاً 🎯</h2><div class="topics-grid" id="topicsList"></div></div></div>
     <div id="settingsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('settingsModal')">&times;</span><h2 style="text-align:center; color: var(--primary);">🎨 المظهر</h2><div class="settings-group"><label>صندوق المتدرب:</label><input type="color" id="userBgColor" value="#d5f5e3" onchange="applySettings()"></div><div class="settings-group"><label>صندوق المدرب:</label><input type="color" id="aiBgColor" value="#e1f5fe" onchange="applySettings()"></div><div class="settings-group"><label>لون النصوص:</label><input type="color" id="fontColor" value="#2c3e50" onchange="applySettings()"></div><div class="settings-group"><label>حجم الخط:</label><input type="range" id="fontSize" min="12" max="24" value="16" oninput="applySettings()"><span id="fontSizeVal">16px</span></div><button class="send-btn" style="width: 100%; margin-top: 15px;" onclick="resetSettings()">🔄 استعادة</button></div></div>
     <h2>Smart Academy 🎓</h2>
-    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 20px; font-weight: bold;">مرحباً بك يا {{ username }}! سجل محادثاتك محفوظ.</div>
+    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 20px; font-weight: bold;">مرحباً بك يا {{ username }}! سجلك محفوظ.</div>
     <div class="curriculum-info">📚 <strong>المنهج:</strong> (CEFR). <span id="curriculumStatus" style="color:var(--success); font-weight:bold; margin-right:10px;"></span></div>
     <div class="top-bar"><select id="mode" onchange="changeStyle()"><option value="adult">وضع الكبار</option><option value="child">وضع الأطفال</option></select><select id="micLang"><option value="en-US">الميكروفون: إنجليزي</option><option value="ar-SA">الميكروفون: عربي</option></select><button class="start-btn" onclick="startLiveLesson()">🎓 ابدأ المكالمة الحية</button></div>
     <div id="liveIndicator">🔴 المكالمة نشطة...</div>
