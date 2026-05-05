@@ -36,7 +36,7 @@ def init_db():
 init_db()
 
 # ==========================================
-# 1. بوابة الدخول التسويقية (Landing, SEO, Pricing)
+# 1. واجهة بوابة الدخول والتسويق
 # ==========================================
 LOGIN_PAGE = """
 <!DOCTYPE html>
@@ -44,28 +44,16 @@ LOGIN_PAGE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- SEO & Social Media Meta Tags -->
-    <title>Smart Academy - تعلم الإنجليزية بالذكاء الاصطناعي</title>
-    <meta name="description" content="أكاديمية ذكية لتعلم اللغة الإنجليزية بمعايير CEFR. تدرب مع معلم ذكاء اصطناعي بشخصية حقيقية، محادثات صوتية حية، وتصحيح فوري.">
-    <meta name="keywords" content="تعلم الإنجليزية, ذكاء اصطناعي, محادثة, CEFR, توفل, آيلتس, كورس إنجليزي">
-    <meta property="og:title" content="Smart Academy - ثورة تعلم الإنجليزية">
-    <meta property="og:description" content="تدرب على المحادثة مع مدرس ذكاء اصطناعي تفاعلي على مدار الساعة.">
-    <meta property="og:type" content="website">
-    
+    <title>Smart Academy - تعلم الإنجليزية باحتراف</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); overflow-x: hidden; color: #2c3e50;}
-        .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
-        
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
         @keyframes popIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
         
-        /* قسم الهيرو (Hero Section) والـ Auth */
-        .hero-section { display: flex; flex-wrap: wrap; gap: 30px; align-items: stretch; margin-bottom: 60px; animation: popIn 0.6s ease-out;}
+        .hero-section { display: flex; flex-wrap: wrap; gap: 30px; align-items: stretch; margin-bottom: 50px; animation: popIn 0.6s ease-out;}
         .box { background: rgba(255, 255, 255, 0.9); padding: 35px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); flex: 1; min-width: 320px; }
         
-        .intro-box { display: flex; flex-direction: column; justify-content: center;}
         .intro-box h1 { color: #8e44ad; margin-top: 0; font-size: 32px; margin-bottom: 15px;}
         .intro-box p { line-height: 1.8; font-size: 16px; margin-bottom: 20px;}
         .features-list { list-style: none; padding: 0; margin-bottom: 25px;}
@@ -81,160 +69,124 @@ LOGIN_PAGE = """
         .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px;}
         .input-group input { width: 100%; padding: 12px 15px; border-radius: 10px; border: 1px solid #bdc3c7; font-size: 14px; outline: none; box-sizing: border-box; background: #f9f9f9;}
         .input-group input:focus { border-color: #3498db; background: white; box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
-        
         .main-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-size: 15px; font-weight: bold; color: white; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);}
         .main-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4); }
-        
         .toggle-text { margin-top: 15px; font-size: 13px; color: #7f8c8d; }
         .toggle-text span { color: #8e44ad; font-weight: bold; cursor: pointer; }
-        .toggle-text span:hover { text-decoration: underline; }
-        
-        .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: #bdc3c7; font-size: 12px; }
-        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #ecf0f1; }
-        .divider:not(:empty)::before { margin-left: .25em; }
-        .divider:not(:empty)::after { margin-right: .25em; }
-
         .social-btn { width: 100%; padding: 10px; border-radius: 10px; border: none; font-size: 14px; font-weight: bold; cursor: pointer; transition: all 0.3s; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;}
-        .social-btn.facebook { background: #1877F2; color: white; box-shadow: 0 4px 10px rgba(24, 119, 242, 0.3);}
+        .social-btn.facebook { background: #1877F2; color: white;}
         .social-btn.guest { background: #95a5a6; color: white; margin-bottom: 0;}
         #googleBtnContainer { margin-bottom: 10px; display: flex; justify-content: center; width: 100%;}
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
 
-        /* قسم خطط الأسعار (Pricing) التسويقي */
-        .pricing-section { text-align: center; margin-top: 40px; animation: popIn 0.8s ease-out;}
-        .pricing-section h2 { font-size: 28px; margin-bottom: 10px; color: #8e44ad;}
-        .pricing-section p { margin-bottom: 40px; color: #7f8c8d;}
+        /* قسم المناهج والشهادات (جديد) */
+        .academic-section { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 40px; animation: popIn 0.8s ease-out;}
+        .acad-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; min-width: 300px; text-align: right;}
+        .acad-box h3 { color: #3498db; font-size: 20px; margin-top: 0; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;}
+        .acad-box ul { list-style: none; padding: 0;}
+        .acad-box ul li { margin-bottom: 15px; line-height: 1.6;}
+        .acad-box ul li strong { color: #8e44ad; }
+        
+        .pricing-section { text-align: center; margin-top: 50px;}
         .pricing-cards { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        
-        .card { background: white; border-radius: 20px; padding: 30px 20px; flex: 1; min-width: 280px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eee; transition: transform 0.3s; position: relative; overflow: hidden;}
-        .card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .card { background: white; border-radius: 20px; padding: 30px 20px; flex: 1; min-width: 280px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eee; transition: transform 0.3s; position: relative;}
         .card.popular { border: 2px solid #3498db; transform: scale(1.05); }
-        .card.popular:hover { transform: scale(1.05) translateY(-10px); }
-        .popular-badge { position: absolute; top: 15px; right: -35px; background: #e74c3c; color: white; padding: 5px 40px; transform: rotate(45deg); font-size: 12px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
-        
+        .popular-badge { position: absolute; top: 15px; right: -35px; background: #e74c3c; color: white; padding: 5px 40px; transform: rotate(45deg); font-size: 12px; font-weight: bold;}
         .card h3 { margin-top: 0; font-size: 22px; color: #2c3e50;}
         .price { font-size: 36px; font-weight: bold; color: #3498db; margin: 15px 0;}
         .price span { font-size: 16px; color: #95a5a6; font-weight: normal;}
         .card ul { list-style: none; padding: 0; margin: 20px 0 30px 0; text-align: right;}
-        .card ul li { margin-bottom: 12px; font-size: 15px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 8px;}
+        .card ul li { margin-bottom: 12px; font-size: 14px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 8px;}
         .card-btn { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #3498db; background: transparent; color: #3498db; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px;}
         .card.popular .card-btn { background: #3498db; color: white; }
-        .card-btn:hover { background: #3498db; color: white; }
     </style>
 </head>
 <body>
     <script>
-      window.fbAsyncInit = function() {
-        FB.init({ appId: '{{ fb_id }}', cookie: true, xfbml: true, version: 'v19.0' });
-      };
-      (function(d, s, id){
-         var js, fjs = d.getElementsByTagName(s)[0];
-         if (d.getElementById(id)) {return;}
-         js = d.createElement(s); js.id = id;
-         js.src = "https://connect.facebook.net/en_US/sdk.js";
-         fjs.parentNode.insertBefore(js, fjs);
-       }(document, 'script', 'facebook-jssdk'));
+      window.fbAsyncInit = function() { FB.init({ appId: '{{ fb_id }}', cookie: true, xfbml: true, version: 'v19.0' }); };
+      (function(d, s, id){ var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) {return;} js = d.createElement(s); js.id = id; js.src = "https://connect.facebook.net/en_US/sdk.js"; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));
     </script>
-
     <div class="container">
-        <!-- الهيرو والتسجيل -->
         <div class="hero-section">
             <div class="box intro-box">
                 <h1>Smart Academy 🌟</h1>
-                <p>مستقبلك في إتقان اللغة الإنجليزية يبدأ من هنا. تدرّب مع معلم ذكاء اصطناعي متاح 24/7، يحاكي البشر، ويصحح أخطاءك فوراً.</p>
-                
+                <p>مستقبلك في إتقان الإنجليزية يبدأ من هنا. تدرّب مع معلم ذكاء اصطناعي تفاعلي يحاكي البشر ويصحح أخطاءك فوراً.</p>
                 <ul class="features-list">
                     <li>محادثات صوتية حية (Full-Duplex).</li>
-                    <li>مناهج عالمية متوافقة مع CEFR.</li>
-                    <li>تقييم فوري وخطط دراسية مخصصة.</li>
-                    <li>دعم رفع المناهج والكتب بصيغ PDF و Word.</li>
+                    <li>مناهج عالمية معتمدة من كامبريدج وأكسفورد.</li>
+                    <li>خطة اختبارات متكاملة وشهادات إتمام.</li>
+                    <li>مكتبة موارد شاملة (PDF, MP3, PPT).</li>
                 </ul>
-
-                <button class="audio-btn" id="introAudioBtn" onclick="playIntroAudio()">
-                    <span id="audioIcon">🔊</span> استمع لنبذة الأكاديمية
-                </button>
+                <button class="audio-btn" id="introAudioBtn" onclick="playIntroAudio()"><span id="audioIcon">🔊</span> استمع لنبذة الأكاديمية</button>
                 <audio id="introPlayer"></audio>
             </div>
-
+            
             <div class="box auth-box" id="loginBox">
                 <h2 id="authTitle">تسجيل الدخول</h2>
                 <div id="errorMsg"></div>
-                
-                <div class="input-group">
-                    <label>اسم المستخدم أو الإيميل</label>
-                    <input type="text" id="username" placeholder="أدخل بياناتك هنا...">
-                </div>
-                <div class="input-group">
-                    <label>كلمة المرور</label>
-                    <input type="password" id="password" placeholder="أدخل كلمة المرور...">
-                </div>
+                <div class="input-group"><label>الإيميل أو اسم المستخدم</label><input type="text" id="username" placeholder="أدخل بياناتك..."></div>
+                <div class="input-group"><label>كلمة المرور</label><input type="password" id="password" placeholder="أدخل كلمة المرور..."></div>
                 <button class="main-btn" id="submitBtn" onclick="submitAuth()">دخول إلى الأكاديمية</button>
-                
                 <div class="toggle-text" id="toggleDiv">ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span></div>
-                
-                <div class="divider">أو عبر المنصات</div>
-                
+                <div style="margin:15px 0; color:#bdc3c7; font-size:12px;">أو عبر المنصات</div>
                 <div id="googleBtnContainer"></div>
                 <button class="social-btn facebook" onclick="loginWithFacebook()">📘 الدخول بحساب Facebook</button>
                 <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة مجانية)</button>
             </div>
         </div>
 
-        <!-- قسم خطط الأسعار (للتسويق) -->
+        <!-- القسم الأكاديمي (مناهج، اختبارات، شهادات) -->
+        <div class="academic-section">
+            <div class="acad-box">
+                <h3>📚 مصادرنا ومناهجنا المعتمدة</h3>
+                <p style="color:#7f8c8d; font-size:14px; margin-bottom:15px;">نعتمد في تدريبنا على أقوى الموارد العالمية المفتوحة (OER) لضمان جودة التعليم وفق معايير الإطار الأوروبي (CEFR):</p>
+                <ul>
+                    <li><strong>Oxford OER:</strong> لمناهج القواعد المتقدمة وتوسيع الحصيلة اللغوية.</li>
+                    <li><strong>Cambridge English:</strong> كمرجع أساسي لاختبارات تقييم المستوى (A1 to C2).</li>
+                    <li><strong>BBC Learning English:</strong> للتدرب على المحادثات اليومية والنطق البريطاني الأصيل.</li>
+                    <li><strong>Voice of America (VOA):</strong> للاستماع والأخبار باللكنة الأمريكية.</li>
+                </ul>
+            </div>
+            <div class="acad-box">
+                <h3>🎓 خطة الاختبارات والشهادات</h3>
+                <p style="color:#7f8c8d; font-size:14px; margin-bottom:15px;">رحلتك معنا منظمة لتحقيق أهدافك بوضوح وتوثيقها:</p>
+                <ul>
+                    <li><strong>1. اختبار تحديد المستوى:</strong> يجريه المدرس فور تسجيلك لتحديد نقطة البداية الصحيحة.</li>
+                    <li><strong>2. التقييمات الدورية:</strong> اختبارات قصيرة بعد كل وحدة دراسية لضمان الفهم.</li>
+                    <li><strong>3. الاختبار النهائي (Final Exam):</strong> تقييم شامل (استماع، تحدث، وقواعد) عند نهاية كل مستوى (مثل B1).</li>
+                    <li><strong>4. الشهادات:</strong> إصدار <i>شهادة إتمام كورس</i> و <i>شهادة اجتياز مستوى</i> موثقة من الأكاديمية بعد اجتياز الاختبار النهائي بنجاح.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- قسم خطط الأسعار -->
         <div class="pricing-section">
-            <h2>استثمر في مستقبلك اللغوي 🚀</h2>
-            <p>اختر الباقة التي تناسب طموحك، وابدأ التحدث بطلاقة اليوم.</p>
-            
-            <div class="pricing-cards">
-                <!-- الباقة المجانية -->
+            <h2 style="color:#8e44ad;">استثمر في مستقبلك اللغوي 🚀</h2>
+            <div class="pricing-cards" style="margin-top:30px;">
                 <div class="card">
-                    <h3>باقة التجربة</h3>
-                    <div class="price">مجاناً <span>/ للأبد</span></div>
-                    <ul>
-                        <li>دخول كضيف بدون تسجيل</li>
-                        <li>15 دقيقة محادثة يومياً</li>
-                        <li>مواضيع محددة مسبقاً</li>
-                        <li>لا يتم حفظ السجل</li>
-                    </ul>
-                    <button class="card-btn" onclick="window.scrollTo(0,0); guestLogin();">ابدأ التجربة الآن</button>
+                    <h3>باقة التجربة</h3><div class="price">مجاناً</div>
+                    <ul><li>دخول كضيف</li><li>موارد أساسية</li><li>اختبار تحديد مستوى بسيط</li></ul>
+                    <button class="card-btn" onclick="window.scrollTo(0,0); guestLogin();">ابدأ التجربة</button>
                 </div>
-                
-                <!-- الباقة الأساسية -->
                 <div class="card popular">
                     <div class="popular-badge">الأكثر طلباً</div>
-                    <h3>باقة المحترفين (Pro)</h3>
-                    <div class="price">$19 <span>/ شهرياً</span></div>
-                    <ul>
-                        <li>محادثات صوتية غير محدودة</li>
-                        <li>حفظ سجل المحادثات والتقدم</li>
-                        <li>رفع ملفات PDF لدراستها</li>
-                        <li>تصحيح قواعد ونطق فوري</li>
-                        <li>تقارير مستوى دورية</li>
-                    </ul>
+                    <h3>باقة المحترفين (Pro)</h3><div class="price">$19 <span>/ شهرياً</span></div>
+                    <ul><li>محادثات غير محدودة</li><li>مكتبة الموارد كاملة (PPT/PDF)</li><li>اختبارات دورية وشهادات إتمام</li></ul>
                     <button class="card-btn" onclick="window.scrollTo(0,0); toggleMode();">اشترك الآن</button>
                 </div>
-
-                <!-- الباقة السنوية -->
                 <div class="card">
-                    <h3>الباقة الماسية (VIP)</h3>
-                    <div class="price">$149 <span>/ سنوياً</span></div>
-                    <ul>
-                        <li><b>جميع ميزات باقة المحترفين</b></li>
-                        <li>توفير 35% من القيمة</li>
-                        <li>جلسات تحضير لاختبارات (IELTS/TOEFL)</li>
-                        <li>دعم فني وتوجيه أكاديمي خاص</li>
-                    </ul>
+                    <h3>الباقة الماسية (VIP)</h3><div class="price">$149 <span>/ سنوياً</span></div>
+                    <ul><li>جميع ميزات باقة المحترفين</li><li>شهادات اجتياز مستوى معتمدة</li><li>تجهيز لاختبارات IELTS/TOEFL</li></ul>
                     <button class="card-btn" onclick="window.scrollTo(0,0); toggleMode();">احصل على الخصم</button>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <script>
         let isLogin = true;
-        
         function toggleMode() {
-            if(!isLogin) return; // إذا كان بالفعل إنشاء حساب لا تفعل شيء
+            if(!isLogin) return; 
             isLogin = false;
             document.getElementById('authTitle').innerText = 'إنشاء حساب جديد ✨';
             document.getElementById('submitBtn').innerText = 'تسجيل الحساب وبدء التعلم';
@@ -247,67 +199,33 @@ LOGIN_PAGE = """
             document.getElementById('toggleDiv').innerHTML = 'ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span>';
             document.getElementById('errorMsg').innerText = '';
         }
-
         async function executeAuth(action, username, password, provider='local') {
-            let err = document.getElementById('errorMsg');
-            err.innerText = "جاري التحقق..."; err.style.color = "#3498db";
+            let err = document.getElementById('errorMsg'); err.innerText = "جاري التحقق..."; err.style.color = "#3498db";
             try {
-                let res = await fetch("/auth", {
-                    method: "POST", headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({ action: action, username: username, password: password, provider: provider })
-                });
+                let res = await fetch("/auth", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ action: action, username: username, password: password, provider: provider }) });
                 let data = await res.json();
                 if(data.success) window.location.href = "/?login=success"; 
                 else { err.style.color = "#e74c3c"; err.innerText = data.error; }
             } catch(e) { err.style.color = "#e74c3c"; err.innerText = "خطأ في الاتصال بالسيرفر."; }
         }
-
         async function submitAuth() {
-            let user = document.getElementById('username').value;
-            let pass = document.getElementById('password').value;
+            let user = document.getElementById('username').value, pass = document.getElementById('password').value;
             if(!user || !pass) { document.getElementById('errorMsg').innerText = "يرجى تعبئة الحقول."; return; }
             executeAuth(isLogin ? 'login' : 'register', user, pass);
         }
-
         async function guestLogin() { executeAuth('guest', '', ''); }
-
-        window.onload = function () {
-            google.accounts.id.initialize({ client_id: "{{ google_id }}", callback: handleGoogleResponse });
-            google.accounts.id.renderButton(document.getElementById("googleBtnContainer"), { theme: "outline", size: "large", width: "100%" });
-        };
-        function handleGoogleResponse(response) {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            executeAuth('social', payload.email, payload.name, 'google');
-        }
-        function loginWithFacebook() {
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    FB.api('/me', {fields: 'name,email'}, function(res) { executeAuth('social', res.email || res.id, res.name, 'facebook'); });
-                } else { document.getElementById('errorMsg').innerText = "تم إلغاء الدخول."; }
-            }, {scope: 'public_profile,email'});
-        }
-
-        async function playIntroAudio() {
-            let btn = document.getElementById('introAudioBtn'), icon = document.getElementById('audioIcon'), player = document.getElementById('introPlayer');
-            if(!player.src) {
-                icon.innerText = "⏳"; btn.disabled = true;
-                try {
-                    let res = await fetch("/intro_audio"); let data = await res.json();
-                    player.src = "data:audio/mp3;base64," + data.audio; player.play();
-                } catch(e) { alert("خطأ في التحميل."); }
-                btn.disabled = false;
-            } else { if(player.paused) player.play(); else player.pause(); }
-        }
-        document.getElementById('introPlayer').onplay = () => document.getElementById('audioIcon').innerText = "⏸️";
-        document.getElementById('introPlayer').onpause = () => document.getElementById('audioIcon').innerText = "🔊";
-        document.getElementById('introPlayer').onended = () => document.getElementById('audioIcon').innerText = "🔊";
+        window.onload = function () { google.accounts.id.initialize({ client_id: "{{ google_id }}", callback: handleGoogleResponse }); google.accounts.id.renderButton(document.getElementById("googleBtnContainer"), { theme: "outline", size: "large", width: "100%" }); };
+        function handleGoogleResponse(response) { const payload = JSON.parse(atob(response.credential.split('.')[1])); executeAuth('social', payload.email, payload.name, 'google'); }
+        function loginWithFacebook() { FB.login(function(response) { if (response.authResponse) { FB.api('/me', {fields: 'name,email'}, function(res) { executeAuth('social', res.email || res.id, res.name, 'facebook'); }); } else { document.getElementById('errorMsg').innerText = "تم إلغاء الدخول."; } }, {scope: 'public_profile,email'}); }
+        async function playIntroAudio() { let btn = document.getElementById('introAudioBtn'), icon = document.getElementById('audioIcon'), player = document.getElementById('introPlayer'); if(!player.src) { icon.innerText = "⏳"; btn.disabled = true; try { let res = await fetch("/intro_audio"); let data = await res.json(); player.src = "data:audio/mp3;base64," + data.audio; player.play(); } catch(e) { alert("خطأ في التحميل."); } btn.disabled = false; } else { if(player.paused) player.play(); else player.pause(); } }
+        document.getElementById('introPlayer').onplay = () => document.getElementById('audioIcon').innerText = "⏸️"; document.getElementById('introPlayer').onpause = () => document.getElementById('audioIcon').innerText = "🔊"; document.getElementById('introPlayer').onended = () => document.getElementById('audioIcon').innerText = "🔊";
     </script>
 </body>
 </html>
 """
 
 # ==========================================
-# 2. واجهة الأكاديمية الرئيسية (لم تتغير عن الخطوة السابقة)
+# 2. واجهة الأكاديمية الرئيسية
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -332,6 +250,7 @@ MAIN_PAGE = """
         .drawer-btn { border-radius: 15px; padding: 14px 18px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: all 0.2s ease; display: flex; align-items: center; justify-content: flex-start; gap: 12px; border: 1px solid rgba(255,255,255,0.5); text-align: right; color: #2c3e50;}
         .drawer-btn .icon { font-size: 18px; background: rgba(255,255,255,0.4); border-radius: 50%; padding: 6px;}
         .drawer-btn.plan { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .drawer-btn.downloads { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .drawer-btn.test { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
         .drawer-btn.topics { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .drawer-btn.upload { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
@@ -366,6 +285,8 @@ MAIN_PAGE = """
         .close-btn { color: #aaa; float: left; font-size: 32px; font-weight: bold; cursor: pointer; transition: color 0.2s; background: #f0f0f0; border-radius: 50%; width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;}
         .topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 15px; }
         .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid #dcdde1; font-weight: bold; color: #34495e;}
+        .topic-item.locked { opacity: 0.6; background: #ecf0f1; border-color: #bdc3c7; }
+        .topic-item:hover:not(.locked) { background: var(--primary); color: white; transform: translateY(-4px);}
         .topic-category { grid-column: 1 / -1; font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 15px; border-bottom: 2px dashed #bdc3c7; padding-bottom: 5px; }
         .settings-group { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 12px 15px; border-radius: 12px; border: 1px solid #eee;}
         .settings-group input[type="color"] { border: none; width: 45px; height: 45px; border-radius: 8px; cursor: pointer; background: transparent;}
@@ -375,42 +296,109 @@ MAIN_PAGE = """
     </style>
 </head>
 <body>
-    <div id="loginToast" class="toast">✅ تم الدخول بنجاح! جاري تحضير خطة الدرس...</div>
+    <div id="loginToast" class="toast">✅ تم الدخول بنجاح! يتم الآن تحضير خطة الدرس...</div>
     <button class="hamburger-btn" onclick="toggleDrawer()"><span>☰</span> الخيارات</button>
     <div id="overlay" onclick="toggleDrawer()"></div>
+    
     <div id="sideDrawer" class="drawer">
         <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-top: 0;">الخدمات الأكاديمية</h3>
-        <button class="drawer-btn plan" onclick="requestFeature('study_plan')"><span class="icon">📅</span><span>الخطة الدراسية</span></button>
-        <button class="drawer-btn test" onclick="requestFeature('test')"><span class="icon">📝</span><span>التقييم والتدريب</span></button>
+        <button class="drawer-btn downloads" onclick="openModal('downloadsModal')"><span class="icon">📚</span><span>مكتبة الموارد والملفات</span></button>
+        <button class="drawer-btn plan" onclick="openModal('academicModal')"><span class="icon">🎓</span><span>المناهج والشهادات</span></button>
+        <button class="drawer-btn test" onclick="requestFeature('test')"><span class="icon">📝</span><span>التقييم الفوري</span></button>
         <button class="drawer-btn topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span><span>المواضيع والقصص</span></button>
-        <button class="drawer-btn upload" onclick="triggerUpload()"><span class="icon">📂</span><span>رفع منهج PDF</span></button>
-        <button class="drawer-btn settings" onclick="openModal('settingsModal')"><span class="icon">🎨</span><span>تخصيص المظهر</span></button>
+        <button class="drawer-btn upload" onclick="triggerUpload()"><span class="icon">📂</span><span>رفع منهج خاص</span></button>
+        <button class="drawer-btn settings" onclick="openModal('settingsModal')"><span class="icon">🎨</span><span>المظهر</span></button>
         <button class="drawer-btn logout" onclick="window.location.href='/logout'"><span class="icon">🚪</span><span>تسجيل الخروج</span></button>
     </div>
+    
     <input type="file" id="fileUpload" accept=".txt,.pdf,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)">
+    
+    <!-- نافذة مكتبة الموارد (مجاني ومدفوع) -->
+    <div id="downloadsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span>
+            <h2 style="text-align:center; color: var(--primary);">📚 مكتبة الموارد والملفات</h2>
+            
+            <h3 style="color: var(--success); border-bottom: 2px dashed #ecf0f1; padding-bottom: 5px;">🆓 موارد مجانية للتحميل</h3>
+            <div class="topics-grid">
+                <div class="topic-item" onclick="downloadFree('Study_Plan_CEFR.pdf')">📄 خطة دراسية CEFR (PDF)</div>
+                <div class="topic-item" onclick="downloadFree('Basic_Vocab.pdf')">📕 كتاب الكلمات الأساسية (PDF)</div>
+                <div class="topic-item" onclick="downloadFree('Starter_Conversations.mp3')">🎧 محادثات للمبتدئين (MP3)</div>
+            </div>
+
+            <h3 style="color: #e74c3c; border-bottom: 2px dashed #ecf0f1; padding-bottom: 5px; margin-top: 20px;">💎 موارد مدفوعة (Pro / VIP)</h3>
+            <div class="topics-grid">
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 خطة اجتياز IELTS الشاملة</div>
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 عروض تفاعلية للدروس (PPT)</div>
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 كتاب القواعد المتقدم (PDF)</div>
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 مكتبة الصوتيات الكاملة (MP3)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة المناهج وخطة الاختبارات -->
+    <div id="academicModal" class="modal">
+        <div class="modal-content" style="line-height: 1.8;">
+            <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
+            <h2 style="text-align:center; color: var(--accent);">🎓 الخطة الأكاديمية والشهادات</h2>
+            
+            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مصادرنا المعتمدة:</h3>
+            <p>لضمان جودة التعليم وموثوقيته، نبني محادثاتنا على أسس من: <b>Oxford OER, Cambridge English, BBC Learning English.</b></p>
+            
+            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مسار الاختبارات:</h3>
+            <ul style="padding-right: 20px;">
+                <li><b>اختبار تحديد المستوى (Placement Test):</b> يتم إجراؤه في بداية المحادثة. <button onclick="requestFeature('placement_test'); closeModal('academicModal');" style="background:#2ecc71; color:white; border:none; border-radius:5px; cursor:pointer; padding:3px 8px; font-size:12px;">ابدأ الآن</button></li>
+                <li><b>التقييم المرحلي (Quizzes):</b> بعد إتمام موضوع معين لقياس الفهم.</li>
+                <li><b>الاختبار النهائي (Final Exam):</b> اختبار شامل نهاية المستوى لطلب الشهادة.</li>
+            </ul>
+
+            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">الشهادات والاعتماد:</h3>
+            <p>عند اجتياز الاختبار النهائي بنسبة 80%، يتم إصدار <b>شهادة إتمام مستوى</b> رقمية موثقة من الأكاديمية (متاحة لاشتراكات VIP).</p>
+        </div>
+    </div>
+
     <div id="topicsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('topicsModal')">&times;</span><h2 style="text-align:center; color: var(--accent);">اختر موضوعاً 🎯</h2><div class="topics-grid" id="topicsList"></div></div></div>
     <div id="settingsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('settingsModal')">&times;</span><h2 style="text-align:center; color: var(--primary);">🎨 المظهر</h2><div class="settings-group"><label>صندوق المتدرب:</label><input type="color" id="userBgColor" value="#d5f5e3" onchange="applySettings()"></div><div class="settings-group"><label>صندوق المدرب:</label><input type="color" id="aiBgColor" value="#e1f5fe" onchange="applySettings()"></div><div class="settings-group"><label>لون النصوص:</label><input type="color" id="fontColor" value="#2c3e50" onchange="applySettings()"></div><div class="settings-group"><label>حجم الخط:</label><input type="range" id="fontSize" min="12" max="24" value="16" oninput="applySettings()"><span id="fontSizeVal">16px</span></div><button class="send-btn" style="width: 100%; margin-top: 15px;" onclick="resetSettings()">🔄 استعادة</button></div></div>
+    
     <h2>Smart Academy 🎓</h2>
-    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 20px; font-weight: bold;">مرحباً بك يا {{ username }}! سجلك محفوظ.</div>
-    <div class="curriculum-info">📚 <strong>المنهج:</strong> (CEFR). <span id="curriculumStatus" style="color:var(--success); font-weight:bold; margin-right:10px;"></span></div>
+    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 20px; font-weight: bold;">مرحباً بك يا {{ username }}! سجلك محفوظ بأمان.</div>
+    <div class="curriculum-info">📚 <strong>نعتمد مصادر:</strong> Oxford OER, Cambridge, BBC. <span id="curriculumStatus" style="color:var(--success); font-weight:bold; margin-right:10px;"></span></div>
+    
     <div class="top-bar"><select id="mode" onchange="changeStyle()"><option value="adult">وضع الكبار</option><option value="child">وضع الأطفال</option></select><select id="micLang"><option value="en-US">الميكروفون: إنجليزي</option><option value="ar-SA">الميكروفون: عربي</option></select><button class="start-btn" onclick="startLiveLesson()">🎓 ابدأ المكالمة الحية</button></div>
+    
     <div id="liveIndicator">🔴 المكالمة نشطة...</div>
     <div class="input-container"><button id="micBtn" class="circle-btn" onclick="toggleMic()">🎤</button><input type="text" id="userMsg" placeholder="اكتب أو تحدث..."><button class="send-btn" onclick="sendMsg()">إرسال</button></div>
     <div id="audioControls"><button class="circle-btn control-btn" onclick="skipAudio(-5)">⏪</button><button id="pauseBtn" class="circle-btn control-btn" onclick="togglePauseAudio()">⏸️</button><button class="circle-btn control-btn" onclick="skipAudio(5)">⏩</button><button class="circle-btn download-btn" onclick="downloadAudio()">💾</button></div>
     <div id="chatBox"></div><audio id="audioPlayer"></audio>
+    
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
         let isRecording = false, recognition, customCurriculumContent = "", wordsElements = [];
         let isLiveMode = false, silenceTimer, final_transcript = '', chatHistory = [], isTeacherSpeaking = false, userName = "{{ username }}";
+        
         function toggleDrawer() { document.getElementById('sideDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); }
-        const topicsLibrary = { "📱 تكنولوجيا": ["الذكاء الاصطناعي", "الأمن السيبراني"], "⚽ رياضة": ["كرة القدم", "كرة السلة"], "💼 حياة": ["مقابلات العمل", "إدارة الوقت"] };
+        
+        function downloadFree(filename) { alert("جاري تحميل الملف المجاني: " + filename + "\\n(في النسخة النهائية سيتم ربط هذا الزر بالملف الفعلي على السيرفر)"); closeModal('downloadsModal'); }
+        function upgradeAlert() { alert("💎 هذا الملف مخصص لاشتراكات Pro و VIP فقط. يرجى ترقية حسابك للوصول إلى هذه الميزة والمزيد من الملفات الأكاديمية."); closeModal('downloadsModal'); }
+
+        const topicsLibrary = { "📱 تكنولوجيا": ["الذكاء الاصطناعي", "الأمن السيبراني"], "⚽ رياضة": ["كرة القدم", "الألعاب الأولمبية"], "💼 حياة": ["مقابلات العمل", "إدارة الوقت"] };
         function populateTopics() { let container = document.getElementById("topicsList"); for (const [category, topics] of Object.entries(topicsLibrary)) { let catDiv = document.createElement("div"); catDiv.className = "topic-category"; catDiv.innerText = category; container.appendChild(catDiv); topics.forEach(topic => { let btn = document.createElement("div"); btn.className = "topic-item"; btn.innerText = topic; btn.onclick = () => { closeModal('topicsModal'); toggleDrawer(); sendMsg(`Let's discuss: ${topic}.`); }; container.appendChild(btn); }); } } populateTopics();
         function openModal(id) { document.getElementById(id).style.display = "block"; toggleDrawer(); } function closeModal(id) { document.getElementById(id).style.display = "none"; }
         function applySettings() { let root = document.documentElement; root.style.setProperty('--user-bg', document.getElementById('userBgColor').value); root.style.setProperty('--ai-bg', document.getElementById('aiBgColor').value); root.style.setProperty('--chat-color', document.getElementById('fontColor').value); root.style.setProperty('--chat-size', document.getElementById('fontSize').value + 'px'); document.getElementById('fontSizeVal').innerText = document.getElementById('fontSize').value + 'px'; }
         function resetSettings() { document.getElementById('userBgColor').value = "#d5f5e3"; document.getElementById('aiBgColor').value = "#e1f5fe"; document.getElementById('fontColor').value = "#2c3e50"; document.getElementById('fontSize').value = "16"; applySettings(); }
         function changeStyle() { document.getElementById('aiBgColor').value = document.getElementById("mode").value === "child" ? "#ffebef" : "#e1f5fe"; applySettings(); }
+        
         async function startLiveLesson() { try { window.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); } catch (e) {} isLiveMode = true; document.getElementById("liveIndicator").style.display = "block"; final_transcript = ''; if (!isRecording && recognition) { recognition.lang = document.getElementById("micLang").value; try { recognition.start(); } catch(e) {} } sendMsg(`Hello! I am ready. Please ask me a question to start.`); }
-        function requestFeature(type) { toggleDrawer(); sendMsg({"study_plan": "Suggest a CEFR study plan.", "test": "Give me a short test."}[type]); }
+        
+        function requestFeature(type) { 
+            toggleDrawer(); 
+            let p = {
+                "placement_test": "Please give me a comprehensive English placement test right now to determine my CEFR level. Ask questions one by one.", 
+                "test": "Give me a short quick English test."
+            }[type];
+            if(p) sendMsg(p);
+        }
+        
         function triggerUpload() { toggleDrawer(); if(confirm("⚠️ يمنع رفع أي مواد تخالف القوانين أو حقوق النشر. موافق؟")) { document.getElementById("fileUpload").click(); } }
         function handleFileUpload(event) { let file = event.target.files[0]; if (!file) return; let status = document.getElementById("curriculumStatus"); status.innerText = "⏳ جاري قراءة الملف..."; let ext = file.name.split('.').pop().toLowerCase(); if (ext === 'txt') { let reader = new FileReader(); reader.onload = e => { customCurriculumContent = e.target.result; status.innerText = "✅ تم دمج المنهج."; }; reader.readAsText(file); } else if (ext === 'pdf') { let reader = new FileReader(); reader.onload = async function(e) { try { let typedarray = new Uint8Array(e.target.result); let pdf = await pdfjsLib.getDocument(typedarray).promise; let fullText = ""; for(let i=1; i<=Math.min(pdf.numPages, 3); i++) { let page = await pdf.getPage(i); let textContent = await page.getTextContent(); fullText += textContent.items.map(item => item.str).join(" ") + " "; } customCurriculumContent = fullText; status.innerText = `✅ تم الاستخراج.`; } catch(err) { status.innerText = "❌ خطأ."; } }; reader.readAsArrayBuffer(file); } event.target.value = ''; }
         function skipAudio(s) { let a = document.getElementById("audioPlayer"); if (a.src) a.currentTime += s; } function downloadAudio() { let a = document.getElementById("audioPlayer"); if (!a.src) return; let link = document.createElement("a"); link.href = a.src; link.download = "SmartAcademy_Lesson.mp3"; document.body.appendChild(link); link.click(); document.body.removeChild(link); } function togglePauseAudio() { let a = document.getElementById("audioPlayer"), btn = document.getElementById("pauseBtn"); if(a.src === "") return; if (a.paused) { a.play(); btn.innerText = "⏸️"; } else { a.pause(); btn.innerText = "▶️"; } }
@@ -418,13 +406,70 @@ MAIN_PAGE = """
         function initSpeechRecognition() { window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (window.SpeechRecognition) { recognition = new window.SpeechRecognition(); recognition.continuous = true; recognition.interimResults = true; recognition.onstart = () => { isRecording = true; document.getElementById("micBtn").classList.add("recording"); }; recognition.onresult = (event) => { if(isTeacherSpeaking) return; let interim = ''; for (let i = event.resultIndex; i < event.results.length; ++i) { if (event.results[i].isFinal) final_transcript += event.results[i][0].transcript + " "; else interim += event.results[i][0].transcript; } let currentSpeech = (final_transcript + interim).trim(); if (currentSpeech.length > 0) { document.getElementById("userMsg").value = currentSpeech; clearTimeout(silenceTimer); silenceTimer = setTimeout(() => { if (isLiveMode && currentSpeech.length > 0) sendMsg(); }, 2500); } }; recognition.onend = () => { isRecording = false; document.getElementById("micBtn").classList.remove("recording"); if (isLiveMode && !isTeacherSpeaking) { try { recognition.start(); } catch(e) {} } }; return true; } return false; } let isSpeechSupported = initSpeechRecognition();
         async function toggleMic() { if (!isSpeechSupported) return alert("المتصفح لا يدعم الميكروفون."); if (isTeacherSpeaking && !audioPlayer.paused) { audioPlayer.pause(); isTeacherSpeaking = false; document.getElementById("pauseBtn").innerText = "▶️"; wordsElements.forEach(span => span.classList.add("spoken")); isLiveMode = true; final_transcript = ''; document.getElementById("liveIndicator").style.display = "block"; recognition.lang = document.getElementById("micLang").value; try { recognition.start(); } catch(e) {} return; } if (isLiveMode || isRecording) { isLiveMode = false; if(isRecording) recognition.stop(); document.getElementById("liveIndicator").style.display = "none"; if(window.localStream) window.localStream.getTracks().forEach(t => t.stop()); } else { try { window.localStream = await navigator.mediaDevices.getUserMedia({audio: { echoCancellation: true, noiseSuppression: true }}); } catch (e) {} isLiveMode = true; final_transcript = ''; document.getElementById("liveIndicator").style.display = "block"; recognition.lang = document.getElementById("micLang").value; try { recognition.start(); } catch(e) {} } }
         document.getElementById("userMsg").addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); sendMsg(); } });
-        function appendBubble(text, isUser, data=null) { let box = document.getElementById("chatBox"), container = document.createElement("div"); container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; if(isUser) { container.innerText = text; } else { let engDiv = document.createElement("div"); engDiv.className = "english-text"; wordsElements = []; data.english.split(" ").forEach(word => { let span = document.createElement("span"); span.className = "word"; span.innerText = word; engDiv.appendChild(span); wordsElements.push(span); }); container.appendChild(engDiv); let arDiv = document.createElement("div"); arDiv.className = "arabic-translation"; arDiv.innerText = data.arabic; container.appendChild(arDiv); let details = ""; if(data.keywords) details += `<div class="structured-data"><span class="section-title">🔑 Keywords:</span><br>${data.keywords}</div>`; if(data.summary) details += `<div class="structured-data"><span class="section-title">📝 Notes:</span><br>${data.summary}</div>`; if (details !== "") { let dDiv = document.createElement("div"); dDiv.innerHTML = details; container.appendChild(dDiv); } } box.appendChild(container); setTimeout(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }), 100); }
-        window.onload = async function() { if (window.location.search.includes("login=success")) { let toast = document.getElementById("loginToast"); toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 4000); } document.getElementById('chatBox').innerHTML = ''; try { let res = await fetch("/get_history"); let history = await res.json(); if (history.length > 0) { history.forEach(item => { if(item.role === 'user') { appendBubble(item.content, true); chatHistory.push({"role": "user", "content": item.content}); } else if(item.role === 'assistant') { appendBubble("", false, {english: item.content, arabic: item.arabic}); chatHistory.push({"role": "assistant", "content": item.content}); } }); document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; } else { let prompt = `Welcome the student (${userName}) warmly. Outline a short lesson plan for today. Ask if they are ready.`; sendMsg(prompt, true); } } catch(e) {} };
-        async function sendMsg(overrideMsg = null, isHidden = false) { let inputField = document.getElementById("userMsg"), msg = overrideMsg || inputField.value; if(!msg.trim()) return; if(!isHidden){ appendBubble(msg, true); chatHistory.push({"role": "user", "content": msg}); } else { chatHistory.push({"role": "system", "content": msg}); } final_transcript = ''; clearTimeout(silenceTimer); audioPlayer.pause(); document.getElementById("audioControls").style.display = "none"; inputField.value = ""; let loadDiv = document.createElement("div"); loadDiv.className = "chat-bubble ai-bubble"; loadDiv.id = "loadingBubble"; loadDiv.innerHTML = "<div class='arabic-translation' style='border:none;'>جاري تجهيز الرد... ⏳</div>"; document.getElementById("chatBox").appendChild(loadDiv); document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; try { let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ history: chatHistory.slice(-10), mode: document.getElementById("mode").value, custom_curriculum: customCurriculumContent }) }); let data = await res.json(); document.getElementById("loadingBubble")?.remove(); if(data.error) return alert("⚠️ خطأ: " + data.error); chatHistory.push({"role": "assistant", "content": data.english}); appendBubble("", false, data); if(data.audio) { audioPlayer.src = "data:audio/mp3;base64," + data.audio; document.getElementById("audioControls").style.display = "flex"; document.getElementById("pauseBtn").innerText = "⏸️"; isTeacherSpeaking = true; if(isRecording) recognition.stop(); let playPromise = audioPlayer.play(); if (playPromise !== undefined) playPromise.catch(error => { console.log("Auto-play blocked."); }); } } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("⚠️ خطأ في الاتصال."); } }
+        
+        function appendBubble(text, isUser, data=null) { 
+            let box = document.getElementById("chatBox"), container = document.createElement("div"); 
+            container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
+            if(isUser) { container.innerText = text; } 
+            else { 
+                let engDiv = document.createElement("div"); engDiv.className = "english-text"; wordsElements = []; 
+                data.english.split(" ").forEach(word => { let span = document.createElement("span"); span.className = "word"; span.innerText = word; engDiv.appendChild(span); wordsElements.push(span); }); 
+                container.appendChild(engDiv); 
+                let arDiv = document.createElement("div"); arDiv.className = "arabic-translation"; arDiv.innerText = data.arabic; container.appendChild(arDiv); 
+                let details = ""; 
+                if(data.keywords) details += `<div class="structured-data"><span class="section-title">🔑 Keywords:</span><br>${data.keywords}</div>`; 
+                if(data.summary) details += `<div class="structured-data"><span class="section-title">📝 Notes & Corrections:</span><br>${data.summary}</div>`; 
+                if (details !== "") { let dDiv = document.createElement("div"); dDiv.innerHTML = details; container.appendChild(dDiv); } 
+            } 
+            box.appendChild(container); setTimeout(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }), 100); 
+        }
+        
+        window.onload = async function() { 
+            if (window.location.search.includes("login=success")) { let toast = document.getElementById("loginToast"); toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 4000); } 
+            document.getElementById('chatBox').innerHTML = ''; 
+            try { 
+                let res = await fetch("/get_history"); let history = await res.json(); 
+                if (history.length > 0) { 
+                    history.forEach(item => { 
+                        if(item.role === 'user') { appendBubble(item.content, true); chatHistory.push({"role": "user", "content": item.content}); } 
+                        else if(item.role === 'assistant') { appendBubble("", false, {english: item.content, arabic: item.arabic}); chatHistory.push({"role": "assistant", "content": item.content}); } 
+                    }); 
+                    document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; 
+                } else { 
+                    // رسالة الترحيب الأولى باللغتين
+                    let prompt = `Welcome the student (${userName}) very warmly. Provide a welcoming message in BOTH English and Arabic. Briefly explain that we use Cambridge and Oxford standards. Ask them if they are ready for a quick placement test.`; 
+                    sendMsg(prompt, true); 
+                } 
+            } catch(e) {} 
+        };
+        
+        async function sendMsg(overrideMsg = null, isHidden = false) { 
+            let inputField = document.getElementById("userMsg"), msg = overrideMsg || inputField.value; 
+            if(!msg.trim()) return; 
+            if(!isHidden){ appendBubble(msg, true); chatHistory.push({"role": "user", "content": msg}); } 
+            else { chatHistory.push({"role": "system", "content": msg}); } 
+            final_transcript = ''; clearTimeout(silenceTimer); audioPlayer.pause(); document.getElementById("audioControls").style.display = "none"; inputField.value = ""; 
+            let loadDiv = document.createElement("div"); loadDiv.className = "chat-bubble ai-bubble"; loadDiv.id = "loadingBubble"; loadDiv.innerHTML = "<div class='arabic-translation' style='border:none;'>جاري التفكير وتجهيز الرد... ⏳</div>"; document.getElementById("chatBox").appendChild(loadDiv); document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; 
+            try { 
+                let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ history: chatHistory.slice(-10), mode: document.getElementById("mode").value, custom_curriculum: customCurriculumContent }) }); 
+                let data = await res.json(); document.getElementById("loadingBubble")?.remove(); 
+                if(data.error) return alert("⚠️ خطأ: " + data.error); 
+                chatHistory.push({"role": "assistant", "content": data.english}); appendBubble("", false, data); 
+                if(data.audio) { 
+                    audioPlayer.src = "data:audio/mp3;base64," + data.audio; document.getElementById("audioControls").style.display = "flex"; document.getElementById("pauseBtn").innerText = "⏸️"; 
+                    isTeacherSpeaking = true; if(isRecording) recognition.stop(); 
+                    let playPromise = audioPlayer.play(); if (playPromise !== undefined) playPromise.catch(error => { console.log("Auto-play blocked."); }); 
+                } 
+            } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("⚠️ خطأ في الاتصال."); } 
+        }
     </script>
 </body>
 </html>
 """
+
+# ==========================================
+# 3. مسارات الخادم (API Routes)
+# ==========================================
 
 @app.route("/")
 def home():
@@ -449,7 +494,6 @@ def auth():
     
     with sqlite3.connect('academy.db') as conn:
         cursor = conn.cursor()
-        
         if action == 'guest':
             guest_name = f"ضيف_{random.randint(1000, 9999)}"
             cursor.execute("INSERT INTO users (username, password_hash, auth_provider) VALUES (?, ?, ?)", (guest_name, "GUEST", "guest"))
@@ -458,13 +502,11 @@ def auth():
             session['user_id'] = cursor.fetchone()[0]
             session['username'] = guest_name
             return jsonify({"success": True})
-
         elif action == 'social':
             email = username 
             name = password 
             cursor.execute("SELECT id FROM users WHERE username = ?", (email,))
             user = cursor.fetchone()
-            
             if not user:
                 random_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
                 hashed_pw = generate_password_hash(random_pass)
@@ -474,11 +516,9 @@ def auth():
                 user_id = cursor.fetchone()[0]
             else:
                 user_id = user[0]
-                
             session['user_id'] = user_id
             session['username'] = name.split()[0] if name else email.split('@')[0]
             return jsonify({"success": True})
-
         elif action == 'register':
             cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
             if cursor.fetchone(): return jsonify({"success": False, "error": "الاسم مستخدم مسبقاً."})
@@ -489,7 +529,6 @@ def auth():
             session['user_id'] = cursor.fetchone()[0]
             session['username'] = username
             return jsonify({"success": True})
-            
         elif action == 'login':
             cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,))
             user = cursor.fetchone()
@@ -542,13 +581,13 @@ def chat():
         core_rules = """
         CRITICAL RULES: 
         1. MUST STRICTLY adhere to Islamic Sharia and local laws.
-        2. Base language progression on the CEFR.
+        2. Base language progression on the CEFR. Draw inspiration from BBC Learning English, Cambridge, and Oxford OER standards.
         3. ACT EXACTLY LIKE A REAL, EMPATHETIC HUMAN TUTOR. Provide proactive guidance.
         4. Make your 'english' response sound 100% natural, using conversational fillers.
         """
         if custom_curriculum: core_rules += f"\\n5. Context from uploaded files: {custom_curriculum[:2500]}"
 
-        json_structure = 'Respond ONLY in JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Lesson Plan / Gentle Corrections" }'
+        json_structure = 'Respond ONLY in JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Gentle Corrections" }'
         
         sys_msg = core_rules + ("\\nYou are a fun English teacher for kids." if mode == "child" else "\\nYou are a professional English coach.") + json_structure
         voice_model = "en-US-AriaNeural" if mode == "child" else "en-US-ChristopherNeural" 
@@ -561,7 +600,7 @@ def chat():
         ar_text = parsed.get("arabic", "")
         
         with sqlite3.connect('academy.db') as conn:
-            if "Generate a unique, warm welcome message" not in user_msg:
+            if "Generate a unique, warm welcome message" not in user_msg and "Welcome the student" not in user_msg:
                 conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng_text, ar_text))
             
