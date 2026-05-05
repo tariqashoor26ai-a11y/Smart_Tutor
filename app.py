@@ -159,7 +159,10 @@ LOGIN_PAGE = """
                 <button class="main-btn" id="submitBtn" onclick="submitAuth()">دخول إلى الأكاديمية</button>
                 <div class="toggle-text" id="toggleDiv">ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span></div>
                 <div style="margin:15px 0; color:#bdc3c7; font-size:12px;">أو عبر المنصات</div>
+                
+                <!-- حاوية زر تسجيل الدخول بجوجل -->
                 <div id="googleBtnContainer"></div>
+                
                 <button class="social-btn facebook" onclick="loginWithFacebook()">📘 الدخول بحساب Facebook</button>
                 <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة مجانية)</button>
             </div>
@@ -260,6 +263,7 @@ LOGIN_PAGE = """
         }
 
         window.onload = function () { 
+            // تهيئة زر جوجل باستخدام مفتاح الـ Client ID
             google.accounts.id.initialize({ client_id: "{{ google_id }}", callback: handleGoogleResponse }); 
             google.accounts.id.renderButton(document.getElementById("googleBtnContainer"), { theme: "outline", size: "large", width: "100%" }); 
         };
@@ -352,7 +356,6 @@ MAIN_PAGE = """
 
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
         select { padding: 10px 15px; font-size: 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.4); outline: none; background: white;}
-        .start-btn { background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 100%); font-weight: bold; padding: 10px 25px; font-size: 15px; border-radius: 12px; border: none; color: white; cursor: pointer;}
         
         /* مؤشر التحدث */
         #liveIndicator { display: none; color: var(--danger); font-weight: bold; font-size: 14px; margin-top: 10px; animation: blink 1.5s infinite; }
@@ -368,7 +371,7 @@ MAIN_PAGE = """
         #micBtn.recording { animation: pulseMic 1.5s infinite; }
         .send-btn { padding: 14px 30px; font-size: 16px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%);}
         
-        /* أدوات التحكم بالصوت */
+        /* أدوات التحكم بالصوت (التي طلبت إرجاعها) */
         #audioControls { display: none; justify-content: center; gap: 15px; margin-top: 15px; background: rgba(255,255,255,0.95); padding: 12px 25px; border-radius: 30px; box-shadow: var(--soft-shadow); width: fit-content; margin: 15px auto;}
         .control-btn { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); width: 45px; height: 45px; font-size: 18px;}
         .download-btn { background: linear-gradient(135deg, var(--success) 0%, #27ae60 100%); width: 45px; height: 45px; font-size: 18px;}
@@ -434,6 +437,7 @@ MAIN_PAGE = """
     
     <input type="file" id="fileUpload" accept=".txt,.pdf,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)">
     
+    <!-- نافذة مكتبة الموارد -->
     <div id="downloadsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span>
@@ -452,6 +456,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
+    <!-- نافذة المناهج -->
     <div id="academicModal" class="modal">
         <div class="modal-content" style="line-height: 1.8;">
             <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
@@ -467,6 +472,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
+    <!-- نافذة الإحصاءات -->
     <div id="statsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
@@ -480,6 +486,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
+    <!-- نافذة المواضيع الاحترافية الـ 50 -->
     <div id="topicsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('topicsModal')">&times;</span>
@@ -488,6 +495,7 @@ MAIN_PAGE = """
         </div>
     </div>
     
+    <!-- نافذة الإعدادات -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('settingsModal')">&times;</span>
@@ -524,6 +532,7 @@ MAIN_PAGE = """
         <button class="send-btn" onclick="sendMsg()">إرسال</button>
     </div>
     
+    <!-- أدوات التحكم بالصوت المسترجعة -->
     <div id="audioControls">
         <button class="circle-btn control-btn" onclick="skipAudio(-5)" title="تأخير 5 ثواني">⏪</button>
         <button id="pauseBtn" class="circle-btn control-btn" onclick="togglePauseAudio()" title="إيقاف / تشغيل">⏸️</button>
@@ -535,7 +544,6 @@ MAIN_PAGE = """
     <audio id="audioPlayer"></audio>
     
     <script>
-        // --- 50 موضوع احترافي مقسم ---
         const topicsLibrary = {
             "🗣️ مواضيع للمبتدئين (A1-A2)": ["Introducing Yourself", "Daily Routines", "Family Members", "Weather and Seasons", "Ordering Food", "Asking for Directions", "Hobbies", "Describing House", "Shopping", "Weekend Plans"],
             "🌍 الثقافات والمجتمع (A2-B2)": ["Global Cuisines", "Traveling on Budget", "Ancient History", "Japanese Culture", "Learning Languages", "Climate Change", "Minimalist Lifestyle", "Festivals", "City vs Country", "Volunteering"],
@@ -548,7 +556,6 @@ MAIN_PAGE = """
         let isLiveMode = false, silenceTimer, final_transcript = '', chatHistory = [], isTeacherSpeaking = false, userName = "{{ username }}";
         let isClassroomMode = false, classroomPollingInterval = null, lastMessageCount = 0, chartInstance = null;
 
-        // --- نظام البومودورو للراحة ---
         let studyMinutes = 0;
         setInterval(() => {
             studyMinutes++;
@@ -587,7 +594,7 @@ MAIN_PAGE = """
             if(p) sendMsg(p);
         }
 
-        // --- أدوات التحكم بالصوت (التي تم استرجاعها) ---
+        // --- أدوات التحكم بالصوت التفاعلية ---
         function skipAudio(seconds) { 
             let a = document.getElementById("audioPlayer"); 
             if (a.src && !a.paused) { a.currentTime += seconds; } 
@@ -604,7 +611,6 @@ MAIN_PAGE = """
             if (a.paused) { a.play(); btn.innerText = "⏸️"; } else { a.pause(); btn.innerText = "▶️"; } 
         }
         
-        // --- تخصيص المظهر ---
         function applySettings() { 
             let root = document.documentElement; 
             root.style.setProperty('--user-bg', document.getElementById('userBgColor').value); 
@@ -613,7 +619,6 @@ MAIN_PAGE = """
             root.style.setProperty('--chat-size', document.getElementById('fontSize').value + 'px'); 
             document.getElementById('fontSizeVal').innerText = document.getElementById('fontSize').value + 'px'; 
             
-            // تغيير وضع الأطفال
             if (document.getElementById("mode").value === "child") {
                 root.style.setProperty('--ai-bg', "#ffebef");
             }
@@ -622,7 +627,6 @@ MAIN_PAGE = """
             document.getElementById('userBgColor').value = "#d5f5e3"; document.getElementById('aiBgColor').value = "#e1f5fe"; document.getElementById('fontColor').value = "#2c3e50"; document.getElementById('fontSize').value = "16"; applySettings(); 
         }
 
-        // --- الفصل الجماعي المشترك ---
         function toggleClassroomMode() {
             toggleDrawer(); isClassroomMode = !isClassroomMode;
             let banner = document.getElementById("classroomBanner"), btnText = document.getElementById("classroomBtnText");
@@ -653,7 +657,6 @@ MAIN_PAGE = """
             } catch(e) {}
         }
 
-        // --- الإحصاءات ---
         async function openStatsModal() {
             toggleDrawer(); document.getElementById('statsModal').style.display = "block";
             try {
@@ -669,7 +672,6 @@ MAIN_PAGE = """
             } catch (e) { alert("فشل تحميل الإحصاءات"); }
         }
 
-        // --- إضافة الرسائل وتلوين الكلمات ---
         function appendBubble(text, isUser, data=null, senderName=null) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
@@ -736,7 +738,7 @@ MAIN_PAGE = """
                 
                 if(data.audio) { 
                     let ap = document.getElementById("audioPlayer"); ap.src = "data:audio/mp3;base64," + data.audio; 
-                    document.getElementById("audioControls").style.display = "flex"; // إظهار أزرار الصوت
+                    document.getElementById("audioControls").style.display = "flex"; 
                     document.getElementById("pauseBtn").innerText = "⏸️"; 
                     isTeacherSpeaking = true; if(isRecording) recognition.stop(); 
                     let playPromise = ap.play(); if (playPromise !== undefined) playPromise.catch(error => { console.log("Auto-play blocked."); }); 
@@ -744,7 +746,7 @@ MAIN_PAGE = """
             } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("⚠️ خطأ في الاتصال."); } 
         }
         
-        // --- محرك الصوت (المزامنة والمقاطعة) ---
+        // --- محرك الصوت (المزامنة) ---
         let audioPlayer = document.getElementById("audioPlayer"); 
         audioPlayer.ontimeupdate = function() { 
             if (wordsElements.length === 0 || isNaN(audioPlayer.duration)) return; 
@@ -761,7 +763,7 @@ MAIN_PAGE = """
             if (isLiveMode) setTimeout(() => { try { recognition.start(); } catch(e) {} }, 300); 
         };
 
-        // --- الميكروفون التفاعلي (المقاطعة الحية) ---
+        // --- الميكروفون التفاعلي (والمقاطعة) ---
         function initSpeechRecognition() { 
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; 
             if (window.SpeechRecognition) { 
@@ -795,7 +797,7 @@ MAIN_PAGE = """
             if (!isSpeechSupported) return alert("المتصفح لا يدعم الميكروفون."); 
             let ap = document.getElementById("audioPlayer"); 
             
-            // ميزة المقاطعة (Interrupt): إذا كان المدرس يتحدث، إيقافه وتشغيل الميكروفون
+            // المقاطعة (Interrupt Function)
             if (isTeacherSpeaking && !ap.paused) { 
                 ap.pause(); isTeacherSpeaking = false; document.getElementById("pauseBtn").innerText = "▶️"; 
                 wordsElements.forEach(span => span.classList.add("spoken")); 
@@ -819,14 +821,14 @@ MAIN_PAGE = """
         
         document.getElementById("userMsg").addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); sendMsg(); } });
 
-        // --- رفع الملفات المخصص (قراءة في المتصفح) ---
-        function triggerUpload() { toggleDrawer(); if(confirm("⚠️ يمنع رفع أي مواد تخالف القوانين. موافق؟")) { document.getElementById("fileUpload").click(); } }
+        // --- رفع الملفات ---
+        function triggerUpload() { toggleDrawer(); if(confirm("⚠️ يمنع رفع أي مواد تخالف القوانين أو حقوق النشر. موافق؟")) { document.getElementById("fileUpload").click(); } }
         function handleFileUpload(event) { 
             let file = event.target.files[0]; if (!file) return; 
-            let status = document.getElementById("curriculumStatus"); status.innerText = "⏳ جاري قراءة الملف..."; 
+            let status = document.getElementById("curriculumStatus"); status.innerText = "⏳ جاري القراءة..."; 
             let ext = file.name.split('.').pop().toLowerCase(); 
             if (ext === 'txt') { 
-                let reader = new FileReader(); reader.onload = e => { customCurriculumContent = e.target.result; status.innerText = "✅ تم دمج المنهج."; }; reader.readAsText(file); 
+                let reader = new FileReader(); reader.onload = e => { customCurriculumContent = e.target.result; status.innerText = "✅ تم الدمج."; }; reader.readAsText(file); 
             } else if (ext === 'pdf') { 
                 let reader = new FileReader(); reader.onload = async function(e) { 
                     try { 
@@ -849,26 +851,32 @@ MAIN_PAGE = """
 
 @app.route("/")
 def home():
-    if 'user_id' in session: return render_template_string(MAIN_PAGE, username=session['username'])
-    else: return render_template_string(LOGIN_PAGE)
+    # التحقق من وجود المتغير وإرسال القيم لتفعيل زر جوجل
+    if 'user_id' in session: 
+        return render_template_string(MAIN_PAGE, username=session['username'])
+    else: 
+        return render_template_string(LOGIN_PAGE, google_id=GOOGLE_CLIENT_ID, fb_id=FACEBOOK_APP_ID)
 
 @app.route("/download/<file_id>")
 def download_file(file_id):
     if 'user_id' not in session: return redirect(url_for('home'))
+    
     if file_id == 'study_plan':
-        content = "=== Smart Academy CEFR Study Plan ===\n\n1. Level A1: Basic phrases.\n2. Level A2: Routine tasks.\n3. Level B1: Travel, expressing opinions."
+        content = """=== Smart Academy CEFR Study Plan ===\n\n1. Level A1 (Beginner):\n- Focus: Basic phrases, introducing yourself.\n- Grammar: Present simple, basic pronouns.\n\n2. Level A2 (Elementary):\n- Focus: Routine tasks, simple shopping.\n- Grammar: Past simple, future plans.\n\n3. Level B1 (Intermediate):\n- Focus: Travel, expressing opinions.\n- Grammar: Perfect tenses, conditionals.\n\nKeep practicing daily with our AI Tutor!"""
         filename = "Study_Plan_CEFR.txt"
     elif file_id == 'vocab':
-        content = "=== Essential 500 English Words ===\n\n1. Always\n2. Because\n3. Beautiful\n4. Company\n5. Different\n"
+        content = """=== Essential 500 English Words (A1) ===\n\n1. Always\n2. Because\n3. Beautiful\n4. Company\n5. Different\n6. Enough\n7. Family\n... (Keep using the Academy to learn them all in context!)"""
         filename = "Basic_Vocab.txt"
     else:
         return "File not found", 404
+        
     response = app.response_class(content, mimetype='text/plain')
     response.headers["Content-Disposition"] = f"attachment; filename={filename}"
     return response
 
 @app.route("/intro_audio")
 def intro_audio():
+    # النص المشكل بالكامل
     text = "مَرْحَبًا بِكَ فِي أَكَادِيمِيَّتِكَ الذَّكِيَّةِ لِتَعَلُّمِ اللُّغَةِ الْإِنْجِلِيزِيَّةِ. هُنَا نُقَدِّمُ لَكَ مُعَلِّمًا بِشَخْصِيَّةٍ حَقِيقِيَّةٍ يُصَحِّحُ أَخْطَاءَكَ، وَيُوَجِّهُكَ فِي مُحَادَثَاتٍ حَيَّةٍ وَمُمْتِعَةٍ تُغَطِّي مِئَاتِ الْمَوَاضِيعِ وَفْقَ الْمَعَايِيرِ الْعَالَمِيَّةِ. سَجِّلْ دُخُولَكَ الْآنَ لِتَبْدَأَ رِحْلَتَكَ."
     try:
         audio = asyncio.run(generate_audio(text, "ar-SA-HamedNeural")) 
@@ -993,7 +1001,7 @@ def chat():
         eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
         
         with sqlite3.connect('academy.db') as conn:
-            if "Welcome the student" not in user_msg:
+            if "Act as a professional Cambridge examiner" not in user_msg and "Welcome the student" not in user_msg:
                 conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
             conn.commit()
