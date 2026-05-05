@@ -79,7 +79,6 @@ LOGIN_PAGE = """
         #googleBtnContainer { margin-bottom: 10px; display: flex; justify-content: center; width: 100%;}
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
 
-        /* قسم المناهج والشهادات (جديد) */
         .academic-section { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 40px; animation: popIn 0.8s ease-out;}
         .acad-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; min-width: 300px; text-align: right;}
         .acad-box h3 { color: #3498db; font-size: 20px; margin-top: 0; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;}
@@ -135,11 +134,10 @@ LOGIN_PAGE = """
             </div>
         </div>
 
-        <!-- القسم الأكاديمي (مناهج، اختبارات، شهادات) -->
         <div class="academic-section">
             <div class="acad-box">
                 <h3>📚 مصادرنا ومناهجنا المعتمدة</h3>
-                <p style="color:#7f8c8d; font-size:14px; margin-bottom:15px;">نعتمد في تدريبنا على أقوى الموارد العالمية المفتوحة (OER) لضمان جودة التعليم وفق معايير الإطار الأوروبي (CEFR):</p>
+                <p style="color:#7f8c8d; font-size:14px; margin-bottom:15px;">نعتمد في تدريبنا على أقوى الموارد العالمية المفتوحة لضمان جودة التعليم وفق معايير الإطار الأوروبي (CEFR):</p>
                 <ul>
                     <li><strong>Oxford OER:</strong> لمناهج القواعد المتقدمة وتوسيع الحصيلة اللغوية.</li>
                     <li><strong>Cambridge English:</strong> كمرجع أساسي لاختبارات تقييم المستوى (A1 to C2).</li>
@@ -153,13 +151,12 @@ LOGIN_PAGE = """
                 <ul>
                     <li><strong>1. اختبار تحديد المستوى:</strong> يجريه المدرس فور تسجيلك لتحديد نقطة البداية الصحيحة.</li>
                     <li><strong>2. التقييمات الدورية:</strong> اختبارات قصيرة بعد كل وحدة دراسية لضمان الفهم.</li>
-                    <li><strong>3. الاختبار النهائي (Final Exam):</strong> تقييم شامل (استماع، تحدث، وقواعد) عند نهاية كل مستوى (مثل B1).</li>
-                    <li><strong>4. الشهادات:</strong> إصدار <i>شهادة إتمام كورس</i> و <i>شهادة اجتياز مستوى</i> موثقة من الأكاديمية بعد اجتياز الاختبار النهائي بنجاح.</li>
+                    <li><strong>3. الاختبار النهائي:</strong> تقييم شامل (استماع، تحدث، وقواعد) عند نهاية كل مستوى.</li>
+                    <li><strong>4. الشهادات:</strong> إصدار <i>شهادة إتمام كورس</i> و <i>شهادة اجتياز مستوى</i> موثقة.</li>
                 </ul>
             </div>
         </div>
 
-        <!-- قسم خطط الأسعار -->
         <div class="pricing-section">
             <h2 style="color:#8e44ad;">استثمر في مستقبلك اللغوي 🚀</h2>
             <div class="pricing-cards" style="margin-top:30px;">
@@ -478,7 +475,8 @@ def home():
 
 @app.route("/intro_audio")
 def intro_audio():
-    text = "مرحباً بك في أكاديميتك الذكية لتعلم اللغة الإنجليزية. هنا نقدم لك معلماً بشخصية حقيقية يصحح أخطاءك، ويوجهك في محادثات حية وممتعة تغطي مئات المواضيع وفق المعايير العالمية. سجل دخولك الآن لتبدأ رحلتك."
+    # استخدام التشكيل لضمان النطق الصحيح وتفادي الأخطاء التي أشرت إليها
+    text = "مَرْحَبًا بِكَ فِي أَكَادِيمِيَّتِكَ الذَّكِيَّةِ لِتَعَلُّمِ اللُّغَةِ الْإِنْجِلِيزِيَّةِ. هُنَا نُقَدِّمُ لَكَ مُعَلِّمًا بِشَخْصِيَّةٍ حَقِيقِيَّةٍ يُصَحِّحُ أَخْطَاءَكَ، وَيُوَجِّهُكَ فِي مُحَادَثَاتٍ حَيَّةٍ وَمُمْتِعَةٍ تُغَطِّي مِئَاتِ الْمَوَاضِيعِ وَفْقَ الْمَعَايِيرِ الْعَالَمِيَّةِ. سَجِّلْ دُخُولَكَ الْآنَ لِتَبْدَأَ رِحْلَتَكَ."
     try:
         audio = asyncio.run(generate_audio(text, "ar-SA-HamedNeural")) 
         return jsonify({"audio": audio})
@@ -554,7 +552,8 @@ def get_history():
     except Exception as e: return jsonify([])
 
 async def generate_audio(text, voice):
-    clean_text = re.sub(r'[^\w\s.,!?\']', '', text) 
+    # إزالة علامات الماركدوان فقط للحفاظ على الحركات (التشكيل) والنصوص السليمة
+    clean_text = re.sub(r'[*#_~`]', '', text) 
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save("response.mp3")
     with open("response.mp3", "rb") as f: return base64.b64encode(f.read()).decode('utf-8')
@@ -587,7 +586,7 @@ def chat():
         """
         if custom_curriculum: core_rules += f"\\n5. Context from uploaded files: {custom_curriculum[:2500]}"
 
-        json_structure = 'Respond ONLY in JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Gentle Corrections" }'
+        json_structure = 'Respond ONLY in JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation (If asked to provide both English and Arabic, include the Arabic here)", "keywords": "Keywords", "summary": "Notes / Test Feedback / Gentle Corrections" }'
         
         sys_msg = core_rules + ("\\nYou are a fun English teacher for kids." if mode == "child" else "\\nYou are a professional English coach.") + json_structure
         voice_model = "en-US-AriaNeural" if mode == "child" else "en-US-ChristopherNeural" 
