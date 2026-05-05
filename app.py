@@ -6,8 +6,8 @@ import re
 import sqlite3
 import random
 import string
-from datetime import datetime, timedelta
-from flask import Flask, request, jsonify, render_template_string, session, redirect, url_for
+from datetime import datetime
+from flask import Flask, request, jsonify, render_template_string, session, redirect, url_for, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from groq import Groq
 import edge_tts
@@ -45,12 +45,14 @@ def init_db():
                             arabic TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
-        try: conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        except: pass
+        try: 
+            conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        except: 
+            pass
 init_db()
 
 # ==========================================
-# 1. واجهة بوابة الدخول والتسويق (Landing)
+# 1. بوابة الدخول والتسويق (Landing)
 # ==========================================
 LOGIN_PAGE = """
 <!DOCTYPE html>
@@ -64,15 +66,19 @@ LOGIN_PAGE = """
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); overflow-x: hidden; color: #2c3e50;}
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
         @keyframes popIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+        
         .hero-section { display: flex; flex-wrap: wrap; gap: 30px; align-items: stretch; margin-bottom: 50px; animation: popIn 0.6s ease-out;}
         .box { background: rgba(255, 255, 255, 0.9); padding: 35px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); flex: 1; min-width: 320px; }
+        
         .intro-box h1 { color: #8e44ad; margin-top: 0; font-size: 32px; margin-bottom: 15px;}
         .intro-box p { line-height: 1.8; font-size: 16px; margin-bottom: 20px;}
         .features-list { list-style: none; padding: 0; margin-bottom: 25px;}
         .features-list li { margin-bottom: 12px; font-weight: bold; display: flex; align-items: center; gap: 10px;}
         .features-list li::before { content: '✅'; color: #2ecc71; }
+        
         .audio-btn { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); border: none; padding: 12px 25px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3); transition: all 0.3s; align-self: flex-start;}
         .audio-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4); }
+
         .auth-box { text-align: center; }
         .auth-box h2 { color: #2c3e50; margin-top: 0; font-size: 24px; margin-bottom: 20px;}
         .input-group { margin-bottom: 15px; text-align: right; }
@@ -88,11 +94,13 @@ LOGIN_PAGE = """
         .social-btn.guest { background: #95a5a6; color: white; margin-bottom: 0;}
         #googleBtnContainer { margin-bottom: 10px; display: flex; justify-content: center; width: 100%;}
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
+
         .academic-section { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 40px; animation: popIn 0.8s ease-out;}
         .acad-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; min-width: 300px; text-align: right;}
         .acad-box h3 { color: #3498db; font-size: 20px; margin-top: 0; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;}
         .acad-box ul { list-style: none; padding: 0;}
         .acad-box ul li { margin-bottom: 15px; line-height: 1.6;}
+        
         .pricing-section { text-align: center; margin-top: 50px;}
         .pricing-cards { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
         .card { background: white; border-radius: 20px; padding: 30px 20px; flex: 1; min-width: 280px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eee; transition: transform 0.3s; position: relative;}
@@ -109,8 +117,16 @@ LOGIN_PAGE = """
 </head>
 <body>
     <script>
-      window.fbAsyncInit = function() { FB.init({ appId: '{{ fb_id }}', cookie: true, xfbml: true, version: 'v19.0' }); };
-      (function(d, s, id){ var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) {return;} js = d.createElement(s); js.id = id; js.src = "https://connect.facebook.net/en_US/sdk.js"; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));
+      window.fbAsyncInit = function() {
+        FB.init({ appId: '{{ fb_id }}', cookie: true, xfbml: true, version: 'v19.0' });
+      };
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "https://connect.facebook.net/en_US/sdk.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
     </script>
     <div class="container">
         <div class="hero-section">
@@ -123,15 +139,23 @@ LOGIN_PAGE = """
                     <li>مناهج عالمية معتمدة وشهادات إتمام.</li>
                     <li>مكتبة موارد شاملة (PDF, MP3, PPT).</li>
                 </ul>
-                <button class="audio-btn" id="introAudioBtn" onclick="playIntroAudio()"><span id="audioIcon">🔊</span> استمع لنبذة الأكاديمية</button>
+                <button class="audio-btn" id="introAudioBtn" onclick="playIntroAudio()">
+                    <span id="audioIcon">🔊</span> استمع لنبذة الأكاديمية
+                </button>
                 <audio id="introPlayer"></audio>
             </div>
             
             <div class="box auth-box" id="loginBox">
                 <h2 id="authTitle">تسجيل الدخول</h2>
                 <div id="errorMsg"></div>
-                <div class="input-group"><label>الإيميل أو اسم المستخدم</label><input type="text" id="username" placeholder="أدخل بياناتك..."></div>
-                <div class="input-group"><label>كلمة المرور</label><input type="password" id="password" placeholder="أدخل كلمة المرور..."></div>
+                <div class="input-group">
+                    <label>الإيميل أو اسم المستخدم</label>
+                    <input type="text" id="username" placeholder="أدخل بياناتك...">
+                </div>
+                <div class="input-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور...">
+                </div>
                 <button class="main-btn" id="submitBtn" onclick="submitAuth()">دخول إلى الأكاديمية</button>
                 <div class="toggle-text" id="toggleDiv">ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span></div>
                 <div style="margin:15px 0; color:#bdc3c7; font-size:12px;">أو عبر المنصات</div>
@@ -144,11 +168,19 @@ LOGIN_PAGE = """
         <div class="academic-section">
             <div class="acad-box">
                 <h3>📚 مصادرنا ومناهجنا المعتمدة</h3>
-                <ul><li><strong>Oxford OER & Cambridge English:</strong> لضمان جودة التعليم.</li><li><strong>BBC Learning English:</strong> للتدرب على المحادثات اليومية.</li></ul>
+                <ul>
+                    <li><strong>Oxford OER & Cambridge English:</strong> لضمان جودة التعليم النحوي والمفردات.</li>
+                    <li><strong>BBC Learning English:</strong> للتدرب على المحادثات اليومية والاستماع الفعال.</li>
+                    <li><strong>CEFR Standards:</strong> جميع مواضيعنا واختباراتنا مبنية على الإطار الأوروبي المشترك.</li>
+                </ul>
             </div>
             <div class="acad-box">
                 <h3>🎓 خطة الاختبارات والشهادات</h3>
-                <ul><li>1. اختبار تحديد المستوى.</li><li>2. التقييمات الدورية.</li><li>3. شهادات إتمام مستوى موثقة بعد الاختبار النهائي.</li></ul>
+                <ul>
+                    <li>1. <b>اختبار تحديد المستوى:</b> يتم إجراؤه لتحديد نقطة البداية الصحيحة (A1-C2).</li>
+                    <li>2. <b>التقييمات الدورية:</b> اختبارات قصيرة بعد إتمام كل وحدة.</li>
+                    <li>3. <b>الشهادات:</b> شهادات إتمام مستوى موثقة بعد اجتياز الاختبار النهائي.</li>
+                </ul>
             </div>
         </div>
 
@@ -157,13 +189,13 @@ LOGIN_PAGE = """
             <div class="pricing-cards" style="margin-top:30px;">
                 <div class="card">
                     <h3>باقة التجربة</h3><div class="price">مجاناً</div>
-                    <ul><li>دخول كضيف للفصل</li><li>موارد أساسية</li></ul>
+                    <ul><li>دخول كضيف للفصل</li><li>تحميل الموارد الأساسية الحرة</li></ul>
                     <button class="card-btn" onclick="window.scrollTo(0,0); guestLogin();">ابدأ التجربة</button>
                 </div>
                 <div class="card popular">
                     <div class="popular-badge">الأكثر طلباً</div>
                     <h3>باقة المحترفين (Pro)</h3><div class="price">$19 <span>/ شهرياً</span></div>
-                    <ul><li>إحصاءات تقدم مفصلة</li><li>دخول دائم للفصل</li><li>اختبارات دورية وشهادات</li></ul>
+                    <ul><li>إحصاءات تقدم مفصلة</li><li>الوصول لمكتبة الـ VIP</li><li>اختبارات دورية وشهادات</li></ul>
                     <button class="card-btn" onclick="window.scrollTo(0,0); toggleMode();">اشترك الآن</button>
                 </div>
                 <div class="card">
@@ -185,39 +217,97 @@ LOGIN_PAGE = """
             document.getElementById('toggleDiv').innerHTML = 'لديك حساب بالفعل؟ <span onclick="isLogin=true; toggleModeReal();">تسجيل الدخول</span>';
             document.getElementById('errorMsg').innerText = '';
         }
+        
         function toggleModeReal() {
             document.getElementById('authTitle').innerText = 'تسجيل الدخول';
             document.getElementById('submitBtn').innerText = 'دخول إلى الأكاديمية';
             document.getElementById('toggleDiv').innerHTML = 'ليس لديك حساب؟ <span onclick="toggleMode()">إنشاء حساب جديد</span>';
             document.getElementById('errorMsg').innerText = '';
         }
+
         async function executeAuth(action, username, password, provider='local') {
-            let err = document.getElementById('errorMsg'); err.innerText = "جاري التحقق..."; err.style.color = "#3498db";
+            let err = document.getElementById('errorMsg'); 
+            err.innerText = "جاري التحقق..."; 
+            err.style.color = "#3498db";
             try {
-                let res = await fetch("/auth", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ action: action, username: username, password: password, provider: provider }) });
+                let res = await fetch("/auth", { 
+                    method: "POST", 
+                    headers: {"Content-Type": "application/json"}, 
+                    body: JSON.stringify({ action: action, username: username, password: password, provider: provider }) 
+                });
                 let data = await res.json();
-                if(data.success) window.location.href = "/?login=success"; 
-                else { err.style.color = "#e74c3c"; err.innerText = data.error; }
-            } catch(e) { err.style.color = "#e74c3c"; err.innerText = "خطأ في الاتصال بالسيرفر."; }
+                if(data.success) {
+                    window.location.href = "/?login=success"; 
+                } else { 
+                    err.style.color = "#e74c3c"; 
+                    err.innerText = data.error; 
+                }
+            } catch(e) { 
+                err.style.color = "#e74c3c"; 
+                err.innerText = "خطأ في الاتصال بالسيرفر."; 
+            }
         }
+
         async function submitAuth() {
-            let user = document.getElementById('username').value, pass = document.getElementById('password').value;
+            let user = document.getElementById('username').value;
+            let pass = document.getElementById('password').value;
             if(!user || !pass) { document.getElementById('errorMsg').innerText = "يرجى تعبئة الحقول."; return; }
             executeAuth(isLogin ? 'login' : 'register', user, pass);
         }
-        async function guestLogin() { executeAuth('guest', '', ''); }
-        window.onload = function () { google.accounts.id.initialize({ client_id: "{{ google_id }}", callback: handleGoogleResponse }); google.accounts.id.renderButton(document.getElementById("googleBtnContainer"), { theme: "outline", size: "large", width: "100%" }); };
-        function handleGoogleResponse(response) { const payload = JSON.parse(atob(response.credential.split('.')[1])); executeAuth('social', payload.email, payload.name, 'google'); }
-        function loginWithFacebook() { FB.login(function(response) { if (response.authResponse) { FB.api('/me', {fields: 'name,email'}, function(res) { executeAuth('social', res.email || res.id, res.name, 'facebook'); }); } else { document.getElementById('errorMsg').innerText = "تم إلغاء الدخول."; } }, {scope: 'public_profile,email'}); }
-        async function playIntroAudio() { let btn = document.getElementById('introAudioBtn'), icon = document.getElementById('audioIcon'), player = document.getElementById('introPlayer'); if(!player.src) { icon.innerText = "⏳"; btn.disabled = true; try { let res = await fetch("/intro_audio"); let data = await res.json(); player.src = "data:audio/mp3;base64," + data.audio; player.play(); } catch(e) { alert("خطأ في التحميل."); } btn.disabled = false; } else { if(player.paused) player.play(); else player.pause(); } }
-        document.getElementById('introPlayer').onplay = () => document.getElementById('audioIcon').innerText = "⏸️"; document.getElementById('introPlayer').onpause = () => document.getElementById('audioIcon').innerText = "🔊"; document.getElementById('introPlayer').onended = () => document.getElementById('audioIcon').innerText = "🔊";
+
+        async function guestLogin() { 
+            executeAuth('guest', '', ''); 
+        }
+
+        window.onload = function () { 
+            google.accounts.id.initialize({ client_id: "{{ google_id }}", callback: handleGoogleResponse }); 
+            google.accounts.id.renderButton(document.getElementById("googleBtnContainer"), { theme: "outline", size: "large", width: "100%" }); 
+        };
+
+        function handleGoogleResponse(response) { 
+            const payload = JSON.parse(atob(response.credential.split('.')[1])); 
+            executeAuth('social', payload.email, payload.name, 'google'); 
+        }
+
+        function loginWithFacebook() { 
+            FB.login(function(response) { 
+                if (response.authResponse) { 
+                    FB.api('/me', {fields: 'name,email'}, function(res) { executeAuth('social', res.email || res.id, res.name, 'facebook'); }); 
+                } else { 
+                    document.getElementById('errorMsg').innerText = "تم إلغاء الدخول."; 
+                } 
+            }, {scope: 'public_profile,email'}); 
+        }
+
+        async function playIntroAudio() { 
+            let btn = document.getElementById('introAudioBtn');
+            let icon = document.getElementById('audioIcon');
+            let player = document.getElementById('introPlayer'); 
+            if(!player.src) { 
+                icon.innerText = "⏳"; 
+                btn.disabled = true; 
+                try { 
+                    let res = await fetch("/intro_audio"); 
+                    let data = await res.json(); 
+                    player.src = "data:audio/mp3;base64," + data.audio; 
+                    player.play(); 
+                } catch(e) { alert("خطأ في التحميل."); } 
+                btn.disabled = false; 
+            } else { 
+                if(player.paused) player.play(); 
+                else player.pause(); 
+            } 
+        }
+        document.getElementById('introPlayer').onplay = () => document.getElementById('audioIcon').innerText = "⏸️"; 
+        document.getElementById('introPlayer').onpause = () => document.getElementById('audioIcon').innerText = "🔊"; 
+        document.getElementById('introPlayer').onended = () => document.getElementById('audioIcon').innerText = "🔊";
     </script>
 </body>
 </html>
 """
 
 # ==========================================
-# 2. واجهة الأكاديمية (الرئيسية، الإحصاءات، والفصل)
+# 2. واجهة الأكاديمية التفاعلية الكاملة (Main App)
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -228,15 +318,23 @@ MAIN_PAGE = """
     <title>Smart Academy - المدرس الذكي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
-    <!-- مكتبة Chart.js للرسومات الملونة -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #3498db; --secondary: #2c3e50; --accent: #8e44ad; --danger: #e74c3c; --success: #2ecc71; --bg: #f5f7fa; --user-bg: #d5f5e3; --ai-bg: #e1f5fe; --chat-color: #2c3e50; --chat-size: 16px; --chat-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --soft-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        :root { 
+            --primary: #3498db; --secondary: #2c3e50; --accent: #8e44ad; --danger: #e74c3c; --success: #2ecc71; 
+            --bg: #f5f7fa; --user-bg: #d5f5e3; --ai-bg: #e1f5fe; --chat-color: #2c3e50; --chat-size: 16px; 
+            --chat-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; --soft-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+        }
         body { font-family: var(--chat-font); text-align: center; margin: 0; padding: 20px 20px 80px 20px; background: linear-gradient(135deg, var(--bg) 0%, #c3cfe2 100%); min-height: 100vh; overflow-x: hidden;}
         h2 { color: var(--secondary); text-shadow: 1px 1px 2px rgba(0,0,0,0.1); margin-bottom: 5px;}
+        
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 12px 25px; border-radius: 30px; box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3); font-weight: bold; font-size: 15px; z-index: 4000; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .toast.show { transform: translateX(-50%) translateY(0); }
+        
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseMic { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
+        
+        /* القائمة الجانبية (Hamburger) */
         .hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 1002; background: white; color: var(--secondary); padding: 10px 18px; border-radius: 12px; border: 1px solid #bdc3c7; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;}
         .drawer { position: fixed; top: 0; right: -320px; width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1); transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1001; padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px; overflow-y: auto;}
         .drawer.open { right: 0; }
@@ -247,184 +345,335 @@ MAIN_PAGE = """
         .drawer-btn.stats { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .drawer-btn.downloads { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .drawer-btn.plan { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .drawer-btn.topics { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+        .drawer-btn.upload { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
+        .drawer-btn.settings { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
         .drawer-btn.logout { background: transparent; border: 1px solid #e74c3c; color: #e74c3c;}
 
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
         select { padding: 10px 15px; font-size: 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.4); outline: none; background: white;}
         .start-btn { background: linear-gradient(135deg, var(--accent) 0%, #9b59b6 100%); font-weight: bold; padding: 10px 25px; font-size: 15px; border-radius: 12px; border: none; color: white; cursor: pointer;}
+        
+        /* مؤشر التحدث */
+        #liveIndicator { display: none; color: var(--danger); font-weight: bold; font-size: 14px; margin-top: 10px; animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
         .input-container { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 20px;}
         input[type="text"] { padding: 16px 25px; font-size: 16px; border-radius: 30px; border: none; width: 65%; max-width: 600px; outline: none; background: white; box-shadow: var(--soft-shadow); }
-        .circle-btn { border-radius: 50%; width: 55px; height: 55px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: none; cursor: pointer; color: white;}
+        .circle-btn { border-radius: 50%; width: 55px; height: 55px; display: flex; justify-content: center; align-items: center; font-size: 24px; border: none; cursor: pointer; color: white; transition: all 0.2s ease;}
+        .circle-btn:active { transform: scale(0.9); }
+        .circle-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        
         #micBtn { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);}
+        #micBtn.recording { animation: pulseMic 1.5s infinite; }
         .send-btn { padding: 14px 30px; font-size: 16px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%);}
         
+        /* أدوات التحكم بالصوت */
+        #audioControls { display: none; justify-content: center; gap: 15px; margin-top: 15px; background: rgba(255,255,255,0.95); padding: 12px 25px; border-radius: 30px; box-shadow: var(--soft-shadow); width: fit-content; margin: 15px auto;}
+        .control-btn { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); width: 45px; height: 45px; font-size: 18px;}
+        .download-btn { background: linear-gradient(135deg, var(--success) 0%, #27ae60 100%); width: 45px; height: 45px; font-size: 18px;}
+        
+        /* صندوق المحادثة */
         #chatBox { width: 95%; max-width: 900px; margin: 20px auto; background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: var(--soft-shadow); height: 55vh; max-height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; border-top: 6px solid var(--primary); scroll-behavior: smooth; }
         .chat-bubble { max-width: 85%; padding: 18px 22px; border-radius: 20px; position: relative; font-size: var(--chat-size); color: var(--chat-color); line-height: 1.6; animation: fadeSlideUp 0.3s ease-out; box-shadow: 0 4px 10px rgba(0,0,0,0.04);}
         .user-bubble { background: var(--user-bg); align-self: flex-start; border-bottom-left-radius: 5px; text-align: left; direction: ltr;}
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; border-bottom-right-radius: 5px; text-align: right;}
         
         .sender-name { font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; display: block; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 3px;}
-        
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px;}
         .arabic-translation { border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 10px; opacity: 0.9;}
         .structured-data { font-size: calc(var(--chat-size) - 2px); background-color: rgba(255,255,255,0.6); padding: 12px 15px; border-radius: 12px; margin-top: 12px; text-align: left; direction: ltr; border-left: 5px solid rgba(0,0,0,0.2);}
         
+        /* النوافذ المنبثقة (Modals) */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(6px); }
         .modal-content { background: rgba(255,255,255,0.98); margin: 5vh auto; padding: 35px; border-radius: 25px; width: 85%; max-width: 750px; max-height: 85vh; overflow-y: auto; text-align: right; box-shadow: 0 25px 50px rgba(0,0,0,0.3);}
         .close-btn { color: #aaa; float: left; font-size: 32px; font-weight: bold; cursor: pointer; transition: color 0.2s;}
         
+        /* جداول الإحصاءات والمواضيع */
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         .stats-table th, .stats-table td { border: 1px solid #ecf0f1; padding: 12px; text-align: center; }
         .stats-table th { background: #3498db; color: white; }
         .stats-table tr:nth-child(even) { background-color: #f9f9f9; }
         
+        .topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 15px; }
+        .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid #dcdde1; font-weight: bold; color: #34495e;}
+        .topic-item.locked { opacity: 0.6; background: #ecf0f1; border-color: #bdc3c7; }
+        .topic-item:hover:not(.locked) { background: var(--primary); color: white; transform: translateY(-4px);}
+        .topic-category { grid-column: 1 / -1; font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 15px; border-bottom: 2px dashed #bdc3c7; padding-bottom: 5px; }
+        
+        .settings-group { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; padding: 12px 15px; border-radius: 12px; border: 1px solid #eee;}
+        .settings-group input[type="color"] { border: none; width: 45px; height: 45px; border-radius: 8px; cursor: pointer; background: transparent;}
+        .settings-group select, .settings-group input[type="range"] { width: 50%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; outline: none;}
+        
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index: 1000;}
         #overlay.active { display: block; }
+        #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px;}
         
-        #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; animation: pulseMic 2s infinite;}
+        /* إشعار البومودورو */
+        .break-notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #FFD200, #F7971E); color: white; padding: 15px 30px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-weight: bold; font-size: 16px; z-index: 3000; display: none;}
     </style>
 </head>
 <body>
-    <div id="loginToast" class="toast">✅ تم الدخول بنجاح! يتم الآن تحضير خطة الدرس...</div>
+    <div id="loginToast" class="toast">✅ تم الدخول بنجاح! يتم الآن تحضير الأكاديمية...</div>
+    <div id="breakNotice" class="break-notification">⏰ مر 25 دقيقة! المعلم ينصحك بأخذ استراحة قصيرة ☕</div>
+    
     <button class="hamburger-btn" onclick="toggleDrawer()"><span>☰</span> الخيارات</button>
     <div id="overlay" onclick="toggleDrawer()"></div>
     
     <div id="sideDrawer" class="drawer">
         <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-top: 0;">الخدمات الأكاديمية</h3>
         <button class="drawer-btn classroom" onclick="toggleClassroomMode()"><span class="icon">🏫</span><span id="classroomBtnText">الدخول للفصل الجماعي</span></button>
-        <button class="drawer-btn stats" onclick="openStatsModal()"><span class="icon">📊</span><span>إحصاءات الاستخدام</span></button>
-        <button class="drawer-btn downloads" onclick="openModal('downloadsModal')"><span class="icon">📚</span><span>مكتبة الموارد</span></button>
         <button class="drawer-btn plan" onclick="openModal('academicModal')"><span class="icon">🎓</span><span>المناهج والشهادات</span></button>
+        <button class="drawer-btn topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span><span>المواضيع والمحادثات</span></button>
+        <button class="drawer-btn downloads" onclick="openModal('downloadsModal')"><span class="icon">📚</span><span>مكتبة الموارد (PDF/MP3)</span></button>
+        <button class="drawer-btn stats" onclick="openStatsModal()"><span class="icon">📊</span><span>إحصاءات الاستخدام</span></button>
+        <button class="drawer-btn upload" onclick="triggerUpload()"><span class="icon">📂</span><span>رفع منهج خاص</span></button>
+        <button class="drawer-btn settings" onclick="openModal('settingsModal')"><span class="icon">🎨</span><span>إعدادات المظهر</span></button>
         <button class="drawer-btn logout" onclick="window.location.href='/logout'"><span class="icon">🚪</span><span>تسجيل الخروج</span></button>
     </div>
     
+    <input type="file" id="fileUpload" accept=".txt,.pdf,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)">
+    
+    <div id="downloadsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span>
+            <h2 style="text-align:center; color: var(--primary);">📚 مكتبة الموارد والملفات</h2>
+            <h3 style="color: var(--success); border-bottom: 2px dashed #ecf0f1; padding-bottom: 5px;">🆓 موارد مجانية (متاحة الآن)</h3>
+            <div class="topics-grid">
+                <div class="topic-item" onclick="downloadFile('study_plan')">📄 خطة دراسية شاملة CEFR (TXT)</div>
+                <div class="topic-item" onclick="downloadFile('vocab')">📕 أهم 500 كلمة للمبتدئين A1 (TXT)</div>
+            </div>
+            <h3 style="color: #e74c3c; border-bottom: 2px dashed #ecf0f1; padding-bottom: 5px; margin-top: 20px;">💎 موارد مدفوعة (Pro / VIP)</h3>
+            <div class="topics-grid">
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 خطة اجتياز IELTS الشاملة (PDF)</div>
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 عروض تفاعلية للدروس (PPT)</div>
+                <div class="topic-item locked" onclick="upgradeAlert()">🔒 مكتبة الصوتيات الكاملة (MP3)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="academicModal" class="modal">
+        <div class="modal-content" style="line-height: 1.8;">
+            <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
+            <h2 style="text-align:center; color: var(--accent);">🎓 الخطة الأكاديمية والشهادات</h2>
+            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مصادرنا المعتمدة:</h3>
+            <p>نعتمد في تدريبنا على: <b>Oxford OER, Cambridge English, BBC Learning English.</b></p>
+            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مسار الاختبارات:</h3>
+            <ul style="padding-right: 20px;">
+                <li><b>اختبار تحديد المستوى (Placement Test):</b> <button onclick="requestFeature('placement_test'); closeModal('academicModal');" style="background:#2ecc71; color:white; border:none; border-radius:5px; cursor:pointer; padding:3px 8px; font-size:12px;">ابدأ الاختبار الآن</button></li>
+                <li><b>التقييم المرحلي (Quizzes):</b> بعد إتمام موضوع معين لقياس الفهم.</li>
+                <li><b>الاختبار النهائي (Final Exam):</b> اختبار شامل نهاية المستوى لطلب الشهادة.</li>
+            </ul>
+        </div>
+    </div>
+
     <div id="statsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
             <h2 style="text-align:center; color: var(--primary);">📊 إحصاءات الاستخدام الخاصة بك</h2>
             <table class="stats-table" id="summaryTable">
                 <tr><th>إجمالي التفاعلات</th><th>الساعات التقديرية للتعلم</th><th>المستوى المقدر</th></tr>
-                <tr><td id="statTotal">0</td><td id="statHours">0</td><td style="color:#2ecc71; font-weight:bold;">A2 (مبتدئ متقدم)</td></tr>
+                <tr><td id="statTotal">0</td><td id="statHours">0</td><td style="color:#2ecc71; font-weight:bold;">قيد التقييم...</td></tr>
             </table>
             <h3 style="margin-top: 30px; text-align: center; color: #8e44ad;">نشاطك في آخر 7 أيام</h3>
             <div style="position: relative; height:40vh; width:100%"><canvas id="usageChart"></canvas></div>
         </div>
     </div>
 
-    <div id="downloadsModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span><h2 style="text-align:center;">مكتبة الموارد قيد التحديث...</h2></div></div>
-    <div id="academicModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('academicModal')">&times;</span><h2 style="text-align:center;">مناهج قيد التحديث...</h2></div></div>
+    <div id="topicsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('topicsModal')">&times;</span>
+            <h2 style="text-align:center; color: var(--accent);">اختر موضوعاً 🎯</h2>
+            <div class="topics-grid" id="topicsList"></div>
+        </div>
+    </div>
+    
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('settingsModal')">&times;</span>
+            <h2 style="text-align:center; color: var(--primary);">🎨 المظهر</h2>
+            <div class="settings-group"><label>صندوق المتدرب:</label><input type="color" id="userBgColor" value="#d5f5e3" onchange="applySettings()"></div>
+            <div class="settings-group"><label>صندوق المدرب:</label><input type="color" id="aiBgColor" value="#e1f5fe" onchange="applySettings()"></div>
+            <div class="settings-group"><label>لون النصوص:</label><input type="color" id="fontColor" value="#2c3e50" onchange="applySettings()"></div>
+            <div class="settings-group"><label>حجم الخط:</label><input type="range" id="fontSize" min="12" max="24" value="16" oninput="applySettings()"><span id="fontSizeVal">16px</span></div>
+            <button class="send-btn" style="width: 100%; margin-top: 15px;" onclick="resetSettings()">🔄 استعادة</button>
+        </div>
+    </div>
 
     <h2>Smart Academy 🎓</h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
     
-    <div class="top-bar"><select id="mode" onchange="applySettings()"><option value="adult">وضع الكبار</option><option value="child">وضع الأطفال</option></select><select id="micLang"><option value="en-US">الميكروفون: إنجليزي</option><option value="ar-SA">الميكروفون: عربي</option></select></div>
+    <div class="top-bar">
+        <select id="mode" onchange="applySettings()">
+            <option value="adult">وضع الكبار</option>
+            <option value="child">وضع الأطفال</option>
+        </select>
+        <select id="micLang">
+            <option value="en-US">الميكروفون: إنجليزي</option>
+            <option value="ar-SA">الميكروفون: عربي</option>
+        </select>
+    </div>
     
-    <div class="input-container"><button id="micBtn" class="circle-btn" onclick="toggleMic()">🎤</button><input type="text" id="userMsg" placeholder="اكتب رسالتك هنا..."><button class="send-btn" onclick="sendMsg()">إرسال</button></div>
+    <div id="liveIndicator">🔴 يتم الاستماع الآن...</div>
+    
+    <div class="input-container">
+        <button id="micBtn" class="circle-btn" onclick="toggleMic()" title="اضغط للتحدث أو مقاطعة المدرس">🎤</button>
+        <input type="text" id="userMsg" placeholder="اكتب رسالتك هنا...">
+        <button class="send-btn" onclick="sendMsg()">إرسال</button>
+    </div>
+    
+    <div id="audioControls">
+        <button class="circle-btn control-btn" onclick="skipAudio(-5)" title="تأخير 5 ثواني">⏪</button>
+        <button id="pauseBtn" class="circle-btn control-btn" onclick="togglePauseAudio()" title="إيقاف / تشغيل">⏸️</button>
+        <button class="circle-btn control-btn" onclick="skipAudio(5)" title="تقديم 5 ثواني">⏩</button>
+        <button class="circle-btn download-btn" onclick="downloadAudio()" title="تحميل الصوت">💾</button>
+    </div>
     
     <div id="chatBox"></div>
     <audio id="audioPlayer"></audio>
-    <div id="audioControls" style="display:none; justify-content:center; gap:15px; margin-top:10px;"><button class="circle-btn control-btn" onclick="document.getElementById('audioPlayer').pause()">⏸️</button></div>
     
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        // --- 50 موضوع احترافي مقسم ---
+        const topicsLibrary = {
+            "🗣️ مواضيع للمبتدئين (A1-A2)": ["Introducing Yourself", "Daily Routines", "Family Members", "Weather and Seasons", "Ordering Food", "Asking for Directions", "Hobbies", "Describing House", "Shopping", "Weekend Plans"],
+            "🌍 الثقافات والمجتمع (A2-B2)": ["Global Cuisines", "Traveling on Budget", "Ancient History", "Japanese Culture", "Learning Languages", "Climate Change", "Minimalist Lifestyle", "Festivals", "City vs Country", "Volunteering"],
+            "📱 التكنولوجيا والابتكار (B1-C1)": ["Artificial Intelligence", "Cybersecurity", "Future of Smartphones", "Internet of Things", "Space Exploration", "Social Media Impact", "Cloud Computing", "Robotics", "5G Networks", "Virtual Reality"],
+            "💼 الأعمال والمهن (B2-C1)": ["Job Interviews", "Time Management", "Remote Work", "Public Speaking", "Financial Literacy", "Starting a Business", "Leadership", "Work-Life Balance", "Professional Emails", "Negotiation"],
+            "⚽ الرياضة والصحة (A1-B2)": ["Football Tactics", "Olympic Games", "Healthy Eating", "Mental Health", "Benefits of Swimming", "Marathon", "E-Sports", "Yoga", "Basketball Rules", "Extreme Sports"]
+        };
+
         let isRecording = false, recognition;
         let isLiveMode = false, silenceTimer, final_transcript = '', chatHistory = [], isTeacherSpeaking = false, userName = "{{ username }}";
-        
-        let isClassroomMode = false;
-        let classroomPollingInterval = null;
-        let lastMessageCount = 0; 
-        let chartInstance = null;
+        let isClassroomMode = false, classroomPollingInterval = null, lastMessageCount = 0, chartInstance = null;
+
+        // --- نظام البومودورو للراحة ---
+        let studyMinutes = 0;
+        setInterval(() => {
+            studyMinutes++;
+            if (studyMinutes === 25) {
+                let notice = document.getElementById("breakNotice");
+                notice.style.display = "block";
+                setTimeout(() => { notice.style.display = "none"; studyMinutes = 0; }, 10000); 
+            }
+        }, 60000);
 
         function toggleDrawer() { document.getElementById('sideDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); }
         function openModal(id) { document.getElementById(id).style.display = "block"; toggleDrawer(); } 
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
-        function applySettings() { } 
         
-        // --- تحسينات الفصل الجماعي (Classroom Fixes) ---
-        function toggleClassroomMode() {
-            toggleDrawer();
-            isClassroomMode = !isClassroomMode;
-            let banner = document.getElementById("classroomBanner");
-            let btnText = document.getElementById("classroomBtnText");
+        function populateTopics() {
+            let container = document.getElementById("topicsList");
+            for (const [category, topics] of Object.entries(topicsLibrary)) {
+                let catDiv = document.createElement("div"); catDiv.className = "topic-category"; catDiv.innerText = category; container.appendChild(catDiv);
+                topics.forEach(topic => {
+                    let btn = document.createElement("div"); btn.className = "topic-item"; btn.innerText = topic;
+                    btn.onclick = () => { closeModal('topicsModal'); toggleDrawer(); sendMsg(`Let's deeply discuss this topic: ${topic}. Guide me as a Cambridge examiner.`); };
+                    container.appendChild(btn);
+                });
+            }
+        }
+        populateTopics();
+
+        function downloadFile(fileType) {
+            window.location.href = '/download/' + fileType;
+            closeModal('downloadsModal');
+        }
+        function upgradeAlert() { alert("💎 هذا الملف مخصص لاشتراكات Pro و VIP فقط. يرجى ترقية حسابك للوصول إلى هذه الميزة."); closeModal('downloadsModal'); }
+
+        function requestFeature(type) { 
+            let p = {"placement_test": "Act as a Cambridge certified examiner. Give me a comprehensive English placement test right now to determine my CEFR level. Ask questions one by one.", "test": "Give me a short quick English test to check my grammar."}[type];
+            if(p) sendMsg(p);
+        }
+
+        // --- أدوات التحكم بالصوت (التي تم استرجاعها) ---
+        function skipAudio(seconds) { 
+            let a = document.getElementById("audioPlayer"); 
+            if (a.src && !a.paused) { a.currentTime += seconds; } 
+        } 
+        function downloadAudio() { 
+            let a = document.getElementById("audioPlayer"); 
+            if (!a.src) return; 
+            let link = document.createElement("a"); link.href = a.src; link.download = "SmartAcademy_Lesson.mp3"; 
+            document.body.appendChild(link); link.click(); document.body.removeChild(link); 
+        } 
+        function togglePauseAudio() { 
+            let a = document.getElementById("audioPlayer"), btn = document.getElementById("pauseBtn"); 
+            if(a.src === "") return; 
+            if (a.paused) { a.play(); btn.innerText = "⏸️"; } else { a.pause(); btn.innerText = "▶️"; } 
+        }
+        
+        // --- تخصيص المظهر ---
+        function applySettings() { 
+            let root = document.documentElement; 
+            root.style.setProperty('--user-bg', document.getElementById('userBgColor').value); 
+            root.style.setProperty('--ai-bg', document.getElementById('aiBgColor').value); 
+            root.style.setProperty('--chat-color', document.getElementById('fontColor').value); 
+            root.style.setProperty('--chat-size', document.getElementById('fontSize').value + 'px'); 
+            document.getElementById('fontSizeVal').innerText = document.getElementById('fontSize').value + 'px'; 
             
+            // تغيير وضع الأطفال
+            if (document.getElementById("mode").value === "child") {
+                root.style.setProperty('--ai-bg', "#ffebef");
+            }
+        }
+        function resetSettings() { 
+            document.getElementById('userBgColor').value = "#d5f5e3"; document.getElementById('aiBgColor').value = "#e1f5fe"; document.getElementById('fontColor').value = "#2c3e50"; document.getElementById('fontSize').value = "16"; applySettings(); 
+        }
+
+        // --- الفصل الجماعي المشترك ---
+        function toggleClassroomMode() {
+            toggleDrawer(); isClassroomMode = !isClassroomMode;
+            let banner = document.getElementById("classroomBanner"), btnText = document.getElementById("classroomBtnText");
             if (isClassroomMode) {
-                banner.style.display = "block";
-                btnText.innerText = "الخروج من الفصل الجماعي";
-                document.getElementById('chatBox').innerHTML = ''; 
-                chatHistory = []; // تصفير مصفوفة المحادثة
-                lastMessageCount = 0;
-                fetchClassroomChats(); 
-                // زيادة وقت الـ Polling وتجنب التداخل
-                classroomPollingInterval = setInterval(fetchClassroomChats, 4000);
+                banner.style.display = "block"; btnText.innerText = "الخروج من الفصل الجماعي";
+                document.getElementById('chatBox').innerHTML = ''; chatHistory = []; lastMessageCount = 0;
+                fetchClassroomChats(); classroomPollingInterval = setInterval(fetchClassroomChats, 4000);
             } else {
-                banner.style.display = "none";
-                btnText.innerText = "الدخول للفصل الجماعي";
+                banner.style.display = "none"; btnText.innerText = "الدخول للفصل الجماعي";
                 if(classroomPollingInterval) clearInterval(classroomPollingInterval);
-                document.getElementById('chatBox').innerHTML = '';
-                chatHistory = []; // تصفير مصفوفة المحادثة
-                loadPersonalChats(); 
+                document.getElementById('chatBox').innerHTML = ''; chatHistory = []; loadPersonalChats(); 
             }
         }
 
         async function fetchClassroomChats() {
-            if(!isClassroomMode) return; // حماية إضافية
+            if(!isClassroomMode) return;
             try {
-                let res = await fetch("/get_classroom_history");
-                let history = await res.json();
-                
-                // تحديث فقط إذا كان هناك رسائل جديدة
+                let res = await fetch("/get_classroom_history"); let history = await res.json();
                 if (history.length > lastMessageCount) {
-                    document.getElementById('chatBox').innerHTML = ''; 
-                    chatHistory = [];
+                    document.getElementById('chatBox').innerHTML = ''; chatHistory = [];
                     history.forEach(item => {
-                        let isMe = (item.username === userName && item.role === 'user');
-                        let isTeacher = (item.role === 'assistant');
-                        
-                        if (isTeacher) {
-                            appendBubble("", false, {english: item.content, arabic: item.arabic}, "المعلم الذكي 🎓");
-                            chatHistory.push({"role": "assistant", "content": item.content});
-                        } else {
-                            appendBubble(item.content, true, null, isMe ? "أنت" : "الزميل: " + item.username);
-                            chatHistory.push({"role": "user", "content": `[${item.username}]: ${item.content}`});
-                        }
+                        let isMe = (item.username === userName && item.role === 'user'), isTeacher = (item.role === 'assistant');
+                        if (isTeacher) { appendBubble("", false, {english: item.content, arabic: item.arabic}, "المعلم الذكي 🎓"); chatHistory.push({"role": "assistant", "content": item.content}); } 
+                        else { appendBubble(item.content, true, null, isMe ? "أنت" : "الزميل: " + item.username); chatHistory.push({"role": "user", "content": `[${item.username}]: ${item.content}`}); }
                     });
-                    lastMessageCount = history.length;
-                    document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
+                    lastMessageCount = history.length; document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
                 }
             } catch(e) {}
         }
 
+        // --- الإحصاءات ---
         async function openStatsModal() {
-            toggleDrawer();
-            document.getElementById('statsModal').style.display = "block";
+            toggleDrawer(); document.getElementById('statsModal').style.display = "block";
             try {
-                let res = await fetch("/get_stats");
-                let data = await res.json();
+                let res = await fetch("/get_stats"); let data = await res.json();
                 document.getElementById("statTotal").innerText = data.total_messages;
                 document.getElementById("statHours").innerText = (data.total_messages * 2 / 60).toFixed(1) + " ساعة"; 
                 let ctx = document.getElementById('usageChart').getContext('2d');
                 if(chartInstance) chartInstance.destroy();
                 chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels: data.labels, datasets: [{ label: 'عدد التفاعلات (رسائل)', data: data.values, backgroundColor: 'rgba(52, 152, 219, 0.6)', borderColor: 'rgba(52, 152, 219, 1)', borderWidth: 2, borderRadius: 5 }] },
+                    type: 'bar', data: { labels: data.labels, datasets: [{ label: 'رسائلك', data: data.values, backgroundColor: 'rgba(52, 152, 219, 0.6)', borderColor: 'rgba(52, 152, 219, 1)', borderWidth: 2, borderRadius: 5 }] },
                     options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
                 });
             } catch (e) { alert("فشل تحميل الإحصاءات"); }
         }
 
+        // --- إضافة الرسائل وتلوين الكلمات ---
         function appendBubble(text, isUser, data=null, senderName=null) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
-            
-            if (isClassroomMode && senderName) {
-                let nameLabel = document.createElement("span");
-                nameLabel.className = "sender-name";
-                nameLabel.innerText = senderName;
-                container.appendChild(nameLabel);
-            }
-
+            if (isClassroomMode && senderName) { let nameLabel = document.createElement("span"); nameLabel.className = "sender-name"; nameLabel.innerText = senderName; container.appendChild(nameLabel); }
             if(isUser) { 
                 let t = document.createElement("span"); t.innerText = text; container.appendChild(t); 
             } else { 
@@ -432,6 +681,10 @@ MAIN_PAGE = """
                 data.english.split(" ").forEach(word => { let span = document.createElement("span"); span.className = "word"; span.innerText = word; engDiv.appendChild(span); }); 
                 container.appendChild(engDiv); 
                 let arDiv = document.createElement("div"); arDiv.className = "arabic-translation"; arDiv.innerText = data.arabic; container.appendChild(arDiv); 
+                let details = ""; 
+                if(data.keywords) details += `<div class="structured-data"><span class="section-title">🔑 Keywords:</span><br>${data.keywords}</div>`; 
+                if(data.summary) details += `<div class="structured-data"><span class="section-title">📝 Corrections & Plan:</span><br>${data.summary}</div>`; 
+                if (details !== "") { let dDiv = document.createElement("div"); dDiv.innerHTML = details; container.appendChild(dDiv); } 
             } 
             box.appendChild(container); setTimeout(() => box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' }), 100); 
         }
@@ -446,7 +699,7 @@ MAIN_PAGE = """
                     }); 
                     document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; 
                 } else { 
-                    let prompt = `Welcome the student (${userName}) very warmly. Provide a welcoming message in BOTH English and Arabic.`; 
+                    let prompt = `Act as a professional Cambridge examiner and tutor. Welcome the student (${userName}) warmly in BOTH English and Arabic. Tell them we follow CEFR standards.`; 
                     sendMsg(prompt, true); 
                 } 
             } catch(e) {} 
@@ -454,8 +707,7 @@ MAIN_PAGE = """
 
         window.onload = async function() { 
             if (window.location.search.includes("login=success")) { let toast = document.getElementById("loginToast"); toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 4000); } 
-            document.getElementById('chatBox').innerHTML = ''; 
-            loadPersonalChats();
+            document.getElementById('chatBox').innerHTML = ''; loadPersonalChats();
         };
         
         async function sendMsg(overrideMsg = null, isHidden = false) { 
@@ -474,7 +726,6 @@ MAIN_PAGE = """
             let loadDiv = document.createElement("div"); loadDiv.className = "chat-bubble ai-bubble"; loadDiv.id = "loadingBubble"; loadDiv.innerHTML = "<div class='arabic-translation' style='border:none;'>جاري التفكير وتجهيز الرد... ⏳</div>"; document.getElementById("chatBox").appendChild(loadDiv); document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; 
             
             let targetUrl = isClassroomMode ? "/classroom_chat" : "/chat";
-
             try { 
                 let res = await fetch(targetUrl, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ history: chatHistory.slice(-10), message: msg, mode: document.getElementById("mode").value }) }); 
                 let data = await res.json(); document.getElementById("loadingBubble")?.remove(); 
@@ -484,11 +735,108 @@ MAIN_PAGE = """
                 appendBubble("", false, data, isClassroomMode ? "المعلم الذكي 🎓" : null); 
                 
                 if(data.audio) { 
-                    let ap = document.getElementById("audioPlayer");
-                    ap.src = "data:audio/mp3;base64," + data.audio; document.getElementById("audioControls").style.display = "flex"; 
+                    let ap = document.getElementById("audioPlayer"); ap.src = "data:audio/mp3;base64," + data.audio; 
+                    document.getElementById("audioControls").style.display = "flex"; // إظهار أزرار الصوت
+                    document.getElementById("pauseBtn").innerText = "⏸️"; 
+                    isTeacherSpeaking = true; if(isRecording) recognition.stop(); 
                     let playPromise = ap.play(); if (playPromise !== undefined) playPromise.catch(error => { console.log("Auto-play blocked."); }); 
                 } 
             } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("⚠️ خطأ في الاتصال."); } 
+        }
+        
+        // --- محرك الصوت (المزامنة والمقاطعة) ---
+        let audioPlayer = document.getElementById("audioPlayer"); 
+        audioPlayer.ontimeupdate = function() { 
+            if (wordsElements.length === 0 || isNaN(audioPlayer.duration)) return; 
+            let activeIndex = Math.floor((audioPlayer.currentTime / audioPlayer.duration) * wordsElements.length); 
+            wordsElements.forEach((span, i) => { 
+                if (i === activeIndex) { span.classList.add("active"); span.classList.remove("spoken"); } 
+                else if (i < activeIndex) { span.classList.remove("active"); span.classList.add("spoken"); } 
+                else { span.classList.remove("active", "spoken"); } 
+            }); 
+        }; 
+        audioPlayer.onended = function() { 
+            isTeacherSpeaking = false; document.getElementById("pauseBtn").innerText = "▶️"; 
+            wordsElements.forEach(span => { span.classList.remove("active"); span.classList.add("spoken"); }); 
+            if (isLiveMode) setTimeout(() => { try { recognition.start(); } catch(e) {} }, 300); 
+        };
+
+        // --- الميكروفون التفاعلي (المقاطعة الحية) ---
+        function initSpeechRecognition() { 
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; 
+            if (window.SpeechRecognition) { 
+                recognition = new window.SpeechRecognition(); recognition.continuous = true; recognition.interimResults = true; 
+                recognition.onstart = () => { isRecording = true; document.getElementById("micBtn").classList.add("recording"); }; 
+                recognition.onresult = (event) => { 
+                    if(isTeacherSpeaking) return; 
+                    let interim = ''; 
+                    for (let i = event.resultIndex; i < event.results.length; ++i) { 
+                        if (event.results[i].isFinal) final_transcript += event.results[i][0].transcript + " "; 
+                        else interim += event.results[i][0].transcript; 
+                    } 
+                    let currentSpeech = (final_transcript + interim).trim(); 
+                    if (currentSpeech.length > 0) { 
+                        document.getElementById("userMsg").value = currentSpeech; 
+                        clearTimeout(silenceTimer); 
+                        silenceTimer = setTimeout(() => { if (isLiveMode && currentSpeech.length > 0) sendMsg(); }, 2500); 
+                    } 
+                }; 
+                recognition.onend = () => { 
+                    isRecording = false; document.getElementById("micBtn").classList.remove("recording"); 
+                    if (isLiveMode && !isTeacherSpeaking) { try { recognition.start(); } catch(e) {} } 
+                }; 
+                return true; 
+            } 
+            return false; 
+        } 
+        let isSpeechSupported = initSpeechRecognition();
+
+        async function toggleMic() { 
+            if (!isSpeechSupported) return alert("المتصفح لا يدعم الميكروفون."); 
+            let ap = document.getElementById("audioPlayer"); 
+            
+            // ميزة المقاطعة (Interrupt): إذا كان المدرس يتحدث، إيقافه وتشغيل الميكروفون
+            if (isTeacherSpeaking && !ap.paused) { 
+                ap.pause(); isTeacherSpeaking = false; document.getElementById("pauseBtn").innerText = "▶️"; 
+                wordsElements.forEach(span => span.classList.add("spoken")); 
+                isLiveMode = true; final_transcript = ''; document.getElementById("liveIndicator").style.display = "block"; 
+                recognition.lang = document.getElementById("micLang").value; 
+                try { recognition.start(); } catch(e) {} 
+                return; 
+            } 
+            
+            if (isLiveMode || isRecording) { 
+                isLiveMode = false; if(isRecording) recognition.stop(); 
+                document.getElementById("liveIndicator").style.display = "none"; 
+                if(window.localStream) window.localStream.getTracks().forEach(t => t.stop()); 
+            } else { 
+                try { window.localStream = await navigator.mediaDevices.getUserMedia({audio: { echoCancellation: true, noiseSuppression: true }}); } catch (e) {} 
+                isLiveMode = true; final_transcript = ''; document.getElementById("liveIndicator").style.display = "block"; 
+                recognition.lang = document.getElementById("micLang").value; 
+                try { recognition.start(); } catch(e) {} 
+            } 
+        }
+        
+        document.getElementById("userMsg").addEventListener("keypress", function(e) { if (e.key === "Enter") { e.preventDefault(); sendMsg(); } });
+
+        // --- رفع الملفات المخصص (قراءة في المتصفح) ---
+        function triggerUpload() { toggleDrawer(); if(confirm("⚠️ يمنع رفع أي مواد تخالف القوانين. موافق؟")) { document.getElementById("fileUpload").click(); } }
+        function handleFileUpload(event) { 
+            let file = event.target.files[0]; if (!file) return; 
+            let status = document.getElementById("curriculumStatus"); status.innerText = "⏳ جاري قراءة الملف..."; 
+            let ext = file.name.split('.').pop().toLowerCase(); 
+            if (ext === 'txt') { 
+                let reader = new FileReader(); reader.onload = e => { customCurriculumContent = e.target.result; status.innerText = "✅ تم دمج المنهج."; }; reader.readAsText(file); 
+            } else if (ext === 'pdf') { 
+                let reader = new FileReader(); reader.onload = async function(e) { 
+                    try { 
+                        let typedarray = new Uint8Array(e.target.result); let pdf = await pdfjsLib.getDocument(typedarray).promise; let fullText = ""; 
+                        for(let i=1; i<=Math.min(pdf.numPages, 3); i++) { let page = await pdf.getPage(i); let textContent = await page.getTextContent(); fullText += textContent.items.map(item => item.str).join(" ") + " "; } 
+                        customCurriculumContent = fullText; status.innerText = `✅ تم الاستخراج.`; 
+                    } catch(err) { status.innerText = "❌ خطأ."; } 
+                }; reader.readAsArrayBuffer(file); 
+            } 
+            event.target.value = ''; 
         }
     </script>
 </body>
@@ -503,6 +851,21 @@ MAIN_PAGE = """
 def home():
     if 'user_id' in session: return render_template_string(MAIN_PAGE, username=session['username'])
     else: return render_template_string(LOGIN_PAGE)
+
+@app.route("/download/<file_id>")
+def download_file(file_id):
+    if 'user_id' not in session: return redirect(url_for('home'))
+    if file_id == 'study_plan':
+        content = "=== Smart Academy CEFR Study Plan ===\n\n1. Level A1: Basic phrases.\n2. Level A2: Routine tasks.\n3. Level B1: Travel, expressing opinions."
+        filename = "Study_Plan_CEFR.txt"
+    elif file_id == 'vocab':
+        content = "=== Essential 500 English Words ===\n\n1. Always\n2. Because\n3. Beautiful\n4. Company\n5. Different\n"
+        filename = "Basic_Vocab.txt"
+    else:
+        return "File not found", 404
+    response = app.response_class(content, mimetype='text/plain')
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
 
 @app.route("/intro_audio")
 def intro_audio():
@@ -584,6 +947,7 @@ def get_classroom_history():
     except: return jsonify([])
 
 async def generate_audio(text, voice):
+    # فلتر آمن: يحذف رموز الماركدوان فقط ويحافظ على التشكيل
     clean_text = re.sub(r'[*#_~`]', '', text) 
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save("response.mp3")
@@ -591,39 +955,51 @@ async def generate_audio(text, voice):
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
+    if 'user_id' not in session: return jsonify({"error": "يرجى تسجيل الدخول أولاً."})
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key: return jsonify({"error": "Missing API Key"})
+
         client = Groq(api_key=api_key)
-        user_msg = request.json.get("message", "")
+        data = request.json
+        mode = data.get("mode", "adult")
+        user_msg = data.get("message", "")
+        custom_curriculum = data.get("custom_curriculum", "")
         user_id = session['user_id']
 
         with sqlite3.connect('academy.db') as conn:
-            history = [{"role": r[0], "content": r[1]} for r in conn.execute("SELECT role, content FROM academy_chats WHERE user_id = ? ORDER BY id DESC LIMIT 8", (user_id,)).fetchall()[::-1]]
+            cursor = conn.execute("SELECT role, content FROM academy_chats WHERE user_id = ? ORDER BY id DESC LIMIT 8", (user_id,))
+            recent_rows = cursor.fetchall()[::-1]
+            history = [{"role": r[0], "content": r[1]} for r in recent_rows]
 
-        sys_msg = """CRITICAL RULES: 
+        core_rules = """
+        CRITICAL RULES: 
         1. MUST STRICTLY adhere to Islamic Sharia and local laws.
-        2. Base language progression on the CEFR.
-        3. ACT EXACTLY LIKE A REAL HUMAN TUTOR. 
-        Respond ONLY in valid JSON: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "", "summary": "" }"""
+        2. Act as a certified Cambridge/Oxford examiner. Correct grammar gently.
+        3. Make your 'english' response sound 100% natural, using conversational fillers.
+        """
+        if custom_curriculum: core_rules += f"\\n4. Context from uploaded files: {custom_curriculum[:2500]}"
+
+        json_structure = 'Respond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Grammar Corrections" }'
+        sys_msg = core_rules + ("\\nYou are a fun English teacher for kids." if mode == "child" else "\\nYou are a professional English coach.") + json_structure
+        voice_model = "en-US-AriaNeural" if mode == "child" else "en-US-ChristopherNeural" 
+
+        messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
+        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, response_format={"type": "json_object"})
         
-        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}], response_format={"type": "json_object"})
-        
-        # حماية إضافية من أخطاء الـ JSON
         try: parsed = json.loads(completion.choices[0].message.content)
         except: parsed = {"english": "I'm sorry, I couldn't process that. Could you repeat?", "arabic": "عذراً، لم أستطع معالجة ذلك. هل يمكنك التكرار؟"}
         
         eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
         
         with sqlite3.connect('academy.db') as conn:
-            if "Generate a unique, warm welcome message" not in user_msg and "Welcome the student" not in user_msg:
+            if "Welcome the student" not in user_msg:
                 conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
             conn.commit()
             
         audio = asyncio.run(generate_audio(eng, "en-US-ChristopherNeural"))
-        return jsonify({ "english": eng, "arabic": ar, "audio": audio })
+        return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio })
     except Exception as e: return jsonify({"error": str(e)})
 
 @app.route("/classroom_chat", methods=["POST"])
@@ -641,8 +1017,7 @@ def classroom_chat():
 
         sys_msg = """CRITICAL RULES: 
         1. You are teaching a VIRTUAL CLASSROOM.
-        2. Students will speak to you in the format '[StudentName]: message'.
-        3. Address the specific student who spoke, but keep the rest of the class engaged. Be very brief.
+        2. Address the specific student who spoke, keep it brief and engaging.
         Respond ONLY in valid JSON: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "", "summary": "" }"""
         
         formatted_msg = f"[{username}]: {user_msg}"
