@@ -142,7 +142,6 @@ LOGIN_PAGE = """
                 <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة مجانية)</button>
             </div>
         </div>
-        <!-- تم اختصار باقي نصوص التسويق هنا للتركيز على الكود الوظيفي (Pricing Cards etc.) يمكنك إضافتها بسهولة -->
     </div>
     
     <script>
@@ -233,7 +232,6 @@ MAIN_PAGE = """
         #micBtn.recording { animation: pulseMic 1.5s infinite; }
         .send-btn { padding: 14px 30px; font-size: 16px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: linear-gradient(135deg, #36D1DC 0%, #5B86E5 100%);}
         
-        /* أدوات الصوت المسترجعة */
         #audioControls { display: none; justify-content: center; gap: 15px; margin-top: 15px; background: rgba(255,255,255,0.95); padding: 12px 25px; border-radius: 30px; box-shadow: var(--soft-shadow); width: fit-content; margin: 15px auto;}
         .control-btn { background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); width: 45px; height: 45px; font-size: 18px;}
         .download-btn { background: linear-gradient(135deg, var(--success) 0%, #27ae60 100%); width: 45px; height: 45px; font-size: 18px;}
@@ -403,6 +401,7 @@ MAIN_PAGE = """
         let isRecording = false, recognition;
         let isLiveMode = false, silenceTimer, final_transcript = '', chatHistory = [], isTeacherSpeaking = false, userName = "{{ username }}";
         let isClassroomMode = false, classroomPollingInterval = null, lastMessageCount = 0, chartInstance = null;
+        let wordsElements = [];
 
         let studyMinutes = 0;
         setInterval(() => {
@@ -579,7 +578,7 @@ MAIN_PAGE = """
             try { 
                 let res = await fetch(targetUrl, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ history: chatHistory.slice(-10), message: msg, mode: document.getElementById("mode").value }) }); 
                 let data = await res.json(); document.getElementById("loadingBubble")?.remove(); 
-                if(data.error) return alert("⚠️ خطأ: " + data.error); 
+                if(data.error) return alert("⚠️ تنبيه: " + data.error); 
                 
                 chatHistory.push({"role": "assistant", "content": data.english}); 
                 appendBubble("", false, data, isClassroomMode ? "المعلم الذكي 🎓" : null); 
@@ -670,17 +669,17 @@ MAIN_PAGE = """
         function triggerUpload() { toggleDrawer(); if(confirm("⚠️ يمنع رفع أي مواد تخالف القوانين أو حقوق النشر. موافق؟")) { document.getElementById("fileUpload").click(); } }
         function handleFileUpload(event) { 
             let file = event.target.files[0]; if (!file) return; 
-            let status = document.getElementById("curriculumStatus"); status.innerText = "⏳ جاري القراءة..."; 
+            let status = document.getElementById("curriculumStatus"); if (status) status.innerText = "⏳ جاري القراءة..."; 
             let ext = file.name.split('.').pop().toLowerCase(); 
             if (ext === 'txt') { 
-                let reader = new FileReader(); reader.onload = e => { customCurriculumContent = e.target.result; status.innerText = "✅ تم الدمج."; }; reader.readAsText(file); 
+                let reader = new FileReader(); reader.onload = e => { customCurriculumContent = e.target.result; if(status) status.innerText = "✅ تم الدمج."; }; reader.readAsText(file); 
             } else if (ext === 'pdf') { 
                 let reader = new FileReader(); reader.onload = async function(e) { 
                     try { 
                         let typedarray = new Uint8Array(e.target.result); let pdf = await pdfjsLib.getDocument(typedarray).promise; let fullText = ""; 
                         for(let i=1; i<=Math.min(pdf.numPages, 3); i++) { let page = await pdf.getPage(i); let textContent = await page.getTextContent(); fullText += textContent.items.map(item => item.str).join(" ") + " "; } 
-                        customCurriculumContent = fullText; status.innerText = `✅ تم الاستخراج.`; 
-                    } catch(err) { status.innerText = "❌ خطأ."; } 
+                        customCurriculumContent = fullText; if(status) status.innerText = `✅ تم الاستخراج.`; 
+                    } catch(err) { if(status) status.innerText = "❌ خطأ."; } 
                 }; reader.readAsArrayBuffer(file); 
             } 
             event.target.value = ''; 
@@ -720,7 +719,7 @@ def download_file(file_id):
 
 @app.route("/intro_audio")
 def intro_audio():
-    text = "مَرْحَبًا بِكَ فِي أَكَادِيمِيَّتِكَ الذَّكِيَّةِ لِتَعَلُّمِ اللُّغَةِ الْإِنْجِلِيزِيَّةِ. هُنَا نُقَدِّمُ لَكَ مُعَلِّمًا بِشَخْصِيَّةٍ حَقِيقِيَّةٍ يُصَحِّحُ أَخْطَاءَكَ، وَيُوَجِّهُكَ فِي مُحَادَثَاتٍ حَيَّةٍ وَمُمْتِعَةٍ تُغَطِّي مِئَاتِ الْمَوَاضِيعِ وَفْقَ الْمَعَايِيرِ الْعَالَمِيَّةِ. سَجِّلْ دُخُولَكَ الْآنَ لِتَبْدَأَ رِحْلَتَكَ."
+    text = "مَرْحَبًا بِكَ فِي أَكَادِيمِيَّتِكَ الذَّكِيَّةِ لِتَعَلُّمِ اللُّغَةِ الْإِنْجِلِيزِيَّةِ. هُنَا نُقَدِّمُ لَكَ مُعَلِّمًا بِشَخْصِيَّةٍ حَقِيقِيَّةٍ يُصَحِّحُ أَخْطَاءَكَ، وَيُوَجِّهُكَ فِي مُحَادَثَاتٍ حَيَّةٍ وَمُمْتِعَةٍ تُغَطِّي مِئَاتِ الْمَوَاضِيعِ وَفْقَ الْمَعَايِيرِ الْعَالَمِيَّةِ. سَجِّلْ دُخُولَكَ الْآنَ لِتَبْدَأَ رِحْلَتَكَ."
     try:
         audio = asyncio.run(generate_audio(text, "ar-SA-HamedNeural")) 
         return jsonify({"audio": audio})
@@ -809,7 +808,7 @@ def chat():
     if 'user_id' not in session: return jsonify({"error": "يرجى تسجيل الدخول أولاً."})
     try:
         api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key: return jsonify({"error": "Missing API Key"})
+        if not api_key: return jsonify({"error": "لم يتم العثور على مفتاح Groq API في متغيرات البيئة. يرجى إضافته في إعدادات الخادم."})
 
         client = Groq(api_key=api_key)
         data = request.json
@@ -851,13 +850,19 @@ def chat():
             
         audio = asyncio.run(generate_audio(eng, "en-US-ChristopherNeural"))
         return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio })
-    except Exception as e: return jsonify({"error": str(e)})
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "API Key" in err_str:
+            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. يرجى التحقق من متغيرات البيئة (Environment Variables) في منصة Render."})
+        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 @app.route("/classroom_chat", methods=["POST"])
 def classroom_chat():
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
     try:
         api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key: return jsonify({"error": "لم يتم العثور على مفتاح Groq API في متغيرات البيئة. يرجى إضافته في إعدادات الخادم."})
+        
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
         user_id = session['user_id']
@@ -886,7 +891,11 @@ def classroom_chat():
             
         audio = asyncio.run(generate_audio(eng, "en-US-ChristopherNeural"))
         return jsonify({ "english": eng, "arabic": ar, "audio": audio })
-    except Exception as e: return jsonify({"error": str(e)})
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "API Key" in err_str:
+            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. يرجى التحقق من متغيرات البيئة (Environment Variables) في منصة Render."})
+        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
