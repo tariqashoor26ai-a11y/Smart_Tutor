@@ -45,12 +45,15 @@ def init_db():
                             arabic TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
-        # تحديثات قاعدة البيانات لضمان التوافقية (Regression & Structural Updates)
+        # تحديثات قاعدة البيانات التراكمية (V1.0.6 & V1.0.7)
         try: conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         except: pass
         try: conn.execute("ALTER TABLE users ADD COLUMN current_state TEXT DEFAULT 'FREE_CHAT'")
         except: pass
         try: conn.execute("ALTER TABLE users ADD COLUMN state_data TEXT DEFAULT '{}'")
+        except: pass
+        # إضافة عمود رقم الآباء السري
+        try: conn.execute("ALTER TABLE users ADD COLUMN parent_pin TEXT DEFAULT '0000'")
         except: pass
 init_db()
 
@@ -94,7 +97,7 @@ class WorkflowManager:
                 state_data["step"] = step + 1
             else:
                 sys_msg = base_rule + "CRITICAL MODE: TEST COMPLETE. The user has finished the 5 questions. Give them their estimated CEFR level (e.g., A2, B1) based on their answers, provide a brief feedback summary, and welcome them to the academy's free chat."
-                current_state = 'FREE_CHAT' # Auto-reset after completion
+                current_state = 'FREE_CHAT'
                 state_data = {}
 
         elif current_state == 'TOPIC_DISCUSSION':
@@ -107,7 +110,7 @@ class WorkflowManager:
 
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Grammar Corrections" }'
         
-        # 3. حفظ الحالة الجديدة في قاعدة البيانات
+        # 3. حفظ الحالة الجديدة
         with sqlite3.connect('academy.db') as conn:
             conn.execute("UPDATE users SET current_state = ?, state_data = ? WHERE id = ?", (current_state, json.dumps(state_data), user_id))
             conn.commit()
@@ -280,6 +283,7 @@ MAIN_PAGE = """
         .drawer-btn.plan { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
         .drawer-btn.topics { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .drawer-btn.upload { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
+        .drawer-btn.parent { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); color: #1e8449; } /* V1.0.7 Parent Btn */
         .drawer-btn.settings { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
         .drawer-btn.logout { background: transparent; border: 1px solid #e74c3c; color: #e74c3c;}
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
@@ -335,6 +339,10 @@ MAIN_PAGE = """
         #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px;}
         #stateBanner { display: none; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer;}
         .break-notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #FFD200, #F7971E); color: white; padding: 15px 30px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-weight: bold; font-size: 16px; z-index: 3000; display: none;}
+        
+        /* V1.0.7 Parent Dashboard Styles */
+        .parent-report { background: #fdfefe; border-radius: 15px; padding: 20px; border: 1px solid #e5e8e8; margin-top: 20px;}
+        .parent-report h3 { color: #1e8449; border-bottom: 2px solid #a8df65; padding-bottom: 5px;}
     </style>
 </head>
 <body>
@@ -347,6 +355,7 @@ MAIN_PAGE = """
     <div id="sideDrawer" class="drawer">
         <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; margin-top: 0;">الخدمات الأكاديمية</h3>
         <button class="drawer-btn classroom" onclick="toggleClassroomMode()"><span class="icon">🏫</span><span id="classroomBtnText">الدخول للفصل الجماعي</span></button>
+        <button class="drawer-btn parent" onclick="openParentModal()"><span class="icon">👨‍👩‍👧</span><span>لوحة متابعة الآباء</span></button>
         <button class="drawer-btn plan" onclick="openModal('academicModal')"><span class="icon">🎓</span><span>المناهج والشهادات</span></button>
         <button class="drawer-btn topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span><span>المواضيع والمحادثات</span></button>
         <button class="drawer-btn downloads" onclick="openModal('downloadsModal')"><span class="icon">📚</span><span>مكتبة الموارد (PDF/MP3)</span></button>
@@ -358,6 +367,32 @@ MAIN_PAGE = """
     
     <input type="file" id="fileUpload" accept=".txt,.pdf,.doc,.docx" style="display: none;" onchange="handleFileUpload(event)">
     
+    <div id="parentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('parentModal')">&times;</span>
+            <h2 style="text-align:center; color: #1e8449;">👨‍👩‍👧 لوحة متابعة الآباء</h2>
+            <div id="parentAuthArea">
+                <p>يرجى إدخال الرمز السري الخاص بك لعرض التقرير (الرمز الافتراضي: 0000)</p>
+                <div class="input-container" style="justify-content:flex-start;">
+                    <input type="password" id="parentPinInput" placeholder="أدخل الـ PIN..." maxlength="4" style="width:150px; text-align:center; letter-spacing: 5px;">
+                    <button class="send-btn" onclick="verifyParent()">دخول</button>
+                </div>
+                <div id="parentAuthError" style="color:red; margin-top:10px; font-weight:bold;"></div>
+            </div>
+            <div id="parentReportArea" style="display:none;">
+                <div class="parent-report">
+                    <h3>📝 التقييم السلوكي والأكاديمي للطالب (مولد بالذكاء الاصطناعي)</h3>
+                    <div id="aiParentSummary">⏳ جاري تحليل بيانات الطالب...</div>
+                </div>
+                <div class="settings-group" style="margin-top:20px;">
+                    <label>تغيير رمز الآباء السري:</label>
+                    <input type="password" id="newPinInput" placeholder="الرمز الجديد" maxlength="4" style="width:100px; padding:5px;">
+                    <button onclick="changePin()" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">تحديث</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="downloadsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('downloadsModal')">&times;</span>
@@ -424,7 +459,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.6</span></h2>
+    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.7</span></h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
@@ -487,6 +522,48 @@ MAIN_PAGE = """
         function openModal(id) { document.getElementById(id).style.display = "block"; toggleDrawer(); } 
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
         
+        // V1.0.7 Parent Dashboard Functions
+        function openParentModal() {
+            toggleDrawer();
+            document.getElementById('parentModal').style.display = "block";
+            document.getElementById('parentAuthArea').style.display = "block";
+            document.getElementById('parentReportArea').style.display = "none";
+            document.getElementById('parentPinInput').value = "";
+            document.getElementById('parentAuthError').innerText = "";
+        }
+        
+        async function verifyParent() {
+            let pin = document.getElementById('parentPinInput').value;
+            let errDiv = document.getElementById('parentAuthError');
+            errDiv.innerText = "جاري التحقق...";
+            try {
+                let res = await fetch("/parent_dashboard", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ pin: pin, action: 'verify' }) });
+                let data = await res.json();
+                if(data.success) {
+                    document.getElementById('parentAuthArea').style.display = "none";
+                    document.getElementById('parentReportArea').style.display = "block";
+                    document.getElementById('aiParentSummary').innerText = "جاري استخراج التقرير من الذكاء الاصطناعي... ⏳";
+                    let repRes = await fetch("/parent_dashboard", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ pin: pin, action: 'get_report' }) });
+                    let repData = await repRes.json();
+                    document.getElementById('aiParentSummary').innerHTML = repData.report.replace(/\\n/g, '<br>');
+                } else {
+                    errDiv.innerText = "الرمز السري غير صحيح.";
+                }
+            } catch(e) { errDiv.innerText = "حدث خطأ في الاتصال."; }
+        }
+
+        async function changePin() {
+            let newPin = document.getElementById('newPinInput').value;
+            let oldPin = document.getElementById('parentPinInput').value;
+            if(newPin.length < 4) return alert("الرمز يجب أن يكون 4 أرقام");
+            try {
+                let res = await fetch("/parent_dashboard", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ pin: oldPin, action: 'change_pin', new_pin: newPin }) });
+                let data = await res.json();
+                if(data.success) alert("تم تحديث الرمز السري بنجاح!");
+                else alert("فشل تحديث الرمز.");
+            } catch(e) { alert("خطأ في الاتصال."); }
+        }
+
         function populateTopics() {
             let container = document.getElementById("topicsList");
             for (const [category, topics] of Object.entries(topicsLibrary)) {
@@ -657,7 +734,6 @@ MAIN_PAGE = """
                 let data = await res.json(); document.getElementById("loadingBubble")?.remove(); 
                 if(data.error) return alert("⚠️ تنبيه: " + data.error); 
                 
-                // Show/hide state banner based on workflow state returned
                 let sBanner = document.getElementById("stateBanner");
                 if(data.workflow_state !== 'FREE_CHAT' && !isClassroomMode) { sBanner.style.display = "block"; } else { sBanner.style.display = "none"; }
 
@@ -885,6 +961,53 @@ def get_classroom_history():
             return jsonify([{"username": r[0], "role": r[1], "content": r[2], "arabic": r[3]} for r in rows])
     except: return jsonify([])
 
+# V1.0.7 Fix: Parent Dashboard API Routes
+@app.route("/parent_dashboard", methods=["POST"])
+def parent_dashboard():
+    if 'user_id' not in session: return jsonify({"success": False})
+    user_id = session['user_id']
+    data = request.json
+    action = data.get("action")
+    pin = data.get("pin", "")
+
+    try:
+        with sqlite3.connect('academy.db') as conn:
+            cursor = conn.execute("SELECT parent_pin FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            real_pin = row[0] if row and row[0] else "0000"
+
+            if pin != real_pin: return jsonify({"success": False, "error": "Invalid PIN"})
+
+            if action == 'verify':
+                return jsonify({"success": True})
+            
+            elif action == 'change_pin':
+                new_pin = data.get("new_pin")
+                if len(new_pin) == 4:
+                    conn.execute("UPDATE users SET parent_pin = ? WHERE id = ?", (new_pin, user_id))
+                    conn.commit()
+                    return jsonify({"success": True})
+                return jsonify({"success": False})
+                
+            elif action == 'get_report':
+                api_key = os.environ.get("GROQ_API_KEY")
+                if not api_key: return jsonify({"success": True, "report": "API Key مفقود، لا يمكن توليد التقرير."})
+                
+                client = Groq(api_key=api_key)
+                cursor = conn.execute("SELECT content FROM academy_chats WHERE user_id = ? AND role = 'user' ORDER BY id DESC LIMIT 15", (user_id,))
+                user_msgs = [r[0] for r in cursor.fetchall()]
+                
+                if not user_msgs: return jsonify({"success": True, "report": "لا توجد بيانات كافية للطالب حتى الآن لإصدار تقرير."})
+
+                prompt = f"""You are a professional educational assessor. Based on these recent messages from the student: {user_msgs}, provide a short summary for their parent IN ARABIC. Include: 1. Estimated CEFR Level. 2. Strong points. 3. Areas to improve. Keep it encouraging and under 150 words."""
+                
+                completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
+                report = completion.choices[0].message.content
+                
+                return jsonify({"success": True, "report": report})
+                
+    except Exception as e: return jsonify({"success": False, "error": str(e)})
+
 async def generate_audio(text, voice):
     clean_text = re.sub(r'[*#_~`]', '', text) 
     communicate = edge_tts.Communicate(clean_text, voice)
@@ -911,7 +1034,6 @@ def chat():
             recent_rows = cursor.fetchall()[::-1]
             history = [{"role": r[0], "content": r[1]} for r in recent_rows]
 
-        # V1.0.6 Fix: Execute the Workflow Manager to get tailored prompt & save state
         sys_msg, current_state = WorkflowManager.process_state(user_id, user_msg, mode, custom_curriculum)
         voice_model = "en-US-JennyNeural" if mode == "child" else "en-GB-RyanNeural" 
 
