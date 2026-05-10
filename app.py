@@ -23,63 +23,63 @@ FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "YOUR_FACEBOOK_APP_ID")
 # ==========================================
 FULL_SYLLABUS = {
     "A1": {
-        "name": "Beginner (A1)",
+        "name": "المستوى الأول (A1) - Beginner",
         "lessons": {
-            1: {"title": "Greetings", "focus": "Verb to be, basic pronouns"},
-            2: {"title": "Routine", "focus": "Present simple"},
-            3: {"title": "Food & Ordering", "focus": "Countable/Uncountable"},
-            4: {"title": "Travel & Directions", "focus": "Prepositions of place"},
-            5: {"title": "Past Experiences", "focus": "Past simple verbs"},
-            6: {"title": "Shopping", "focus": "Numbers, prices, demonstratives"},
-            7: {"title": "Health & Body", "focus": "Have got, should/shouldn't"},
-            8: {"title": "Jobs", "focus": "Present continuous, work vocab"},
-            9: {"title": "Future Plans", "focus": "Going to, will"},
-            10: {"title": "A1 Final Exam", "focus": "Comprehensive A1 Review"}
+            1: {"title": "Greetings (التحيات)", "focus": "Verb to be, basic pronouns"},
+            2: {"title": "Daily Routine (الروتين اليومي)", "focus": "Present simple"},
+            3: {"title": "Food & Ordering (الطعام والطلبات)", "focus": "Countable/Uncountable"},
+            4: {"title": "Travel & Directions (السفر والاتجاهات)", "focus": "Prepositions of place"},
+            5: {"title": "Past Experiences (تجارب الماضي)", "focus": "Past simple verbs"},
+            6: {"title": "Shopping (التسوق)", "focus": "Numbers, prices, demonstratives"},
+            7: {"title": "Health & Body (الصحة والجسم)", "focus": "Have got, should/shouldn't"},
+            8: {"title": "Jobs (الوظائف)", "focus": "Present continuous, work vocab"},
+            9: {"title": "Future Plans (خطط المستقبل)", "focus": "Going to, will"},
+            10: {"title": "A1 Final Exam (امتحان المستوى A1)", "focus": "Comprehensive A1 Review"}
         }
     },
     "A2": {
-        "name": "Elementary (A2)",
+        "name": "المستوى الثاني (A2) - Elementary",
         "lessons": {
-            11: {"title": "Comparisons", "focus": "Comparative and superlative adjectives"},
-            12: {"title": "Life Experiences", "focus": "Present perfect with ever/never"},
-            13: {"title": "Hobbies & Leisure", "focus": "Gerunds and infinitives"},
-            14: {"title": "Weather & Nature", "focus": "Adverbs of degree"},
-            15: {"title": "Emergencies", "focus": "Past continuous vs Past simple"},
-            16: {"title": "Education", "focus": "Must, have to, can (Obligation)"},
-            17: {"title": "Entertainment", "focus": "Relative clauses (who, which, that)"},
-            18: {"title": "Technology", "focus": "Zero and First Conditional"},
-            19: {"title": "Socializing", "focus": "Making arrangements"},
-            20: {"title": "A2 Final Exam", "focus": "Comprehensive A2 Review"}
+            11: {"title": "Comparisons (المقارنات)", "focus": "Comparative and superlative adjectives"},
+            12: {"title": "Life Experiences (تجارب الحياة)", "focus": "Present perfect with ever/never"},
+            13: {"title": "Hobbies & Leisure (الهوايات)", "focus": "Gerunds and infinitives"},
+            14: {"title": "Weather & Nature (الطقس والطبيعة)", "focus": "Adverbs of degree"},
+            15: {"title": "Emergencies (الطوارئ)", "focus": "Past continuous vs Past simple"},
+            16: {"title": "Education (التعليم)", "focus": "Must, have to, can (Obligation)"},
+            17: {"title": "Entertainment (الترفيه)", "focus": "Relative clauses"},
+            18: {"title": "Technology (التكنولوجيا)", "focus": "Zero and First Conditional"},
+            19: {"title": "Socializing (التواصل الاجتماعي)", "focus": "Making arrangements"},
+            20: {"title": "A2 Final Exam (امتحان المستوى A2)", "focus": "Comprehensive A2 Review"}
         }
     },
     "B1": {
-        "name": "Intermediate (B1)",
+        "name": "المستوى الثالث (B1) - Intermediate",
         "lessons": {
-            21: {"title": "Opinions & Beliefs", "focus": "Second Conditional"},
-            22: {"title": "Career Goals", "focus": "Present perfect continuous"},
-            23: {"title": "Culture & Society", "focus": "Passive voice (present/past)"},
-            24: {"title": "Media & News", "focus": "Reported speech"},
-            25: {"title": "Environment", "focus": "Future continuous"},
-            26: {"title": "Mysteries", "focus": "Modals of deduction (might, can't, must have)"},
-            27: {"title": "Finance & Money", "focus": "Third Conditional"},
-            28: {"title": "Travel Stories", "focus": "Past perfect"},
-            29: {"title": "Health & Lifestyle", "focus": "Phrasal verbs"},
-            30: {"title": "B1 Final Exam", "focus": "Comprehensive B1 Review"}
+            21: {"title": "Opinions & Beliefs (الآراء والمعتقدات)", "focus": "Second Conditional"},
+            22: {"title": "Career Goals (الأهداف المهنية)", "focus": "Present perfect continuous"},
+            23: {"title": "Culture & Society (الثقافة والمجتمع)", "focus": "Passive voice (present/past)"},
+            24: {"title": "Media & News (الإعلام والأخبار)", "focus": "Reported speech"},
+            25: {"title": "Environment (البيئة)", "focus": "Future continuous"},
+            26: {"title": "Mysteries (الغموض والألغاز)", "focus": "Modals of deduction"},
+            27: {"title": "Finance & Money (المال والأعمال)", "focus": "Third Conditional"},
+            28: {"title": "Travel Stories (قصص السفر)", "focus": "Past perfect"},
+            29: {"title": "Health & Lifestyle (أسلوب الحياة)", "focus": "Phrasal verbs"},
+            30: {"title": "B1 Final Exam (امتحان المستوى B1)", "focus": "Comprehensive B1 Review"}
         }
     },
     "B2": {
-        "name": "Upper Intermediate (B2)",
+        "name": "المستوى الرابع (B2) - Upper Intermediate",
         "lessons": {
-            31: {"title": "Advanced Idioms", "focus": "Idiomatic expressions in daily life"},
-            32: {"title": "Debates & Arguments", "focus": "Linking words, expressing strong opinions"},
-            33: {"title": "Global Issues", "focus": "Advanced passive structures"},
-            34: {"title": "Nuance & Tone", "focus": "Inversion for emphasis"},
-            35: {"title": "Negotiations", "focus": "Mixed conditionals"},
-            36: {"title": "Abstract Concepts", "focus": "Cleft sentences"},
-            37: {"title": "Hypothetical Situations", "focus": "Wish, if only, would rather"},
-            38: {"title": "Presentations", "focus": "Signposting and structuring speech"},
-            39: {"title": "Professional Networking", "focus": "Advanced polite requests"},
-            40: {"title": "B2 Final Exam", "focus": "Comprehensive B2 Level Assessment"}
+            31: {"title": "Advanced Idioms (المصطلحات المتقدمة)", "focus": "Idiomatic expressions"},
+            32: {"title": "Debates & Arguments (المناظرات)", "focus": "Linking words, expressing strong opinions"},
+            33: {"title": "Global Issues (القضايا العالمية)", "focus": "Advanced passive structures"},
+            34: {"title": "Nuance & Tone (النبرة اللغوية)", "focus": "Inversion for emphasis"},
+            35: {"title": "Negotiations (التفاوض)", "focus": "Mixed conditionals"},
+            36: {"title": "Abstract Concepts (المفاهيم المجردة)", "focus": "Cleft sentences"},
+            37: {"title": "Hypothetical Situations (الافتراضات)", "focus": "Wish, if only, would rather"},
+            38: {"title": "Presentations (العروض التقديمية)", "focus": "Signposting and structuring speech"},
+            39: {"title": "Networking (التواصل المهني)", "focus": "Advanced polite requests"},
+            40: {"title": "B2 Final Exam (امتحان التخرج B2)", "focus": "Comprehensive B2 Level Assessment"}
         }
     }
 }
@@ -169,7 +169,6 @@ class WorkflowManager:
 
         user_msg_lower = user_msg.lower()
         
-        # Intent Routing
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
             state_data = {"step": 1, "total_steps": 5}
@@ -192,8 +191,8 @@ class WorkflowManager:
 
         base_rule = """CRITICAL RULES:
 1. STRICT Law compliance.
-2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and logical. NEVER use bizarre literal translations. If an idiom does not translate well, translate its meaning instead.
-3. Ensure there are spaces between words in your English output.
+2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and contextual. NEVER use bizarre literal translations.
+3. Keep English sentences properly spaced.
 """
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
         
@@ -210,7 +209,7 @@ class WorkflowManager:
 
         elif current_state == 'TOPIC_DISCUSSION':
             topic = state_data.get("topic", "English")
-            sys_msg = base_rule + f"MODE: FOCUSED TOPIC ('{topic}'). Keep conversation strictly on this topic. Steer back gently if they stray."
+            sys_msg = base_rule + f"MODE: FOCUSED TOPIC ('{topic}'). Keep conversation strictly on this topic."
 
         elif current_state == 'LESSON_MODE':
             level_name, lesson = get_lesson_info(current_lesson_id)
@@ -224,7 +223,7 @@ class WorkflowManager:
                 state_data = {"step": 1, "score": 0}
                 sys_msg = base_rule + f"QUIZ MODE for '{lesson['title']}'. Ask Q1."
             else:
-                sys_msg = base_rule + f"TEACHING Level {level_name}, Lesson {current_lesson_id}: {lesson['title']}. Explain {lesson['focus']} briefly. Remind them to say 'I am ready for the quiz'."
+                sys_msg = base_rule + f"TEACHING Level {level_name}, Lesson {current_lesson_id}: {lesson['title']}. Explain '{lesson['focus']}' briefly. Remind them to say 'I am ready for the quiz'."
 
         elif current_state == 'LESSON_QUIZ':
             level_name, lesson = get_lesson_info(current_lesson_id)
@@ -244,7 +243,7 @@ class WorkflowManager:
             level_name, lesson = get_lesson_info(current_lesson_id)
             step = state_data.get("step", 1)
             if step <= 3:
-                sys_msg = base_rule + f"LEVEL EXAM {level_name} (Q{step}/3). Very formal examiner tone. Ask deep questions. Evaluate their last answer and fill the 'scores' JSON object out of 10 for fluency, grammar, and vocab."
+                sys_msg = base_rule + f"LEVEL EXAM {level_name} (Q{step}/3). Very formal examiner tone. Evaluate their last answer and fill the 'scores' JSON object out of 10 for fluency, grammar, and vocab."
                 state_data["step"] = step + 1
             else:
                 current_lesson_id += 1
@@ -268,7 +267,7 @@ class WorkflowManager:
         return sys_msg + json_structure, current_state, current_lesson_id, xp_points
 
 # ==========================================
-# 1. واجهة تسجيل الدخول والتسويق (LOGIN_PAGE)
+# 1. واجهة تسجيل الدخول (LOGIN_PAGE)
 # ==========================================
 LOGIN_PAGE = """
 <!DOCTYPE html>
@@ -277,7 +276,6 @@ LOGIN_PAGE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Academy - تعلم الإنجليزية باحتراف</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #2c3e50;}
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
@@ -348,7 +346,7 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# 2. الواجهة التفاعلية (MAIN_PAGE) المحدثة (V1.8.0-Core UI)
+# 2. الواجهة التفاعلية (MAIN_PAGE) (V1.9.0-Core UI)
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -368,47 +366,15 @@ MAIN_PAGE = """
         .drawer { position: fixed; top: 0; right: -320px; width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1); transition: 0.4s; z-index: 1001; padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px; overflow-y: auto;}
         .drawer.open { right: 0; }
         
-        /* V1.8.0 UI Update: Attractive, colorful, shadowed buttons */
-        .drawer-btn { 
-            border-radius: 15px; 
-            padding: 12px 18px; 
-            font-size: 14px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            border: none; 
-            width: 100%; 
-            text-align: right; 
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        .drawer-btn:hover { 
-            transform: translateY(-3px) scale(1.02); 
-            box-shadow: 0 7px 14px rgba(0,0,0,0.15); 
-        }
-        .drawer-btn .icon { 
-            font-size: 18px; 
-            background: rgba(255,255,255,0.4); 
-            padding: 8px; 
-            border-radius: 50%; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-        }
-
-        /* Specific Gradients for each button */
+        /* Modern Buttons */
+        .drawer-btn { border-radius: 15px; padding: 12px 18px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 15px; border: none; width: 100%; text-align: right; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .drawer-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 7px 14px rgba(0,0,0,0.15); }
+        .drawer-btn .icon { font-size: 18px; background: rgba(255,255,255,0.4); padding: 8px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 20px; height: 20px; text-align:center;}
         .btn-syllabus { background: linear-gradient(135deg, #a18cd1 0%, #8e44ad 100%); color: white; }
         .btn-classroom { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #c0392b; }
         .btn-parent { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); color: #1e8449; }
         .btn-academic { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: #d35400; }
         .btn-topics { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: #0b5345; }
-        .btn-stats { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); color: #154360; }
-        .btn-settings { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); color: #2c3e50; border: 1px solid #eee;}
         .btn-logout { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); color: white; }
         
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
@@ -421,8 +387,7 @@ MAIN_PAGE = """
         input[type="text"] { padding: 16px; border-radius: 30px; border: none; width: 65%; max-width: 600px; outline: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .circle-btn { border-radius: 50%; width: 55px; height: 55px; font-size: 24px; border: none; cursor: pointer; color: white; background: #ff4b2b; box-shadow: 0 4px 10px rgba(255, 75, 43, 0.3); transition: transform 0.2s;}
         .circle-btn:active { transform: scale(0.9); }
-        .send-btn { padding: 14px 30px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: #3498db; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); transition: transform 0.2s;}
-        .send-btn:active { transform: scale(0.95); }
+        .send-btn { padding: 14px 30px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: #3498db; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);}
         
         #audioControls { display: none; justify-content: center; gap: 15px; margin-top: 15px; background: white; padding: 12px; border-radius: 30px; width: fit-content; margin: 15px auto;}
         
@@ -446,8 +411,8 @@ MAIN_PAGE = """
         
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index: 1000;}
         #overlay.active { display: block; }
-        #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);}
-        #stateBanner { display: none; background: #f39c12; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.2);}
+        #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px;}
+        #stateBanner { display: none; background: #f39c12; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer;}
         
         .progress-container { width: 100%; max-width: 900px; margin: 0 auto 10px; background: #e0e0e0; border-radius: 10px; height: 12px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);}
         .progress-bar { height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); width: 0%; transition: 0.5s; }
@@ -455,23 +420,30 @@ MAIN_PAGE = """
         .topic-category { font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 15px; border-bottom: 2px dashed #bdc3c7; padding-bottom: 5px; width:100%; text-align:right;}
         .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; border: 1px solid #dcdde1; font-weight: bold; flex: 1 1 calc(33% - 10px); box-sizing: border-box; transition: all 0.2s;}
         .topic-item:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);}
+        
+        /* V1.9.0 Syllabus Roadmap Styling */
+        .syllabus-level { background: white; border: 1px solid #eee; border-radius: 15px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.03);}
+        .syllabus-header { background: #f9f9f9; padding: 15px; font-weight: bold; color: #8e44ad; font-size: 18px; border-bottom: 1px solid #eee;}
+        .lesson-item { padding: 15px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; text-align: right;}
+        .lesson-item:last-child { border-bottom: none; }
+        .lesson-done { background: #e8f8f5; }
+        .lesson-current { background: #eaf2f8; border-right: 5px solid #3498db; }
+        .lesson-locked { background: #fdfdfd; color: #aaa; }
     </style>
 </head>
 <body>
     <div id="loginToast" class="toast">✅ تم الدخول بنجاح! يتم الآن تحضير الأكاديمية...</div>
     
-    <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="فتح القائمة الجانبية"><span>☰</span> الخيارات</button>
+    <button class="hamburger-btn" onclick="toggleDrawer()"><span>☰</span> الخيارات</button>
     <div id="overlay" onclick="toggleDrawer()"></div>
     
     <div id="sideDrawer" class="drawer">
         <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; text-align:center;">الخدمات الأكاديمية</h3>
-        <button class="drawer-btn btn-syllabus" onclick="sendMsg('Start the next syllabus lesson', true); toggleDrawer();"><span class="icon">📖</span> متابعة المسار التعليمي</button>
+        <button class="drawer-btn btn-syllabus" onclick="sendMsg('Start the next syllabus lesson', true); toggleDrawer();"><span class="icon">📖</span> متابعة الدرس الحالي</button>
         <button class="drawer-btn btn-classroom" onclick="toggleClassroomMode()"><span class="icon">🏫</span> الفصل الجماعي</button>
         <button class="drawer-btn btn-parent" onclick="openParentModal()"><span class="icon">👨‍👩‍👧</span> لوحة الآباء</button>
-        <button class="drawer-btn btn-academic" onclick="openModal('academicModal')"><span class="icon">🎓</span> المناهج والشهادات</button>
+        <button class="drawer-btn btn-academic" onclick="openAcademicModal()"><span class="icon">🗺️</span> المناهج التدريسية</button>
         <button class="drawer-btn btn-topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span> المواضيع الحرة</button>
-        <button class="drawer-btn btn-stats" onclick="openModal('statsModal')"><span class="icon">📊</span> الإحصاءات</button>
-        <button class="drawer-btn btn-settings" onclick="openModal('settingsModal')"><span class="icon">🎨</span> المظهر</button>
         <button class="drawer-btn btn-logout" onclick="window.location.href='/logout'"><span class="icon">🚪</span> تسجيل خروج</button>
     </div>
     
@@ -502,14 +474,16 @@ MAIN_PAGE = """
     </div>
 
     <div id="academicModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="background:#f5f7fa; padding:20px;">
             <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
-            <h2 style="color: #8e44ad;">🎓 الخطة الأكاديمية (A1 -> B2)</h2>
-            <p>نتبع المعايير الأوروبية CEFR.</p>
-            <ul style="list-style:none; padding:0; text-align:right;">
-                <li style="margin-bottom:15px;"><button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%;">بدء اختبار تحديد المستوى</button></li>
-                <li style="margin-bottom:15px;"><button onclick="sendMsg('Start the next syllabus lesson', true); closeModal('academicModal');" class="send-btn" style="width:100%;">استئناف الدرس المنهجي</button></li>
-            </ul>
+            <h2 style="color: #8e44ad; text-align:center;">🗺️ خارطة المسار التعليمي (Syllabus)</h2>
+            <p style="text-align:center; color:#7f8c8d; margin-bottom:20px;">المناهج المعتمدة مقسمة إلى 40 درساً تفاعلياً.</p>
+            
+            <button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%; margin-bottom:20px;">بدء اختبار تحديد المستوى (Placement Test)</button>
+            
+            <div id="syllabusRoadmap">
+                <p style="text-align:center;">⏳ جاري تحميل المناهج...</p>
+            </div>
         </div>
     </div>
 
@@ -521,24 +495,8 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <div id="statsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
-            <h2 style="color: #2c3e50;">📊 الإحصاءات</h2>
-            <p>جارٍ جمع البيانات...</p>
-        </div>
-    </div>
-
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('settingsModal')">&times;</span>
-            <h2>🎨 إعدادات المظهر</h2>
-            <p>تخصيص الألوان متاح قريباً في واجهة محدثة.</p>
-        </div>
-    </div>
-
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.8.0-Core</span></h2>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.9.0-Core</span></h2>
         <div style="font-weight: bold; color: #8e44ad; background: white; padding: 8px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
@@ -622,6 +580,43 @@ MAIN_PAGE = """
             document.getElementById('overlay').classList.remove('active');
         } 
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
+        
+        // V1.9.0 Fix: Dynamic Syllabus Loader
+        async function openAcademicModal() {
+            openModal('academicModal');
+            let res = await fetch("/get_syllabus_progress");
+            let data = await res.json();
+            let container = document.getElementById("syllabusRoadmap");
+            container.innerHTML = "";
+            let cl = data.current_lesson;
+            
+            for (const [level, info] of Object.entries(data.syllabus)) {
+                let lvlDiv = document.createElement("div"); lvlDiv.className = "syllabus-level";
+                lvlDiv.innerHTML = `<div class="syllabus-header">${info.name}</div>`;
+                
+                for (const [idStr, lesson] of Object.entries(info.lessons)) {
+                    let id = parseInt(idStr);
+                    let itemDiv = document.createElement("div"); 
+                    itemDiv.className = "lesson-item";
+                    
+                    let htmlContent = `<div><b>الدرس ${id}:</b> ${lesson.title} <br><span style="font-size:12px;color:grey;">التركيز: ${lesson.focus}</span></div>`;
+                    
+                    if (id < cl) {
+                        itemDiv.classList.add("lesson-done");
+                        htmlContent += `<div style="color:#27ae60; font-size:20px;">✅</div>`;
+                    } else if (id === cl) {
+                        itemDiv.classList.add("lesson-current");
+                        htmlContent += `<button onclick="sendMsg('Start the next syllabus lesson', true); closeModal('academicModal');" class="send-btn" style="padding:8px 15px; font-size:12px;">▶️ ابدأ الدرس</button>`;
+                    } else {
+                        itemDiv.classList.add("lesson-locked");
+                        htmlContent += `<div style="font-size:20px;">🔒</div>`;
+                    }
+                    itemDiv.innerHTML = htmlContent;
+                    lvlDiv.appendChild(itemDiv);
+                }
+                container.appendChild(lvlDiv);
+            }
+        }
         
         function openParentModal() {
             openModal('parentModal');
@@ -817,6 +812,15 @@ def home():
     if 'user_id' in session: return render_template_string(MAIN_PAGE, username=session['username'])
     else: return render_template_string(LOGIN_PAGE, google_id=GOOGLE_CLIENT_ID, fb_id=FACEBOOK_APP_ID)
 
+# V1.9.0 API Route: Fetch Curriculum
+@app.route("/get_syllabus_progress", methods=["GET"])
+def get_syllabus_progress():
+    if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
+    with sqlite3.connect('academy.db') as conn:
+        row = conn.execute("SELECT current_lesson_id FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+        current_lesson = row[0] if row else 1
+    return jsonify({"syllabus": FULL_SYLLABUS, "current_lesson": current_lesson})
+
 @app.route("/check_gdpr", methods=["GET"])
 def check_gdpr():
     if 'user_id' not in session: return jsonify({"consented": False})
@@ -924,9 +928,21 @@ def chat():
         sys_msg, current_state, current_lesson_id, xp = WorkflowManager.process_state(user_id, user_msg, 'adult', "")
 
         messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
-        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, response_format={"type": "json_object"})
+        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages)
         
-        parsed = json.loads(completion.choices[0].message.content)
+        raw_response = completion.choices[0].message.content
+        
+        # V1.9.0 Fix: Robust JSON extraction via Regex to prevent "System Error"
+        try:
+            parsed = json.loads(raw_response)
+        except json.JSONDecodeError:
+            try:
+                json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
+                if json_match: parsed = json.loads(json_match.group(0))
+                else: raise Exception("No JSON block found")
+            except Exception:
+                parsed = {"english": "I'm sorry, I had a technical glitch. Could we restart?", "arabic": "عذراً، حدث خطأ تقني في صياغة الإجابة. هل يمكننا المحاولة مجدداً؟", "summary": "Error Recovered"}
+
         eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
         scores = parsed.get("scores", {})
 
@@ -934,7 +950,7 @@ def chat():
             if current_state == 'LEVEL_EXAM' and isinstance(scores, dict):
                 conn.execute("UPDATE users SET fluency_score = fluency_score + ?, grammar_score = grammar_score + ?, vocab_score = vocab_score + ? WHERE id = ?", (scores.get("fluency", 0), scores.get("grammar", 0), scores.get("vocab", 0), user_id))
             
-            if not user_msg.startswith("Welcome") and not user_msg.startswith("Let's deeply"):
+            if not user_msg.startswith("Welcome") and not user_msg.startswith("Let's deeply") and not user_msg.startswith("Start the next"):
                 conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
             conn.commit()
@@ -944,9 +960,7 @@ def chat():
         
         return jsonify({ "english": eng, "arabic": ar, "summary": parsed.get("summary", ""), "audio": audio, "workflow_state": current_state, "current_lesson": current_lesson_id, "xp_points": xp })
     except Exception as e:
-        err_str = str(e)
-        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
-        return jsonify({"error": "حدث خطأ غير متوقع في الاتصال بالسيرفر."})
+        return jsonify({"error": f"حدث خطأ في النظام الداخلي. ({str(e)[:30]})"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
