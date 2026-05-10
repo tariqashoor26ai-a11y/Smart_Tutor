@@ -242,6 +242,12 @@ MAIN_PAGE = """
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; border-bottom-right-radius: 5px; text-align: right;}
         .sender-name { font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; display: block; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 3px;}
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
+        
+        /* V1.0.5 Fix: Hidden text that reveals sequentially with light highlight */
+        .word { opacity: 0; transition: opacity 0.15s ease-in, background-color 0.15s ease-in; border-radius: 4px; padding: 2px 0;}
+        .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.15); } /* Light blue highlight */
+        .word.spoken { opacity: 1; background-color: transparent; }
+        
         .arabic-translation { border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 10px; opacity: 0.9;}
         .structured-data { font-size: calc(var(--chat-size) - 2px); background-color: rgba(255,255,255,0.6); padding: 12px 15px; border-radius: 12px; margin-top: 12px; text-align: left; direction: ltr; border-left: 5px solid rgba(0,0,0,0.2);}
         
@@ -355,7 +361,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <h2>Smart Academy 🎓</h2>
+    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.5</span></h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
@@ -400,7 +406,7 @@ MAIN_PAGE = """
 
         let isRecording = false, recognition;
         let isLiveMode = false, silenceTimer, final_transcript = '', chatHistory = [], isTeacherSpeaking = false, userName = "{{ username }}";
-        let isClassroomMode = false, classroomPollingInterval = null, lastMessageCount = 0, chartInstance = null;
+        let isClassroomMode = false, classroomPollingInterval = null, lastMessageCount = null, chartInstance = null;
         let wordsElements = [];
 
         let studyMinutes = 0;
@@ -495,8 +501,8 @@ MAIN_PAGE = """
                     document.getElementById('chatBox').innerHTML = ''; chatHistory = [];
                     history.forEach(item => {
                         let isMe = (item.username === userName && item.role === 'user'), isTeacher = (item.role === 'assistant');
-                        if (isTeacher) { appendBubble("", false, {english: item.content, arabic: item.arabic}, "المعلم الذكي 🎓"); chatHistory.push({"role": "assistant", "content": item.content}); } 
-                        else { appendBubble(item.content, true, null, isMe ? "أنت" : "الزميل: " + item.username); chatHistory.push({"role": "user", "content": `[${item.username}]: ${item.content}`}); }
+                        if (isTeacher) { appendBubble("", false, {english: item.content, arabic: item.arabic}, "المعلم الذكي 🎓", true); chatHistory.push({"role": "assistant", "content": item.content}); } 
+                        else { appendBubble(item.content, true, null, isMe ? "أنت" : "الزميل: " + item.username, true); chatHistory.push({"role": "user", "content": `[${item.username}]: ${item.content}`}); }
                     });
                     lastMessageCount = history.length; document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
                 }
@@ -518,7 +524,8 @@ MAIN_PAGE = """
             } catch (e) { alert("فشل تحميل الإحصاءات"); }
         }
 
-        function appendBubble(text, isUser, data=null, senderName=null) { 
+        // V1.0.5 Fix: Added forceVisible parameter for history loading
+        function appendBubble(text, isUser, data=null, senderName=null, forceVisible=false) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
             if (isClassroomMode && senderName) { let nameLabel = document.createElement("span"); nameLabel.className = "sender-name"; nameLabel.innerText = senderName; container.appendChild(nameLabel); }
@@ -526,9 +533,11 @@ MAIN_PAGE = """
                 let t = document.createElement("span"); t.innerText = text; container.appendChild(t); 
             } else { 
                 let engDiv = document.createElement("div"); engDiv.className = "english-text"; 
-                data.english.split(" ").forEach(word => { 
+                let engText = data.english || "";
+                engText.split(" ").forEach(word => { 
                     let span = document.createElement("span"); 
                     span.className = "word"; 
+                    if(forceVisible) span.classList.add("spoken");
                     span.innerText = word; 
                     engDiv.appendChild(span); 
                     engDiv.appendChild(document.createTextNode(" ")); 
@@ -548,8 +557,8 @@ MAIN_PAGE = """
                 let res = await fetch("/get_history"); let history = await res.json(); 
                 if (history.length > 0) { 
                     history.forEach(item => { 
-                        if(item.role === 'user') { appendBubble(item.content, true); chatHistory.push({"role": "user", "content": item.content}); } 
-                        else if(item.role === 'assistant') { appendBubble("", false, {english: item.content, arabic: item.arabic}); chatHistory.push({"role": "assistant", "content": item.content}); } 
+                        if(item.role === 'user') { appendBubble(item.content, true, null, null, true); chatHistory.push({"role": "user", "content": item.content}); } 
+                        else if(item.role === 'assistant') { appendBubble("", false, {english: item.content, arabic: item.arabic}, null, true); chatHistory.push({"role": "assistant", "content": item.content}); } 
                     }); 
                     document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; 
                 } else { 
@@ -569,7 +578,7 @@ MAIN_PAGE = """
             if(!msg.trim()) return; 
             
             if(!isHidden){ 
-                appendBubble(msg, true, null, isClassroomMode ? "أنت" : null); 
+                appendBubble(msg, true, null, isClassroomMode ? "أنت" : null, true); 
                 chatHistory.push({"role": "user", "content": isClassroomMode ? `[${userName}]: ${msg}` : msg}); 
                 if(isClassroomMode) lastMessageCount++; 
             } else { 
@@ -586,17 +595,25 @@ MAIN_PAGE = """
                 if(data.error) return alert("⚠️ تنبيه: " + data.error); 
                 
                 chatHistory.push({"role": "assistant", "content": data.english}); 
-                appendBubble("", false, data, isClassroomMode ? "المعلم الذكي 🎓" : null); 
+                appendBubble("", false, data, isClassroomMode ? "المعلم الذكي 🎓" : null, false); 
                 
                 if(data.audio) { 
                     let ap = document.getElementById("audioPlayer"); ap.src = "data:audio/mp3;base64," + data.audio; 
                     document.getElementById("audioControls").style.display = "flex"; 
                     document.getElementById("pauseBtn").innerText = "⏸️"; 
                     isTeacherSpeaking = true; if(isRecording) recognition.stop(); 
-                    let playPromise = ap.play(); if (playPromise !== undefined) playPromise.catch(error => { console.log("Auto-play blocked."); }); 
+                    
+                    // V1.0.5 Fix: Handle Autoplay blocks to prevent stuck invisible text
+                    let playPromise = ap.play(); 
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => { 
+                            console.log("Auto-play blocked."); 
+                            document.querySelectorAll(".english-text .word").forEach(w => w.classList.add("spoken"));
+                        }); 
+                    }
                 } 
                 
-                wordsElements = document.querySelectorAll(".english-text .word");
+                wordsElements = document.querySelectorAll("#chatBox > div:last-child .english-text .word");
             } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("⚠️ خطأ في الاتصال."); } 
         }
         
@@ -803,7 +820,6 @@ def get_classroom_history():
     except: return jsonify([])
 
 async def generate_audio(text, voice):
-    # فلتر يحذف الرموز ويحافظ على حركات التشكيل (النطق السليم المخفي)
     clean_text = re.sub(r'[*#_~`]', '', text) 
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save("response.mp3")
@@ -829,7 +845,6 @@ def chat():
             recent_rows = cursor.fetchall()[::-1]
             history = [{"role": r[0], "content": r[1]} for r in recent_rows]
 
-        # V1.0.3 Fix: Updated core rules to force conversational tone with natural punctuation
         core_rules = """
         CRITICAL RULES: 
         1. MUST STRICTLY adhere to Islamic Sharia and local laws.
@@ -841,7 +856,6 @@ def chat():
         json_structure = 'Respond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Grammar Corrections" }'
         sys_msg = core_rules + ("\\nYou are a fun, cheerful English teacher for kids." if mode == "child" else "\\nYou are an expert, professional English coach.") + json_structure
         
-        # V1.0.3 Fix: Changed to high-quality expressive neural voices
         voice_model = "en-US-JennyNeural" if mode == "child" else "en-GB-RyanNeural" 
 
         messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
@@ -858,7 +872,6 @@ def chat():
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
             conn.commit()
             
-        # V1.0.3 Fix: Applied the dynamic voice_model variable instead of hardcoding Christopher
         audio = asyncio.run(generate_audio(eng, voice_model))
         return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio })
     except Exception as e:
@@ -883,7 +896,6 @@ def classroom_chat():
         with sqlite3.connect('academy.db') as conn:
             history = [{"role": r[0], "content": r[1]} for r in conn.execute("SELECT role, content FROM classroom_chats ORDER BY id DESC LIMIT 10").fetchall()[::-1]]
 
-        # V1.0.3 Fix: Enforce human-like responses in classroom too
         sys_msg = """CRITICAL RULES: 
         1. You are teaching a VIRTUAL CLASSROOM. Be highly engaging and human-like. Use proper punctuation for TTS pauses.
         2. Address the specific student who spoke, keep it brief and conversational.
@@ -902,7 +914,6 @@ def classroom_chat():
             conn.execute("INSERT INTO classroom_chats (user_id, username, role, content, arabic) VALUES (?, ?, ?, ?, ?)", (0, "Teacher", "assistant", eng, ar))
             conn.commit()
             
-        # V1.0.3 Fix: Use the British professional voice for the classroom teacher
         audio = asyncio.run(generate_audio(eng, "en-GB-RyanNeural"))
         return jsonify({ "english": eng, "arabic": ar, "audio": audio })
     except Exception as e:
