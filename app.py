@@ -18,7 +18,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "smart-academy-super-secret-
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
 FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "YOUR_FACEBOOK_APP_ID")
 
-# V1.0.8: المنهج الدراسي الثابت (يمكن نقله لقاعدة البيانات لاحقاً)
+# المنهج الدراسي الثابت
 SYLLABUS = {
     1: {"title": "Greetings & Introductions", "focus": "Verb to be, basic pronouns, 'Hello, my name is...'"},
     2: {"title": "Daily Routine", "focus": "Present simple, time vocabulary (morning, evening, clock times)"},
@@ -55,7 +55,7 @@ def init_db():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
         
-        # التحديثات التراكمية لقاعدة البيانات (Regression Safeties)
+        # التحديثات التراكمية (الاحتفاظ بالهيكلة السابقة)
         try: conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         except: pass
         try: conn.execute("ALTER TABLE users ADD COLUMN current_state TEXT DEFAULT 'FREE_CHAT'")
@@ -64,8 +64,10 @@ def init_db():
         except: pass
         try: conn.execute("ALTER TABLE users ADD COLUMN parent_pin TEXT DEFAULT '0000'")
         except: pass
-        # V1.0.8 Fix: إضافة تتبع رقم الدرس الحالي
         try: conn.execute("ALTER TABLE users ADD COLUMN current_lesson_id INTEGER DEFAULT 1")
+        except: pass
+        # V1.0.9: عمود جديد لتخزين درجات الاختبار القصير
+        try: conn.execute("ALTER TABLE users ADD COLUMN last_quiz_score TEXT DEFAULT 'N/A'")
         except: pass
 init_db()
 
@@ -76,15 +78,17 @@ class WorkflowManager:
     @staticmethod
     def process_state(user_id, user_msg, mode, custom_curriculum):
         with sqlite3.connect('academy.db') as conn:
-            cursor = conn.execute("SELECT current_state, state_data, current_lesson_id FROM users WHERE id = ?", (user_id,))
+            cursor = conn.execute("SELECT current_state, state_data, current_lesson_id, last_quiz_score FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             current_state = row[0] if row and row[0] else 'FREE_CHAT'
             try: state_data = json.loads(row[1]) if row and row[1] else {}
             except: state_data = {}
             current_lesson_id = row[2] if row and row[2] else 1
+            last_quiz_score = row[3] if row and row[3] else 'N/A'
 
-        # 1. Intent Routing (اعتراض أوامر تغيير الحالة)
         user_msg_lower = user_msg.lower()
+        
+        # 1. اعتراض الأوامر (Intent Routing)
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
             state_data = {"step": 1, "total_steps": 5}
@@ -93,59 +97,77 @@ class WorkflowManager:
             try: topic = user_msg.split("topic: ")[1].split(".")[0]
             except: topic = "General English"
             state_data = {"topic": topic}
-        # V1.0.8: اعتراض أمر بدء الدرس المنهجي
         elif "start the next syllabus lesson" in user_msg_lower:
             current_state = 'LESSON_MODE'
-            if current_lesson_id not in SYLLABUS: current_lesson_id = 1 # Reset if completed all
-            state_data = {"lesson_id": current_lesson_id, "stage": "intro"}
+            if current_lesson_id not in SYLLABUS: current_lesson_id = 1
+            state_data = {"lesson_id": current_lesson_id, "stage": "practice"}
         elif current_state != 'FREE_CHAT' and any(word in user_msg_lower for word in ["exit test", "stop", "خروج", "إنهاء الاختبار", "exit lesson"]):
             current_state = 'FREE_CHAT'
             state_data = {}
             return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id
 
-        # 2. State Execution (بناء السياق برمجياً)
+        # 2. بناء السياق الموجه (State Execution)
         base_rule = "1. MUST STRICTLY adhere to Islamic Sharia and local laws.\n"
-        if custom_curriculum: base_rule += f"2. Context from uploaded curriculum: {custom_curriculum[:1500]}\n"
+        if custom_curriculum: base_rule += f"2. Context from curriculum: {custom_curriculum[:1500]}\n"
 
         if current_state == 'PLACEMENT_TEST':
             step = state_data.get("step", 1)
             total = state_data.get("total_steps", 5)
             if step <= total:
-                sys_msg = base_rule + f"CRITICAL MODE: PLACEMENT TEST (Question {step} of {total}). You are an examiner. Evaluate their previous answer briefly (in 'summary'). Ask exactly ONE progressive English test question. Do not chat freely."
+                sys_msg = base_rule + f"MODE: PLACEMENT TEST (Q{step}/{total}). Ask exactly ONE progressive English test question. Evaluate previous answer in 'summary'."
                 state_data["step"] = step + 1
             else:
-                sys_msg = base_rule + "CRITICAL MODE: TEST COMPLETE. Give them their estimated CEFR level, brief feedback, and welcome them back to free chat."
+                sys_msg = base_rule + "MODE: TEST COMPLETE. Give estimated CEFR level, brief feedback, and welcome to free chat."
                 current_state = 'FREE_CHAT'
                 state_data = {}
 
         elif current_state == 'TOPIC_DISCUSSION':
             topic = state_data.get("topic", "English")
-            sys_msg = base_rule + f"CRITICAL MODE: FOCUSED TOPIC. You are discussing strictly: '{topic}'. Gently steer them back if they stray. Ask engaging questions related ONLY to this topic."
+            sys_msg = base_rule + f"MODE: FOCUSED TOPIC ('{topic}'). Keep conversation strictly on this topic. Steer back gently if they stray."
 
-        # V1.0.8: سياق الدرس المنهجي
+        # مسار الدرس المنهجي
         elif current_state == 'LESSON_MODE':
             lesson = SYLLABUS.get(state_data.get("lesson_id", 1))
-            stage = state_data.get("stage", "intro")
             
-            if "finish lesson" in user_msg_lower or "i understand" in user_msg_lower:
-                # ترقية الدرس
-                current_lesson_id += 1
-                sys_msg = base_rule + f"CRITICAL MODE: LESSON COMPLETE. Congratulate the student on finishing the lesson '{lesson['title']}'. Return them to free chat."
-                current_state = 'FREE_CHAT'
-                state_data = {}
+            # انتقال للاختبار (V1.0.9 Feature 12.1)
+            if "i am ready for the quiz" in user_msg_lower or "ready for test" in user_msg_lower:
+                current_state = 'LESSON_QUIZ'
+                state_data = {"step": 1, "score": 0, "lesson_id": current_lesson_id}
+                sys_msg = base_rule + f"MODE: LESSON QUIZ for '{lesson['title']}'. Ask the FIRST multiple-choice question to test '{lesson['focus']}'."
             else:
-                sys_msg = base_rule + f"CRITICAL MODE: TEACHING LESSON. Lesson Title: '{lesson['title']}'. Focus Grammar/Vocab: '{lesson['focus']}'. Act as a tutor teaching this specific lesson. Provide a short explanation, then ask a simple practice question."
-                state_data["stage"] = "practice"
+                sys_msg = base_rule + f"MODE: TEACHING LESSON. Title: '{lesson['title']}'. Focus: '{lesson['focus']}'. Explain simply, then practice. Remind them to say 'I am ready for the quiz' when they feel confident."
+
+        # وضع الاختبار القصير للدرس (V1.0.9 Feature 12.1 & 12.3)
+        elif current_state == 'LESSON_QUIZ':
+            step = state_data.get("step", 1)
+            score = state_data.get("score", 0)
+            lesson = SYLLABUS.get(state_data.get("lesson_id", 1))
+
+            if step > 1: # تقييم الإجابة السابقة
+                sys_msg_eval = "Evaluate the user's last answer. If correct, praise them. If wrong, correct it. "
+            else:
+                sys_msg_eval = ""
+
+            if step <= 3: # 3 أسئلة لكل كويز
+                sys_msg = base_rule + sys_msg_eval + f"MODE: QUIZ (Q{step}/3). Topic: '{lesson['focus']}'. Ask exactly ONE question. Do not chat freely."
+                state_data["step"] = step + 1
+            else:
+                # نهاية الكويز
+                sys_msg = base_rule + sys_msg_eval + f"MODE: QUIZ COMPLETE. The user finished the quiz. Tell them they completed Lesson {current_lesson_id}. Welcome them back to free chat."
+                current_lesson_id += 1 # ترقية الدرس
+                current_state = 'FREE_CHAT'
+                last_quiz_score = f"Passed Lesson {current_lesson_id - 1}"
+                state_data = {}
 
         else: # FREE_CHAT
-            role = "a fun, cheerful English teacher for kids" if mode == "child" else "an expert, professional English coach"
-            sys_msg = base_rule + f"CRITICAL MODE: FREE CHAT. You are {role}. Have a natural, warm conversation. Use conversational fillers. Use proper punctuation for TTS pauses."
+            role = "a fun English teacher for kids" if mode == "child" else "an expert English coach"
+            sys_msg = base_rule + f"MODE: FREE CHAT. You are {role}. Have a natural conversation. Use conversational fillers. Use proper punctuation for TTS pauses."
 
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Corrections" }'
         
-        # 3. حفظ الحالة
+        # حفظ الحالة والدرجة
         with sqlite3.connect('academy.db') as conn:
-            conn.execute("UPDATE users SET current_state = ?, state_data = ?, current_lesson_id = ? WHERE id = ?", (current_state, json.dumps(state_data), current_lesson_id, user_id))
+            conn.execute("UPDATE users SET current_state = ?, state_data = ?, current_lesson_id = ?, last_quiz_score = ? WHERE id = ?", (current_state, json.dumps(state_data), current_lesson_id, last_quiz_score, user_id))
             conn.commit()
 
         return sys_msg + json_structure, current_state, current_lesson_id
@@ -474,7 +496,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.8</span></h2>
+    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.9</span></h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
@@ -750,9 +772,12 @@ MAIN_PAGE = """
                 
                 let sBanner = document.getElementById("stateBanner");
                 if(data.workflow_state !== 'FREE_CHAT' && !isClassroomMode) { 
-                    // V1.0.8: تحديث واجهة الشريط بناءً على نوع الوضع
-                    if (data.workflow_state === 'LESSON_MODE') {
-                        sBanner.innerHTML = `🎓 أنت الآن في مسار الدرس المنهجي (الدرس ${data.current_lesson}) (اضغط لإنهاء الدرس)`;
+                    // V1.0.9: تحديث واجهة الشريط بناءً على وضع الكويز الجديد
+                    if (data.workflow_state === 'LESSON_QUIZ') {
+                        sBanner.innerHTML = `📝 أنت الآن في اختبار نهاية الدرس... ركز جيداً! (اضغط للإنهاء)`;
+                        sBanner.style.background = "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)";
+                    } else if (data.workflow_state === 'LESSON_MODE') {
+                        sBanner.innerHTML = `🎓 أنت الآن في مسار الدرس المنهجي (الدرس ${data.current_lesson}) (اضغط للإنهاء)`;
                         sBanner.style.background = "linear-gradient(135deg, #8e44ad 0%, #3498db 100%)";
                     } else {
                         sBanner.innerHTML = "⚙️ أنت الآن في وضع خاص (اضغط هنا للإنهاء والعودة للدردشة الحرة)";
@@ -997,9 +1022,10 @@ def parent_dashboard():
 
     try:
         with sqlite3.connect('academy.db') as conn:
-            cursor = conn.execute("SELECT parent_pin FROM users WHERE id = ?", (user_id,))
+            cursor = conn.execute("SELECT parent_pin, last_quiz_score FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             real_pin = row[0] if row and row[0] else "0000"
+            last_quiz_score = row[1] if row and len(row) > 1 and row[1] else "No Quiz Data Yet"
 
             if pin != real_pin: return jsonify({"success": False, "error": "Invalid PIN"})
 
@@ -1024,4 +1050,105 @@ def parent_dashboard():
                 
                 if not user_msgs: return jsonify({"success": True, "report": "لا توجد بيانات كافية للطالب حتى الآن لإصدار تقرير."})
 
-                prompt = f
+                prompt = f"""You are a professional educational assessor. Based on these recent messages from the student: {user_msgs}, and their last quiz score: {last_quiz_score}, provide a short summary for their parent IN ARABIC. Include: 1. Estimated CEFR Level. 2. Strong points. 3. Areas to improve. Keep it encouraging and under 150 words."""
+                
+                completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
+                report = completion.choices[0].message.content
+                
+                return jsonify({"success": True, "report": report})
+                
+    except Exception as e: return jsonify({"success": False, "error": str(e)})
+
+async def generate_audio(text, voice):
+    clean_text = re.sub(r'[*#_~`]', '', text) 
+    communicate = edge_tts.Communicate(clean_text, voice)
+    await communicate.save("response.mp3")
+    with open("response.mp3", "rb") as f: return base64.b64encode(f.read()).decode('utf-8')
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    if 'user_id' not in session: return jsonify({"error": "يرجى تسجيل الدخول أولاً."})
+    try:
+        api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key or not api_key.strip():
+            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ."})
+
+        client = Groq(api_key=api_key)
+        data = request.json
+        mode = data.get("mode", "adult")
+        user_msg = data.get("message", "")
+        custom_curriculum = data.get("custom_curriculum", "")
+        user_id = session['user_id']
+
+        with sqlite3.connect('academy.db') as conn:
+            cursor = conn.execute("SELECT role, content FROM academy_chats WHERE user_id = ? ORDER BY id DESC LIMIT 8", (user_id,))
+            recent_rows = cursor.fetchall()[::-1]
+            history = [{"role": r[0], "content": r[1]} for r in recent_rows]
+
+        sys_msg, current_state, current_lesson_id = WorkflowManager.process_state(user_id, user_msg, mode, custom_curriculum)
+        voice_model = "en-US-JennyNeural" if mode == "child" else "en-GB-RyanNeural" 
+
+        messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
+        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, response_format={"type": "json_object"})
+        
+        try: parsed = json.loads(completion.choices[0].message.content)
+        except: parsed = {"english": "I'm sorry, I couldn't process that. Could you repeat?", "arabic": "عذراً، لم أستطع معالجة ذلك. هل يمكنك التكرار؟"}
+        
+        eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
+        
+        with sqlite3.connect('academy.db') as conn:
+            if not user_msg.startswith("Welcome the student") and not user_msg.startswith("Give me a comprehensive English placement test") and not user_msg.startswith("Let's deeply discuss this topic:") and not user_msg.startswith("Start the next syllabus lesson"):
+                conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
+            conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
+            conn.commit()
+            
+        audio = asyncio.run(generate_audio(eng, voice_model))
+        return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio, "workflow_state": current_state, "current_lesson": current_lesson_id })
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
+        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
+
+@app.route("/classroom_chat", methods=["POST"])
+def classroom_chat():
+    if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
+    try:
+        api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key or not api_key.strip():
+            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ."})
+        
+        client = Groq(api_key=api_key)
+        user_msg = request.json.get("message", "")
+        user_id = session['user_id']
+        username = session['username']
+
+        with sqlite3.connect('academy.db') as conn:
+            history = [{"role": r[0], "content": r[1]} for r in conn.execute("SELECT role, content FROM classroom_chats ORDER BY id DESC LIMIT 10").fetchall()[::-1]]
+
+        sys_msg = """CRITICAL RULES: 
+        1. You are teaching a VIRTUAL CLASSROOM. Be highly engaging and human-like. Use proper punctuation for TTS pauses.
+        2. Address the specific student who spoke, keep it brief and conversational.
+        Respond ONLY in valid JSON: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "", "summary": "" }"""
+        
+        formatted_msg = f"[{username}]: {user_msg}"
+        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": formatted_msg}], response_format={"type": "json_object"})
+        
+        try: parsed = json.loads(completion.choices[0].message.content)
+        except: parsed = {"english": "Let's continue our lesson.", "arabic": "دعونا نكمل درسنا."}
+        
+        eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
+        
+        with sqlite3.connect('academy.db') as conn:
+            conn.execute("INSERT INTO classroom_chats (user_id, username, role, content, arabic) VALUES (?, ?, ?, ?, ?)", (user_id, username, "user", user_msg, ""))
+            conn.execute("INSERT INTO classroom_chats (user_id, username, role, content, arabic) VALUES (?, ?, ?, ?, ?)", (0, "Teacher", "assistant", eng, ar))
+            conn.commit()
+            
+        audio = asyncio.run(generate_audio(eng, "en-GB-RyanNeural"))
+        return jsonify({ "english": eng, "arabic": ar, "audio": audio })
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
+        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
