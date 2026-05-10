@@ -136,7 +136,7 @@ def init_db():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
         
-        # التحديثات التراكمية
+        # التحديثات التراكمية (Anti-Regression Safeties)
         cols = ["created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP", "current_state TEXT DEFAULT 'FREE_CHAT'", 
                 "state_data TEXT DEFAULT '{}'", "parent_pin TEXT DEFAULT '0000'", "current_lesson_id INTEGER DEFAULT 1",
                 "xp_points INTEGER DEFAULT 0", "last_quiz_score TEXT DEFAULT 'N/A'", "is_certified INTEGER DEFAULT 0",
@@ -169,6 +169,15 @@ class WorkflowManager:
 
         user_msg_lower = user_msg.lower()
         
+        # V1.9.1 Fix: Ensure JSON instruction is ALWAY appended, even for EXITS
+        json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
+        base_rule = """CRITICAL RULES:
+1. STRICT Law compliance.
+2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and contextual. NEVER use bizarre literal translations.
+3. Ensure there are spaces between words in your English output.
+"""
+        
+        # Intent Routing
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
             state_data = {"step": 1, "total_steps": 5}
@@ -183,18 +192,20 @@ class WorkflowManager:
                 current_state = 'LESSON_MODE'
                 state_data = {"lesson_id": current_lesson_id}
                 log_activity(user_id, "STARTED_LESSON", f"Lesson {current_lesson_id}")
+        
+        # V1.9.1 FIX: Handled the Exit intent by ensuring `json_structure` is appended before returning!
         elif current_state != 'FREE_CHAT' and any(word in user_msg_lower for word in ["exit test", "stop", "خروج", "إنهاء الاختبار", "exit lesson"]):
             current_state = 'FREE_CHAT'
             state_data = {}
             log_activity(user_id, "EXITED_MODE", "Returned to free chat")
-            return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id, xp_points
+            sys_msg = base_rule + "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat."
+            
+            # CRITICAL FIX: Returning JSON Structure
+            with sqlite3.connect('academy.db') as conn:
+                conn.execute("UPDATE users SET current_state = ?, state_data = ? WHERE id = ?", (current_state, json.dumps(state_data), user_id))
+                conn.commit()
+            return sys_msg + json_structure, current_state, current_lesson_id, xp_points
 
-        base_rule = """CRITICAL RULES:
-1. STRICT Law compliance.
-2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and contextual. NEVER use bizarre literal translations.
-3. Keep English sentences properly spaced.
-"""
-        json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
         
         if current_state == 'PLACEMENT_TEST':
             step = state_data.get("step", 1)
@@ -267,7 +278,7 @@ class WorkflowManager:
         return sys_msg + json_structure, current_state, current_lesson_id, xp_points
 
 # ==========================================
-# 1. واجهة تسجيل الدخول (LOGIN_PAGE)
+# 1. واجهة تسجيل الدخول والتسويق (LOGIN_PAGE)
 # ==========================================
 LOGIN_PAGE = """
 <!DOCTYPE html>
@@ -276,6 +287,7 @@ LOGIN_PAGE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Academy - تعلم الإنجليزية باحتراف</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #2c3e50;}
         .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
@@ -346,7 +358,7 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# 2. الواجهة التفاعلية (MAIN_PAGE) (V1.9.0-Core UI)
+# 2. الواجهة التفاعلية (MAIN_PAGE)
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -366,7 +378,6 @@ MAIN_PAGE = """
         .drawer { position: fixed; top: 0; right: -320px; width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1); transition: 0.4s; z-index: 1001; padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px; overflow-y: auto;}
         .drawer.open { right: 0; }
         
-        /* Modern Buttons */
         .drawer-btn { border-radius: 15px; padding: 12px 18px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 15px; border: none; width: 100%; text-align: right; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .drawer-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 7px 14px rgba(0,0,0,0.15); }
         .drawer-btn .icon { font-size: 18px; background: rgba(255,255,255,0.4); padding: 8px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 20px; height: 20px; text-align:center;}
@@ -397,7 +408,6 @@ MAIN_PAGE = """
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
         
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
-        
         .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0; margin-right: 4px; display: inline-block;}
         .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.2); }
         .word.spoken { opacity: 1; background-color: transparent; }
@@ -420,8 +430,7 @@ MAIN_PAGE = """
         .topic-category { font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 15px; border-bottom: 2px dashed #bdc3c7; padding-bottom: 5px; width:100%; text-align:right;}
         .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; border: 1px solid #dcdde1; font-weight: bold; flex: 1 1 calc(33% - 10px); box-sizing: border-box; transition: all 0.2s;}
         .topic-item:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);}
-        
-        /* V1.9.0 Syllabus Roadmap Styling */
+
         .syllabus-level { background: white; border: 1px solid #eee; border-radius: 15px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.03);}
         .syllabus-header { background: #f9f9f9; padding: 15px; font-weight: bold; color: #8e44ad; font-size: 18px; border-bottom: 1px solid #eee;}
         .lesson-item { padding: 15px; border-bottom: 1px solid #f1f1f1; display: flex; justify-content: space-between; align-items: center; text-align: right;}
@@ -442,7 +451,7 @@ MAIN_PAGE = """
         <button class="drawer-btn btn-syllabus" onclick="sendMsg('Start the next syllabus lesson', true); toggleDrawer();"><span class="icon">📖</span> متابعة الدرس الحالي</button>
         <button class="drawer-btn btn-classroom" onclick="toggleClassroomMode()"><span class="icon">🏫</span> الفصل الجماعي</button>
         <button class="drawer-btn btn-parent" onclick="openParentModal()"><span class="icon">👨‍👩‍👧</span> لوحة الآباء</button>
-        <button class="drawer-btn btn-academic" onclick="openAcademicModal()"><span class="icon">🗺️</span> المناهج التدريسية</button>
+        <button class="drawer-btn btn-academic" onclick="openAcademicModal()"><span class="icon">🗺️</span> الخارطة والمناهج</button>
         <button class="drawer-btn btn-topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span> المواضيع الحرة</button>
         <button class="drawer-btn btn-logout" onclick="window.location.href='/logout'"><span class="icon">🚪</span> تسجيل خروج</button>
     </div>
@@ -478,12 +487,8 @@ MAIN_PAGE = """
             <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
             <h2 style="color: #8e44ad; text-align:center;">🗺️ خارطة المسار التعليمي (Syllabus)</h2>
             <p style="text-align:center; color:#7f8c8d; margin-bottom:20px;">المناهج المعتمدة مقسمة إلى 40 درساً تفاعلياً.</p>
-            
             <button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%; margin-bottom:20px;">بدء اختبار تحديد المستوى (Placement Test)</button>
-            
-            <div id="syllabusRoadmap">
-                <p style="text-align:center;">⏳ جاري تحميل المناهج...</p>
-            </div>
+            <div id="syllabusRoadmap"><p style="text-align:center;">⏳ جاري تحميل المناهج...</p></div>
         </div>
     </div>
 
@@ -496,7 +501,7 @@ MAIN_PAGE = """
     </div>
 
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.9.0-Core</span></h2>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.9.1-Stable</span></h2>
         <div style="font-weight: bold; color: #8e44ad; background: white; padding: 8px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
@@ -581,7 +586,6 @@ MAIN_PAGE = """
         } 
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
         
-        // V1.9.0 Fix: Dynamic Syllabus Loader
         async function openAcademicModal() {
             openModal('academicModal');
             let res = await fetch("/get_syllabus_progress");
@@ -617,7 +621,7 @@ MAIN_PAGE = """
                 container.appendChild(lvlDiv);
             }
         }
-        
+
         function openParentModal() {
             openModal('parentModal');
             document.getElementById('parentAuthArea').style.display = "block";
@@ -701,7 +705,7 @@ MAIN_PAGE = """
                 
                 if(!res.ok) {
                      document.getElementById("loadingBubble").remove(); 
-                     appendBubble("⚠️ تنبيه: تعذر الاتصال بالسيرفر.", false, {english: "Connection Error.", arabic: "حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً."});
+                     appendBubble("⚠️ تنبيه: تعذر الاتصال بالسيرفر. (HTTP Error)", false, {english: "Connection Error.", arabic: "حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً."});
                      document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
                      return;
                 }
@@ -812,7 +816,6 @@ def home():
     if 'user_id' in session: return render_template_string(MAIN_PAGE, username=session['username'])
     else: return render_template_string(LOGIN_PAGE, google_id=GOOGLE_CLIENT_ID, fb_id=FACEBOOK_APP_ID)
 
-# V1.9.0 API Route: Fetch Curriculum
 @app.route("/get_syllabus_progress", methods=["GET"])
 def get_syllabus_progress():
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
@@ -928,11 +931,16 @@ def chat():
         sys_msg, current_state, current_lesson_id, xp = WorkflowManager.process_state(user_id, user_msg, 'adult', "")
 
         messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
-        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages)
+        
+        # V1.9.1 FIX: Using Strict JSON structure format enforced in prompt + forcing JSON mode on API
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant", 
+            messages=messages, 
+            response_format={"type": "json_object"}
+        )
         
         raw_response = completion.choices[0].message.content
         
-        # V1.9.0 Fix: Robust JSON extraction via Regex to prevent "System Error"
         try:
             parsed = json.loads(raw_response)
         except json.JSONDecodeError:
