@@ -136,7 +136,7 @@ def init_db():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
         
-        # التحديثات التراكمية بأمان
+        # التحديثات التراكمية
         cols = ["created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP", "current_state TEXT DEFAULT 'FREE_CHAT'", 
                 "state_data TEXT DEFAULT '{}'", "parent_pin TEXT DEFAULT '0000'", "current_lesson_id INTEGER DEFAULT 1",
                 "xp_points INTEGER DEFAULT 0", "last_quiz_score TEXT DEFAULT 'N/A'", "is_certified INTEGER DEFAULT 0",
@@ -169,7 +169,7 @@ class WorkflowManager:
 
         user_msg_lower = user_msg.lower()
         
-        # Intent Routing (اعتراض الأوامر)
+        # Intent Routing
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
             state_data = {"step": 1, "total_steps": 5}
@@ -190,10 +190,9 @@ class WorkflowManager:
             log_activity(user_id, "EXITED_MODE", "Returned to free chat")
             return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id, xp_points
 
-        # قواعد الذكاء الاصطناعي الصارمة لمنع الهلوسة
         base_rule = """CRITICAL RULES:
 1. STRICT Law compliance.
-2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and contextual. NEVER use bizarre literal translations (e.g. NEVER translate 'The cat is black' to 'حساء الأسد'). If an idiom does not translate well, translate its meaning instead.
+2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and logical. NEVER use bizarre literal translations. If an idiom does not translate well, translate its meaning instead.
 3. Ensure there are spaces between words in your English output.
 """
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
@@ -349,7 +348,7 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# 2. الواجهة التفاعلية (MAIN_PAGE) المكتملة والنظيفة
+# 2. الواجهة التفاعلية (MAIN_PAGE) المحدثة (V1.8.0-Core UI)
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -368,7 +367,49 @@ MAIN_PAGE = """
         .hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 1002; background: white; padding: 10px 18px; border-radius: 12px; border: 1px solid #ccc; font-weight: bold; cursor: pointer;}
         .drawer { position: fixed; top: 0; right: -320px; width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1); transition: 0.4s; z-index: 1001; padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px; overflow-y: auto;}
         .drawer.open { right: 0; }
-        .drawer-btn { border-radius: 15px; padding: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 12px; border: 1px solid #eee; background: #fdfdfd; width: 100%; text-align: right;}
+        
+        /* V1.8.0 UI Update: Attractive, colorful, shadowed buttons */
+        .drawer-btn { 
+            border-radius: 15px; 
+            padding: 12px 18px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border: none; 
+            width: 100%; 
+            text-align: right; 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        .drawer-btn:hover { 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 7px 14px rgba(0,0,0,0.15); 
+        }
+        .drawer-btn .icon { 
+            font-size: 18px; 
+            background: rgba(255,255,255,0.4); 
+            padding: 8px; 
+            border-radius: 50%; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Specific Gradients for each button */
+        .btn-syllabus { background: linear-gradient(135deg, #a18cd1 0%, #8e44ad 100%); color: white; }
+        .btn-classroom { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #c0392b; }
+        .btn-parent { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); color: #1e8449; }
+        .btn-academic { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); color: #d35400; }
+        .btn-topics { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: #0b5345; }
+        .btn-stats { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); color: #154360; }
+        .btn-settings { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); color: #2c3e50; border: 1px solid #eee;}
+        .btn-logout { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); color: white; }
         
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
         select { padding: 10px 15px; border-radius: 12px; border: 2px solid #ccc; outline: none; }
@@ -378,19 +419,20 @@ MAIN_PAGE = """
         
         .input-container { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 20px;}
         input[type="text"] { padding: 16px; border-radius: 30px; border: none; width: 65%; max-width: 600px; outline: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .circle-btn { border-radius: 50%; width: 55px; height: 55px; font-size: 24px; border: none; cursor: pointer; color: white; background: #ff4b2b;}
-        .send-btn { padding: 14px 30px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: #3498db;}
+        .circle-btn { border-radius: 50%; width: 55px; height: 55px; font-size: 24px; border: none; cursor: pointer; color: white; background: #ff4b2b; box-shadow: 0 4px 10px rgba(255, 75, 43, 0.3); transition: transform 0.2s;}
+        .circle-btn:active { transform: scale(0.9); }
+        .send-btn { padding: 14px 30px; border-radius: 30px; border: none; color: white; cursor: pointer; font-weight: bold; background: #3498db; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); transition: transform 0.2s;}
+        .send-btn:active { transform: scale(0.95); }
         
         #audioControls { display: none; justify-content: center; gap: 15px; margin-top: 15px; background: white; padding: 12px; border-radius: 30px; width: fit-content; margin: 15px auto;}
         
         #chatBox { width: 95%; max-width: 900px; margin: 20px auto; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); height: 55vh; max-height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; border-top: 6px solid var(--primary); scroll-behavior: smooth; }
         .chat-bubble { max-width: 85%; padding: 18px 22px; border-radius: 20px; font-size: var(--chat-size); color: var(--chat-color); line-height: 1.6; word-wrap: break-word;}
-        .user-bubble { background: var(--user-bg); align-self: flex-start; text-align: left; direction: ltr;}
-        .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right;}
+        .user-bubble { background: var(--user-bg); align-self: flex-start; text-align: left; direction: ltr; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
         
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
         
-        /* Karaoke Fix: Inline-block + strict spacing */
         .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0; margin-right: 4px; display: inline-block;}
         .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.2); }
         .word.spoken { opacity: 1; background-color: transparent; }
@@ -399,20 +441,20 @@ MAIN_PAGE = """
         .structured-data { font-size: calc(var(--chat-size) - 2px); background-color: rgba(255,255,255,0.6); padding: 12px; border-radius: 12px; margin-top: 12px; text-align: left; direction: ltr; border-left: 5px solid rgba(0,0,0,0.2);}
         
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 5vh auto; padding: 35px; border-radius: 25px; width: 85%; max-width: 750px; max-height: 85vh; overflow-y: auto; text-align: right;}
+        .modal-content { background: white; margin: 5vh auto; padding: 35px; border-radius: 25px; width: 85%; max-width: 750px; max-height: 85vh; overflow-y: auto; text-align: right; box-shadow: 0 15px 35px rgba(0,0,0,0.2);}
         .close-btn { color: #aaa; float: left; font-size: 32px; font-weight: bold; cursor: pointer;}
         
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index: 1000;}
         #overlay.active { display: block; }
-        #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px;}
-        #stateBanner { display: none; background: #f39c12; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer;}
+        #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);}
+        #stateBanner { display: none; background: #f39c12; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.2);}
         
-        .progress-container { width: 100%; max-width: 900px; margin: 0 auto 10px; background: #ddd; border-radius: 10px; height: 10px; overflow: hidden; }
-        .progress-bar { height: 100%; background: var(--success); width: 0%; transition: 0.5s; }
+        .progress-container { width: 100%; max-width: 900px; margin: 0 auto 10px; background: #e0e0e0; border-radius: 10px; height: 12px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);}
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); width: 0%; transition: 0.5s; }
         
         .topic-category { font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 15px; border-bottom: 2px dashed #bdc3c7; padding-bottom: 5px; width:100%; text-align:right;}
-        .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; border: 1px solid #dcdde1; font-weight: bold; flex: 1 1 calc(33% - 10px); box-sizing: border-box;}
-        .topic-item:hover { background: var(--primary); color: white; transform: translateY(-2px);}
+        .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; border: 1px solid #dcdde1; font-weight: bold; flex: 1 1 calc(33% - 10px); box-sizing: border-box; transition: all 0.2s;}
+        .topic-item:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);}
     </style>
 </head>
 <body>
@@ -422,13 +464,15 @@ MAIN_PAGE = """
     <div id="overlay" onclick="toggleDrawer()"></div>
     
     <div id="sideDrawer" class="drawer">
-        <h3>الخدمات الأكاديمية</h3>
-        <button class="drawer-btn" onclick="sendMsg('Start the next syllabus lesson', true); toggleDrawer();" style="background:#8e44ad; color:white;">📖 متابعة المسار التعليمي</button>
-        <button class="drawer-btn" onclick="toggleClassroomMode()">🏫 الفصل الجماعي</button>
-        <button class="drawer-btn" onclick="openParentModal()">👨‍👩‍👧 لوحة الآباء</button>
-        <button class="drawer-btn" onclick="openModal('academicModal')">🎓 المناهج والشهادات</button>
-        <button class="drawer-btn" onclick="openModal('topicsModal')">🗂️ المواضيع الحرة</button>
-        <button class="drawer-btn" onclick="window.location.href='/logout'" style="color:red;">🚪 خروج</button>
+        <h3 style="color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; text-align:center;">الخدمات الأكاديمية</h3>
+        <button class="drawer-btn btn-syllabus" onclick="sendMsg('Start the next syllabus lesson', true); toggleDrawer();"><span class="icon">📖</span> متابعة المسار التعليمي</button>
+        <button class="drawer-btn btn-classroom" onclick="toggleClassroomMode()"><span class="icon">🏫</span> الفصل الجماعي</button>
+        <button class="drawer-btn btn-parent" onclick="openParentModal()"><span class="icon">👨‍👩‍👧</span> لوحة الآباء</button>
+        <button class="drawer-btn btn-academic" onclick="openModal('academicModal')"><span class="icon">🎓</span> المناهج والشهادات</button>
+        <button class="drawer-btn btn-topics" onclick="openModal('topicsModal')"><span class="icon">🗂️</span> المواضيع الحرة</button>
+        <button class="drawer-btn btn-stats" onclick="openModal('statsModal')"><span class="icon">📊</span> الإحصاءات</button>
+        <button class="drawer-btn btn-settings" onclick="openModal('settingsModal')"><span class="icon">🎨</span> المظهر</button>
+        <button class="drawer-btn btn-logout" onclick="window.location.href='/logout'"><span class="icon">🚪</span> تسجيل خروج</button>
     </div>
     
     <div id="gdprModal" class="modal">
@@ -444,8 +488,8 @@ MAIN_PAGE = """
             <span class="close-btn" onclick="closeModal('parentModal')">&times;</span>
             <h2 style="color: #1e8449;">👨‍👩‍👧 لوحة الآباء</h2>
             <div id="parentAuthArea">
-                <input type="password" id="parentPinInput" placeholder="PIN (الافتراضي 0000)" style="padding:10px; width:90%; border-radius:5px; border:1px solid #ccc;">
-                <button onclick="verifyParent()" class="send-btn" style="width:100%; margin-top:10px;">استخراج التقرير الذكي</button>
+                <input type="password" id="parentPinInput" placeholder="PIN (الافتراضي 0000)" style="padding:10px; width:90%; border-radius:5px; border:1px solid #ccc; text-align:center; letter-spacing:5px;">
+                <button onclick="verifyParent()" class="send-btn" style="width:100%; margin-top:15px;">استخراج التقرير الذكي</button>
                 <div id="parentAuthError" style="color:red; margin-top:10px;"></div>
             </div>
             <div id="parentReportArea" style="display:none;">
@@ -463,8 +507,8 @@ MAIN_PAGE = """
             <h2 style="color: #8e44ad;">🎓 الخطة الأكاديمية (A1 -> B2)</h2>
             <p>نتبع المعايير الأوروبية CEFR.</p>
             <ul style="list-style:none; padding:0; text-align:right;">
-                <li style="margin-bottom:10px;"><button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%;">بدء اختبار تحديد المستوى</button></li>
-                <li style="margin-bottom:10px;"><button onclick="sendMsg('Start the next syllabus lesson', true); closeModal('academicModal');" class="send-btn" style="width:100%;">استئناف الدرس المنهجي</button></li>
+                <li style="margin-bottom:15px;"><button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%;">بدء اختبار تحديد المستوى</button></li>
+                <li style="margin-bottom:15px;"><button onclick="sendMsg('Start the next syllabus lesson', true); closeModal('academicModal');" class="send-btn" style="width:100%;">استئناف الدرس المنهجي</button></li>
             </ul>
         </div>
     </div>
@@ -477,9 +521,25 @@ MAIN_PAGE = """
         </div>
     </div>
 
+    <div id="statsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
+            <h2 style="color: #2c3e50;">📊 الإحصاءات</h2>
+            <p>جارٍ جمع البيانات...</p>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('settingsModal')">&times;</span>
+            <h2>🎨 إعدادات المظهر</h2>
+            <p>تخصيص الألوان متاح قريباً في واجهة محدثة.</p>
+        </div>
+    </div>
+
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.7.0-Core</span></h2>
-        <div style="font-weight: bold; color: #8e44ad;">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.8.0-Core</span></h2>
+        <div style="font-weight: bold; color: #8e44ad; background: white; padding: 8px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
     <div class="progress-container"><div id="mainProgress" class="progress-bar"></div></div>
@@ -599,7 +659,6 @@ MAIN_PAGE = """
                 let engDiv = document.createElement("div"); engDiv.className = "english-text"; 
                 let engText = data.english || "";
                 
-                // Anti-mush space enforcer
                 engText.split(" ").forEach(word => { 
                     if(word.trim() !== "") {
                         let span = document.createElement("span"); span.className = "word"; 
@@ -645,10 +704,9 @@ MAIN_PAGE = """
             try { 
                 let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ message: msg, mode: document.getElementById("mode").value }) }); 
                 
-                // HTTP Error catch
                 if(!res.ok) {
                      document.getElementById("loadingBubble").remove(); 
-                     appendBubble("⚠️ تنبيه: تعذر الاتصال بالسيرفر. (HTTP Error)", false, {english: "Connection Error.", arabic: "حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً."});
+                     appendBubble("⚠️ تنبيه: تعذر الاتصال بالسيرفر.", false, {english: "Connection Error.", arabic: "حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً."});
                      document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
                      return;
                 }
@@ -665,10 +723,9 @@ MAIN_PAGE = """
                 if(data.workflow_state !== 'FREE_CHAT') { 
                     sBanner.style.display = "block";
                     sBanner.innerText = data.workflow_state === 'LEVEL_EXAM' ? "🏛️ امتحان مستوى (اضغط هنا للخروج)" : (data.workflow_state === 'LESSON_QUIZ' ? "📝 كويز قصير (اضغط للخروج)" : "🎓 درس منهجي (اضغط للخروج)");
-                    sBanner.style.background = data.workflow_state === 'LEVEL_EXAM' ? "#e74c3c" : "#8e44ad";
+                    sBanner.style.background = data.workflow_state === 'LEVEL_EXAM' ? "linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)" : "linear-gradient(135deg, #8e44ad 0%, #3498db 100%)";
                 } else sBanner.style.display = "none";
 
-                // Progress Bar 40 lessons
                 document.getElementById("mainProgress").style.width = ((data.current_lesson / 40) * 100) + "%";
                 document.getElementById("xpDisplay").innerText = data.xp_points || 0;
 
@@ -711,7 +768,6 @@ MAIN_PAGE = """
             }
         }
 
-        // Speech Recognition API
         if (window.SpeechRecognition || window.webkitSpeechRecognition) {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.continuous = true; recognition.interimResults = true;
@@ -856,7 +912,7 @@ def chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key or not api_key.strip():
-            return jsonify({"error": "مفتاح Groq API غير موجود في إعدادات المنصة (Render). يرجى إضافته وإعادة تشغيل السيرفر."})
+            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. تأكد من إضافته في إعدادات المنصة (Render)."})
 
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
