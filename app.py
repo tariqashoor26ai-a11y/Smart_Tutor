@@ -808,8 +808,7 @@ def chat():
     if 'user_id' not in session: return jsonify({"error": "يرجى تسجيل الدخول أولاً."})
     try:
         api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key or not api_key.strip():
-            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ. تأكد من إعادة تشغيل (Restart) السيرفر في Render بعد إضافته."})
+        if not api_key: return jsonify({"error": "لم يتم العثور على مفتاح Groq API في متغيرات البيئة. يرجى إضافته في إعدادات الخادم."})
 
         client = Groq(api_key=api_key)
         data = request.json
@@ -854,7 +853,7 @@ def chat():
     except Exception as e:
         err_str = str(e)
         if "401" in err_str or "API Key" in err_str:
-            return jsonify({"error": "مفتاح Groq API غير صالح. يرجى التأكد من نسخه بدون مسافات إضافية والتأكد من فعاليته."})
+            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. يرجى التحقق من متغيرات البيئة (Environment Variables) في منصة Render."})
         return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 @app.route("/classroom_chat", methods=["POST"])
@@ -862,8 +861,7 @@ def classroom_chat():
     if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
     try:
         api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key or not api_key.strip():
-            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ. تأكد من إعادة تشغيل (Restart) السيرفر في Render بعد إضافته."})
+        if not api_key: return jsonify({"error": "لم يتم العثور على مفتاح Groq API في متغيرات البيئة. يرجى إضافته في إعدادات الخادم."})
         
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
@@ -896,7 +894,7 @@ def classroom_chat():
     except Exception as e:
         err_str = str(e)
         if "401" in err_str or "API Key" in err_str:
-            return jsonify({"error": "مفتاح Groq API غير صالح. يرجى التأكد من نسخه بدون مسافات إضافية والتأكد من فعاليته."})
+            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. يرجى التحقق من متغيرات البيئة (Environment Variables) في منصة Render."})
         return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 if __name__ == "__main__":
