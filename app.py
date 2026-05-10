@@ -111,6 +111,9 @@ def log_activity(user_id, action, detail=""):
         conn.execute("INSERT INTO activity_logs (user_id, action, detail) VALUES (?, ?, ?)", (user_id, action, detail))
         conn.commit()
 
+# ==========================================
+# محرك المنطق المهيكل (Structured Workflow Manager)
+# ==========================================
 class WorkflowManager:
     @staticmethod
     def process_state(user_id, user_msg, mode, custom_curriculum):
@@ -145,11 +148,11 @@ class WorkflowManager:
             log_activity(user_id, "EXITED_MODE", "Returned to free chat")
             return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id, xp_points
 
-        # V1.3.3 Fix: Strict Translation Rules to prevent hallucinations
+        # V1.3.4 Fix: Strict Translation Rules to KILL hallucinations permanently.
         base_rule = """CRITICAL RULES:
 1. STRICT Law compliance.
-2. Human-like voice tone.
-3. ACCURATE ARABIC TRANSLATION: Your Arabic translation must be highly accurate and contextual. NEVER translate literal idioms if they don't make sense in Arabic (e.g. 'The cat is black' -> 'القط أسود'). Do not invent or guess words.
+2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and logical. NEVER use bizarre literal translations (e.g. NEVER translate 'The cat is black' to 'حساء الأسد'). If an idiom does not translate well, translate its meaning instead.
+3. Ensure there are spaces between words in your English output.
 """
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
         
@@ -215,7 +218,7 @@ class WorkflowManager:
 
         else: # FREE_CHAT
             role = "a fun English teacher for kids" if mode == "child" else "an expert English coach"
-            sys_msg = base_rule + f"MODE: FREE CHAT. You are {role}. Have a natural conversation. Use conversational fillers. Use proper punctuation for TTS pauses."
+            sys_msg = base_rule + f"MODE: FREE CHAT. You are {role}. Have a natural conversation. Use conversational fillers."
         
         with sqlite3.connect('academy.db') as conn:
             conn.execute("UPDATE users SET current_state = ?, state_data = ?, current_lesson_id = ?, xp_points = ? WHERE id = ?", (current_state, json.dumps(state_data), current_lesson_id, xp_points, user_id))
@@ -344,8 +347,8 @@ MAIN_PAGE = """
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right;}
         
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
-        /* V1.3.3 Fix: Karaoke words spacing & styling */
-        .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0;}
+        /* V1.3.4 Fix: Karaoke words inline-block + explicit margins */
+        .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0; margin-right: 4px; display: inline-block;}
         .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.2); }
         .word.spoken { opacity: 1; background-color: transparent; }
         
@@ -382,7 +385,6 @@ MAIN_PAGE = """
         <button class="drawer-btn" onclick="openParentModal()">👨‍👩‍👧 لوحة الآباء</button>
         <button class="drawer-btn" onclick="openModal('academicModal')">🎓 المناهج والشهادات</button>
         <button class="drawer-btn" onclick="openModal('topicsModal')">🗂️ المواضيع الحرة</button>
-        <button class="drawer-btn" onclick="openModal('statsModal')">📊 الإحصاءات</button>
         <button class="drawer-btn" onclick="window.location.href='/logout'" style="color:red;">🚪 خروج</button>
     </div>
     
@@ -424,24 +426,16 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <div id="statsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
-            <h2>📊 إحصاءاتك</h2>
-            <p>الرسائل المتبادلة: <span id="statTotal" style="font-weight:bold;">0</span></p>
-        </div>
-    </div>
-
     <div id="topicsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('topicsModal')">&times;</span>
-            <h2 style="color: #3498db;">اختر موضوعاً للمحادثة 🎯</h2>
+            <h2 style="color: #3498db;">اختر موضوعاً للدردشة الحرة 🎯</h2>
             <div id="topicsList" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top:20px;"></div>
         </div>
     </div>
 
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.3-Core</span></h2>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.4-Core</span></h2>
         <div style="font-weight: bold; color: #8e44ad;">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
@@ -473,7 +467,6 @@ MAIN_PAGE = """
     <audio id="audioPlayer"></audio>
     
     <script>
-        // V1.3.3 Fix: Restored Full Topics Library
         const topicsLibrary = {
             "🗣️ المبتدئين (A1-A2)": ["Introducing Yourself", "Daily Routines", "Family Members", "Weather", "Food"],
             "🌍 الثقافات (A2-B2)": ["Global Cuisines", "Traveling", "Ancient History", "Languages"],
@@ -483,7 +476,7 @@ MAIN_PAGE = """
 
         let isRecording = false, recognition, isLiveMode = false, silenceTimer, final_transcript = '';
         let chatHistory = [], wordsElements = [], isTeacherSpeaking = false, userName = "{{ username }}";
-        let isClassroomMode = false, lastMessageCount = null;
+        let isClassroomMode = false;
 
         async function checkGDPR() {
             let res = await fetch("/check_gdpr");
@@ -506,7 +499,6 @@ MAIN_PAGE = """
             if (window.location.search.includes("login=success")) { let t = document.getElementById("loginToast"); t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 4000); }
             checkGDPR();
             
-            // V1.3.3 Fix: Properly render categories and buttons
             let container = document.getElementById("topicsList");
             for (const [category, topics] of Object.entries(topicsLibrary)) {
                 let catDiv = document.createElement("div"); catDiv.className = "topic-category"; catDiv.innerText = category;
@@ -521,7 +513,6 @@ MAIN_PAGE = """
 
         function toggleDrawer() { document.getElementById('sideDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); }
         
-        // V1.3.3 Fix: Automatically hide drawer when opening a modal to prevent UI overlap
         function openModal(id) { 
             document.getElementById(id).style.display = "block"; 
             document.getElementById('sideDrawer').classList.remove('open');
@@ -554,7 +545,7 @@ MAIN_PAGE = """
             } catch(e) { err.innerText = "خطأ اتصال."; }
         }
 
-        // V1.3.3 Fix: Appending bubbles correctly with spaces
+        // V1.3.4 Fix: Absolute spacing to prevent text mushing
         function appendBubble(text, isUser, data=null, senderName=null) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
@@ -566,12 +557,11 @@ MAIN_PAGE = """
                 let engDiv = document.createElement("div"); engDiv.className = "english-text"; 
                 let engText = data.english || "";
                 
-                // CRITICAL FIX: Creating explicit space nodes between word spans
                 engText.split(" ").forEach(word => { 
                     if(word.trim() !== "") {
-                        let span = document.createElement("span"); span.className = "word"; span.innerText = word; 
+                        let span = document.createElement("span"); span.className = "word"; 
+                        span.innerHTML = word + "&nbsp;"; // Enforce non-breaking space
                         engDiv.appendChild(span); 
-                        engDiv.appendChild(document.createTextNode(" ")); 
                     }
                 }); 
                 
@@ -611,9 +601,17 @@ MAIN_PAGE = """
             
             try { 
                 let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ message: msg, mode: document.getElementById("mode").value }) }); 
+                
+                // V1.3.4 Fix: Frontend HTTP Error Handling Catch
+                if(!res.ok) {
+                     document.getElementById("loadingBubble").remove(); 
+                     appendBubble("⚠️ تنبيه: تعذر الاتصال بالسيرفر. (HTTP Error)", false, {english: "Connection Error.", arabic: "حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً."});
+                     document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
+                     return;
+                }
+                
                 let data = await res.json(); document.getElementById("loadingBubble").remove(); 
                 
-                // V1.3.3 Fix: Handle API key errors smoothly without crashing
                 if(data.error) {
                     appendBubble("⚠️ خطأ في النظام: " + data.error, false, {english: "System Error.", arabic: "حدث خطأ. حاول مرة أخرى."});
                     document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
@@ -662,7 +660,7 @@ MAIN_PAGE = """
             let banner = document.getElementById("classroomBanner");
             if (isClassroomMode) {
                 banner.style.display = "block";
-                document.getElementById('chatBox').innerHTML = ''; chatHistory = []; lastMessageCount = 0;
+                document.getElementById('chatBox').innerHTML = ''; chatHistory = [];
             } else {
                 banner.style.display = "none";
                 document.getElementById('chatBox').innerHTML = ''; chatHistory = []; loadPersonalChats(); 
@@ -757,7 +755,7 @@ def auth():
             session['user_id'] = user_id; session['username'] = name.split()[0] if name else email.split('@')[0]; return jsonify({"success": True})
         elif action == 'register':
             cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
-            if cursor.fetchone(): return jsonify({"success": False, "error": "الاسم مستخدم."})
+            if cursor.fetchone(): return jsonify({"success": False, "error": "الاسم مستخدم مسبقاً."})
             hashed_pw = generate_password_hash(password)
             cursor.execute("INSERT INTO users (username, password_hash, auth_provider) VALUES (?, ?, ?)", (username, hashed_pw, 'local')); conn.commit()
             cursor.execute("SELECT id FROM users WHERE username = ?", (username,)); session['user_id'] = cursor.fetchone()[0]; session['username'] = username
@@ -765,7 +763,7 @@ def auth():
         elif action == 'login':
             cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,)); user = cursor.fetchone()
             if user and check_password_hash(user[1], password): session['user_id'] = user[0]; session['username'] = username; return jsonify({"success": True})
-            else: return jsonify({"success": False, "error": "بيانات خاطئة."})
+            else: return jsonify({"success": False, "error": "بيانات الدخول غير صحيحة."})
 
 @app.route("/logout")
 def logout(): session.clear(); return redirect("/")
@@ -848,7 +846,7 @@ def chat():
     except Exception as e:
         err_str = str(e)
         if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
-        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
+        return jsonify({"error": "حدث خطأ غير متوقع في الاتصال بالسيرفر."})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
