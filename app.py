@@ -18,6 +18,15 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "smart-academy-super-secret-
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
 FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "YOUR_FACEBOOK_APP_ID")
 
+# V1.0.8: المنهج الدراسي الثابت (يمكن نقله لقاعدة البيانات لاحقاً)
+SYLLABUS = {
+    1: {"title": "Greetings & Introductions", "focus": "Verb to be, basic pronouns, 'Hello, my name is...'"},
+    2: {"title": "Daily Routine", "focus": "Present simple, time vocabulary (morning, evening, clock times)"},
+    3: {"title": "Food & Ordering", "focus": "Countable/Uncountable nouns, 'I would like... / Do you have...?'"},
+    4: {"title": "Travel & Directions", "focus": "Prepositions of place (next to, behind), asking for directions"},
+    5: {"title": "Past Experiences", "focus": "Past simple regular/irregular verbs, 'Yesterday, I went...'"}
+}
+
 def init_db():
     with sqlite3.connect('academy.db') as conn:
         conn.execute('''CREATE TABLE IF NOT EXISTS users (
@@ -45,15 +54,18 @@ def init_db():
                             arabic TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
-        # تحديثات قاعدة البيانات التراكمية (V1.0.6 & V1.0.7)
+        
+        # التحديثات التراكمية لقاعدة البيانات (Regression Safeties)
         try: conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
         except: pass
         try: conn.execute("ALTER TABLE users ADD COLUMN current_state TEXT DEFAULT 'FREE_CHAT'")
         except: pass
         try: conn.execute("ALTER TABLE users ADD COLUMN state_data TEXT DEFAULT '{}'")
         except: pass
-        # إضافة عمود رقم الآباء السري
         try: conn.execute("ALTER TABLE users ADD COLUMN parent_pin TEXT DEFAULT '0000'")
+        except: pass
+        # V1.0.8 Fix: إضافة تتبع رقم الدرس الحالي
+        try: conn.execute("ALTER TABLE users ADD COLUMN current_lesson_id INTEGER DEFAULT 1")
         except: pass
 init_db()
 
@@ -64,13 +76,14 @@ class WorkflowManager:
     @staticmethod
     def process_state(user_id, user_msg, mode, custom_curriculum):
         with sqlite3.connect('academy.db') as conn:
-            cursor = conn.execute("SELECT current_state, state_data FROM users WHERE id = ?", (user_id,))
+            cursor = conn.execute("SELECT current_state, state_data, current_lesson_id FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             current_state = row[0] if row and row[0] else 'FREE_CHAT'
             try: state_data = json.loads(row[1]) if row and row[1] else {}
             except: state_data = {}
+            current_lesson_id = row[2] if row and row[2] else 1
 
-        # 1. اعتراض أوامر تغيير الحالة (Intent Routing)
+        # 1. Intent Routing (اعتراض أوامر تغيير الحالة)
         user_msg_lower = user_msg.lower()
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
@@ -80,12 +93,17 @@ class WorkflowManager:
             try: topic = user_msg.split("topic: ")[1].split(".")[0]
             except: topic = "General English"
             state_data = {"topic": topic}
-        elif current_state != 'FREE_CHAT' and any(word in user_msg_lower for word in ["exit test", "stop", "خروج", "إنهاء الاختبار"]):
+        # V1.0.8: اعتراض أمر بدء الدرس المنهجي
+        elif "start the next syllabus lesson" in user_msg_lower:
+            current_state = 'LESSON_MODE'
+            if current_lesson_id not in SYLLABUS: current_lesson_id = 1 # Reset if completed all
+            state_data = {"lesson_id": current_lesson_id, "stage": "intro"}
+        elif current_state != 'FREE_CHAT' and any(word in user_msg_lower for word in ["exit test", "stop", "خروج", "إنهاء الاختبار", "exit lesson"]):
             current_state = 'FREE_CHAT'
             state_data = {}
-            return "CRITICAL: The user has chosen to exit the current test/topic. Acknowledge this warmly and ask what they would like to do next instead.", current_state
+            return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id
 
-        # 2. بناء قواعد السياق المحددة برمجياً (State Execution)
+        # 2. State Execution (بناء السياق برمجياً)
         base_rule = "1. MUST STRICTLY adhere to Islamic Sharia and local laws.\n"
         if custom_curriculum: base_rule += f"2. Context from uploaded curriculum: {custom_curriculum[:1500]}\n"
 
@@ -93,29 +111,44 @@ class WorkflowManager:
             step = state_data.get("step", 1)
             total = state_data.get("total_steps", 5)
             if step <= total:
-                sys_msg = base_rule + f"CRITICAL MODE: PLACEMENT TEST (Question {step} of {total}). You are a Cambridge examiner. DO NOT chat freely. 1. Evaluate their previous answer briefly (in the 'summary' field). 2. Ask exactly ONE progressive English test question to determine CEFR level. Make it challenging but fair."
+                sys_msg = base_rule + f"CRITICAL MODE: PLACEMENT TEST (Question {step} of {total}). You are an examiner. Evaluate their previous answer briefly (in 'summary'). Ask exactly ONE progressive English test question. Do not chat freely."
                 state_data["step"] = step + 1
             else:
-                sys_msg = base_rule + "CRITICAL MODE: TEST COMPLETE. The user has finished the 5 questions. Give them their estimated CEFR level (e.g., A2, B1) based on their answers, provide a brief feedback summary, and welcome them to the academy's free chat."
+                sys_msg = base_rule + "CRITICAL MODE: TEST COMPLETE. Give them their estimated CEFR level, brief feedback, and welcome them back to free chat."
                 current_state = 'FREE_CHAT'
                 state_data = {}
 
         elif current_state == 'TOPIC_DISCUSSION':
             topic = state_data.get("topic", "English")
-            sys_msg = base_rule + f"CRITICAL MODE: FOCUSED TOPIC. The user is practicing conversation strictly about: '{topic}'. You must gently steer the conversation back to '{topic}' if they stray. Ask engaging questions related ONLY to this topic to test their vocabulary."
+            sys_msg = base_rule + f"CRITICAL MODE: FOCUSED TOPIC. You are discussing strictly: '{topic}'. Gently steer them back if they stray. Ask engaging questions related ONLY to this topic."
+
+        # V1.0.8: سياق الدرس المنهجي
+        elif current_state == 'LESSON_MODE':
+            lesson = SYLLABUS.get(state_data.get("lesson_id", 1))
+            stage = state_data.get("stage", "intro")
+            
+            if "finish lesson" in user_msg_lower or "i understand" in user_msg_lower:
+                # ترقية الدرس
+                current_lesson_id += 1
+                sys_msg = base_rule + f"CRITICAL MODE: LESSON COMPLETE. Congratulate the student on finishing the lesson '{lesson['title']}'. Return them to free chat."
+                current_state = 'FREE_CHAT'
+                state_data = {}
+            else:
+                sys_msg = base_rule + f"CRITICAL MODE: TEACHING LESSON. Lesson Title: '{lesson['title']}'. Focus Grammar/Vocab: '{lesson['focus']}'. Act as a tutor teaching this specific lesson. Provide a short explanation, then ask a simple practice question."
+                state_data["stage"] = "practice"
 
         else: # FREE_CHAT
             role = "a fun, cheerful English teacher for kids" if mode == "child" else "an expert, professional English coach"
-            sys_msg = base_rule + f"CRITICAL MODE: FREE CHAT. You are {role}. Have a natural, warm, and human-like conversation. Use conversational fillers (e.g., 'Well,', 'You see,', 'Ah,', 'Great job!'). Use commas and exclamation marks properly for TTS pauses."
+            sys_msg = base_rule + f"CRITICAL MODE: FREE CHAT. You are {role}. Have a natural, warm conversation. Use conversational fillers. Use proper punctuation for TTS pauses."
 
-        json_structure = '\nRespond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Grammar Corrections" }'
+        json_structure = '\nRespond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Corrections" }'
         
-        # 3. حفظ الحالة الجديدة
+        # 3. حفظ الحالة
         with sqlite3.connect('academy.db') as conn:
-            conn.execute("UPDATE users SET current_state = ?, state_data = ? WHERE id = ?", (current_state, json.dumps(state_data), user_id))
+            conn.execute("UPDATE users SET current_state = ?, state_data = ?, current_lesson_id = ? WHERE id = ?", (current_state, json.dumps(state_data), current_lesson_id, user_id))
             conn.commit()
 
-        return sys_msg + json_structure, current_state
+        return sys_msg + json_structure, current_state, current_lesson_id
 
 # ==========================================
 # 1. واجهة تسجيل الدخول والتسويق (Landing Page)
@@ -156,23 +189,6 @@ LOGIN_PAGE = """
         .social-btn.guest { background: #95a5a6; color: white; margin-bottom: 0;}
         #googleBtnContainer { margin-bottom: 10px; display: flex; justify-content: center; width: 100%;}
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
-        .academic-section { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 40px; animation: popIn 0.8s ease-out;}
-        .acad-box { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); flex: 1; min-width: 300px; text-align: right;}
-        .acad-box h3 { color: #3498db; font-size: 20px; margin-top: 0; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;}
-        .acad-box ul { list-style: none; padding: 0;}
-        .acad-box ul li { margin-bottom: 15px; line-height: 1.6;}
-        .pricing-section { text-align: center; margin-top: 50px;}
-        .pricing-cards { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
-        .card { background: white; border-radius: 20px; padding: 30px 20px; flex: 1; min-width: 280px; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eee; transition: transform 0.3s; position: relative;}
-        .card.popular { border: 2px solid #3498db; transform: scale(1.05); }
-        .popular-badge { position: absolute; top: 15px; right: -35px; background: #e74c3c; color: white; padding: 5px 40px; transform: rotate(45deg); font-size: 12px; font-weight: bold;}
-        .card h3 { margin-top: 0; font-size: 22px; color: #2c3e50;}
-        .price { font-size: 36px; font-weight: bold; color: #3498db; margin: 15px 0;}
-        .price span { font-size: 16px; color: #95a5a6; font-weight: normal;}
-        .card ul { list-style: none; padding: 0; margin: 20px 0 30px 0; text-align: right;}
-        .card ul li { margin-bottom: 12px; font-size: 14px; border-bottom: 1px dashed #ecf0f1; padding-bottom: 8px;}
-        .card-btn { width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #3498db; background: transparent; color: #3498db; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 15px;}
-        .card.popular .card-btn { background: #3498db; color: white; }
     </style>
 </head>
 <body>
@@ -283,7 +299,7 @@ MAIN_PAGE = """
         .drawer-btn.plan { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
         .drawer-btn.topics { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
         .drawer-btn.upload { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
-        .drawer-btn.parent { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); color: #1e8449; } /* V1.0.7 Parent Btn */
+        .drawer-btn.parent { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); color: #1e8449; }
         .drawer-btn.settings { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
         .drawer-btn.logout { background: transparent; border: 1px solid #e74c3c; color: #e74c3c;}
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
@@ -340,7 +356,6 @@ MAIN_PAGE = """
         #stateBanner { display: none; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer;}
         .break-notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #FFD200, #F7971E); color: white; padding: 15px 30px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-weight: bold; font-size: 16px; z-index: 3000; display: none;}
         
-        /* V1.0.7 Parent Dashboard Styles */
         .parent-report { background: #fdfefe; border-radius: 15px; padding: 20px; border: 1px solid #e5e8e8; margin-top: 20px;}
         .parent-report h3 { color: #1e8449; border-bottom: 2px solid #a8df65; padding-bottom: 5px;}
     </style>
@@ -417,11 +432,11 @@ MAIN_PAGE = """
             <h2 style="text-align:center; color: var(--accent);">🎓 الخطة الأكاديمية والشهادات</h2>
             <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مصادرنا المعتمدة:</h3>
             <p>نعتمد في تدريبنا على: <b>Oxford OER, Cambridge English, BBC Learning English.</b></p>
-            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مسار الاختبارات:</h3>
+            <h3 style="color: #3498db; border-bottom: 1px solid #ecf0f1;">مسار الاختبارات والدروس:</h3>
             <ul style="padding-right: 20px;">
-                <li><b>اختبار تحديد المستوى (Placement Test):</b> <button onclick="requestFeature('placement_test'); closeModal('academicModal');" style="background:#2ecc71; color:white; border:none; border-radius:5px; cursor:pointer; padding:3px 8px; font-size:12px;">ابدأ الاختبار الآن</button></li>
-                <li><b>التقييم المرحلي (Quizzes):</b> بعد إتمام موضوع معين لقياس الفهم.</li>
-                <li><b>الاختبار النهائي (Final Exam):</b> اختبار شامل نهاية المستوى لطلب الشهادة.</li>
+                <li><b>اختبار تحديد المستوى:</b> <button onclick="requestFeature('placement_test'); closeModal('academicModal');" style="background:#2ecc71; color:white; border:none; border-radius:5px; cursor:pointer; padding:3px 8px; font-size:12px;">ابدأ الاختبار</button></li>
+                <li><b>المسار التعليمي الموجه:</b> <button onclick="sendMsg('Start the next syllabus lesson', true); closeModal('academicModal');" style="background:#8e44ad; color:white; border:none; border-radius:5px; cursor:pointer; padding:3px 8px; font-size:12px;">بدء درس المنهج الحالي</button></li>
+                <li><b>الاختبار النهائي:</b> اختبار شامل نهاية المستوى لطلب الشهادة.</li>
             </ul>
         </div>
     </div>
@@ -459,7 +474,7 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.7</span></h2>
+    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.8</span></h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
@@ -522,7 +537,6 @@ MAIN_PAGE = """
         function openModal(id) { document.getElementById(id).style.display = "block"; toggleDrawer(); } 
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
         
-        // V1.0.7 Parent Dashboard Functions
         function openParentModal() {
             toggleDrawer();
             document.getElementById('parentModal').style.display = "block";
@@ -735,7 +749,19 @@ MAIN_PAGE = """
                 if(data.error) return alert("⚠️ تنبيه: " + data.error); 
                 
                 let sBanner = document.getElementById("stateBanner");
-                if(data.workflow_state !== 'FREE_CHAT' && !isClassroomMode) { sBanner.style.display = "block"; } else { sBanner.style.display = "none"; }
+                if(data.workflow_state !== 'FREE_CHAT' && !isClassroomMode) { 
+                    // V1.0.8: تحديث واجهة الشريط بناءً على نوع الوضع
+                    if (data.workflow_state === 'LESSON_MODE') {
+                        sBanner.innerHTML = `🎓 أنت الآن في مسار الدرس المنهجي (الدرس ${data.current_lesson}) (اضغط لإنهاء الدرس)`;
+                        sBanner.style.background = "linear-gradient(135deg, #8e44ad 0%, #3498db 100%)";
+                    } else {
+                        sBanner.innerHTML = "⚙️ أنت الآن في وضع خاص (اضغط هنا للإنهاء والعودة للدردشة الحرة)";
+                        sBanner.style.background = "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)";
+                    }
+                    sBanner.style.display = "block"; 
+                } else { 
+                    sBanner.style.display = "none"; 
+                }
 
                 chatHistory.push({"role": "assistant", "content": data.english}); 
                 appendBubble("", false, data, isClassroomMode ? "المعلم الذكي 🎓" : null, false); 
@@ -961,7 +987,6 @@ def get_classroom_history():
             return jsonify([{"username": r[0], "role": r[1], "content": r[2], "arabic": r[3]} for r in rows])
     except: return jsonify([])
 
-# V1.0.7 Fix: Parent Dashboard API Routes
 @app.route("/parent_dashboard", methods=["POST"])
 def parent_dashboard():
     if 'user_id' not in session: return jsonify({"success": False})
@@ -999,105 +1024,4 @@ def parent_dashboard():
                 
                 if not user_msgs: return jsonify({"success": True, "report": "لا توجد بيانات كافية للطالب حتى الآن لإصدار تقرير."})
 
-                prompt = f"""You are a professional educational assessor. Based on these recent messages from the student: {user_msgs}, provide a short summary for their parent IN ARABIC. Include: 1. Estimated CEFR Level. 2. Strong points. 3. Areas to improve. Keep it encouraging and under 150 words."""
-                
-                completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "user", "content": prompt}])
-                report = completion.choices[0].message.content
-                
-                return jsonify({"success": True, "report": report})
-                
-    except Exception as e: return jsonify({"success": False, "error": str(e)})
-
-async def generate_audio(text, voice):
-    clean_text = re.sub(r'[*#_~`]', '', text) 
-    communicate = edge_tts.Communicate(clean_text, voice)
-    await communicate.save("response.mp3")
-    with open("response.mp3", "rb") as f: return base64.b64encode(f.read()).decode('utf-8')
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    if 'user_id' not in session: return jsonify({"error": "يرجى تسجيل الدخول أولاً."})
-    try:
-        api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key or not api_key.strip():
-            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ."})
-
-        client = Groq(api_key=api_key)
-        data = request.json
-        mode = data.get("mode", "adult")
-        user_msg = data.get("message", "")
-        custom_curriculum = data.get("custom_curriculum", "")
-        user_id = session['user_id']
-
-        with sqlite3.connect('academy.db') as conn:
-            cursor = conn.execute("SELECT role, content FROM academy_chats WHERE user_id = ? ORDER BY id DESC LIMIT 8", (user_id,))
-            recent_rows = cursor.fetchall()[::-1]
-            history = [{"role": r[0], "content": r[1]} for r in recent_rows]
-
-        sys_msg, current_state = WorkflowManager.process_state(user_id, user_msg, mode, custom_curriculum)
-        voice_model = "en-US-JennyNeural" if mode == "child" else "en-GB-RyanNeural" 
-
-        messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
-        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=messages, response_format={"type": "json_object"})
-        
-        try: parsed = json.loads(completion.choices[0].message.content)
-        except: parsed = {"english": "I'm sorry, I couldn't process that. Could you repeat?", "arabic": "عذراً، لم أستطع معالجة ذلك. هل يمكنك التكرار؟"}
-        
-        eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
-        
-        with sqlite3.connect('academy.db') as conn:
-            if not user_msg.startswith("Welcome the student") and not user_msg.startswith("Give me a comprehensive English placement test") and not user_msg.startswith("Let's deeply discuss this topic:"):
-                conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
-            conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
-            conn.commit()
-            
-        audio = asyncio.run(generate_audio(eng, voice_model))
-        return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio, "workflow_state": current_state })
-    except Exception as e:
-        err_str = str(e)
-        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
-        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
-
-@app.route("/classroom_chat", methods=["POST"])
-def classroom_chat():
-    if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
-    try:
-        api_key = os.environ.get("GROQ_API_KEY")
-        if not api_key or not api_key.strip():
-            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ."})
-        
-        client = Groq(api_key=api_key)
-        user_msg = request.json.get("message", "")
-        user_id = session['user_id']
-        username = session['username']
-
-        with sqlite3.connect('academy.db') as conn:
-            history = [{"role": r[0], "content": r[1]} for r in conn.execute("SELECT role, content FROM classroom_chats ORDER BY id DESC LIMIT 10").fetchall()[::-1]]
-
-        sys_msg = """CRITICAL RULES: 
-        1. You are teaching a VIRTUAL CLASSROOM. Be highly engaging and human-like. Use proper punctuation for TTS pauses.
-        2. Address the specific student who spoke, keep it brief and conversational.
-        Respond ONLY in valid JSON: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "", "summary": "" }"""
-        
-        formatted_msg = f"[{username}]: {user_msg}"
-        completion = client.chat.completions.create(model="llama-3.1-8b-instant", messages=[{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": formatted_msg}], response_format={"type": "json_object"})
-        
-        try: parsed = json.loads(completion.choices[0].message.content)
-        except: parsed = {"english": "Let's continue our lesson.", "arabic": "دعونا نكمل درسنا."}
-        
-        eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
-        
-        with sqlite3.connect('academy.db') as conn:
-            conn.execute("INSERT INTO classroom_chats (user_id, username, role, content, arabic) VALUES (?, ?, ?, ?, ?)", (user_id, username, "user", user_msg, ""))
-            conn.execute("INSERT INTO classroom_chats (user_id, username, role, content, arabic) VALUES (?, ?, ?, ?, ?)", (0, "Teacher", "assistant", eng, ar))
-            conn.commit()
-            
-        audio = asyncio.run(generate_audio(eng, "en-GB-RyanNeural"))
-        return jsonify({ "english": eng, "arabic": ar, "audio": audio })
-    except Exception as e:
-        err_str = str(e)
-        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
-        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+                prompt = f
