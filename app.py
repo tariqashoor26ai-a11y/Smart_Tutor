@@ -95,7 +95,6 @@ def init_db():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
         
-        # التحديثات التراكمية لقاعدة البيانات
         cols = ["created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP", "current_state TEXT DEFAULT 'FREE_CHAT'", 
                 "state_data TEXT DEFAULT '{}'", "parent_pin TEXT DEFAULT '0000'", "current_lesson_id INTEGER DEFAULT 1",
                 "xp_points INTEGER DEFAULT 0", "last_quiz_score TEXT DEFAULT 'N/A'", "is_certified INTEGER DEFAULT 0",
@@ -128,7 +127,6 @@ class WorkflowManager:
 
         user_msg_lower = user_msg.lower()
         
-        # اعتراض النوايا
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
             state_data = {"step": 1, "total_steps": 5}
@@ -149,7 +147,12 @@ class WorkflowManager:
             log_activity(user_id, "EXITED_MODE", "Returned to free chat")
             return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id, xp_points
 
-        base_rule = "1. STRICT Law compliance. 2. Human-like voice.\n"
+        # V1.3.2 Fix: Added strict translation rules to prevent hallucinations like "Lion's soup"
+        base_rule = """CRITICAL RULES:
+1. STRICT Law compliance.
+2. Human-like voice.
+3. ACCURATE TRANSLATION: Your Arabic translation must be professionally accurate, contextual, and make perfect sense. Do NOT translate idiomatically or word-for-word if it leads to nonsense (e.g., 'The cat is black' must be 'القط أسود', not random words).
+"""
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
         
         if current_state == 'PLACEMENT_TEST':
@@ -337,8 +340,8 @@ MAIN_PAGE = """
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right;}
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
         
-        /* التزامن التتابعي */
-        .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0;}
+        /* V1.3.2 Fix: التزامن التتابعي */
+        .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0; margin-right: 4px; display: inline-block;}
         .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.2); }
         .word.spoken { opacity: 1; background-color: transparent; }
         
@@ -361,7 +364,7 @@ MAIN_PAGE = """
 <body>
     <div id="loginToast" class="toast">✅ تم الدخول بنجاح! يتم الآن تحضير الأكاديمية...</div>
     
-    <button class="hamburger-btn" onclick="toggleDrawer()"><span>☰</span> الخيارات</button>
+    <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="فتح القائمة الجانبية"><span>☰</span> الخيارات</button>
     <div id="overlay" onclick="toggleDrawer()"></div>
     
     <div id="sideDrawer" class="drawer">
@@ -441,7 +444,7 @@ MAIN_PAGE = """
     </div>
 
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.1</span></h2>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.2-Core</span></h2>
         <div style="font-weight: bold; color: #8e44ad;">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
@@ -458,9 +461,9 @@ MAIN_PAGE = """
     <div id="liveIndicator">🔴 يتم الاستماع...</div>
     
     <div class="input-container">
-        <button id="micBtn" class="circle-btn" onclick="toggleMic()">🎤</button>
-        <input type="text" id="userMsg" placeholder="اكتب رسالتك...">
-        <button class="send-btn" onclick="sendMsg()">إرسال</button>
+        <button id="micBtn" class="circle-btn" onclick="toggleMic()" aria-label="تحدث">🎤</button>
+        <input type="text" id="userMsg" placeholder="اكتب رسالتك..." aria-label="الرسالة">
+        <button class="send-btn" onclick="sendMsg()" aria-label="إرسال">إرسال</button>
     </div>
     
     <div id="audioControls">
@@ -538,10 +541,16 @@ MAIN_PAGE = """
             } else { 
                 let engDiv = document.createElement("div"); engDiv.className = "english-text"; 
                 let engText = data.english || "";
+                
+                // V1.3.2 Fix: Added document.createTextNode explicitly to force spaces and fix mushed text
                 engText.split(" ").forEach(word => { 
-                    let span = document.createElement("span"); span.className = "word"; span.innerText = word; 
-                    engDiv.appendChild(span); engDiv.appendChild(document.createTextNode(" ")); 
+                    if(word.trim() !== "") {
+                        let span = document.createElement("span"); span.className = "word"; span.innerText = word; 
+                        engDiv.appendChild(span); 
+                        engDiv.appendChild(document.createTextNode(" ")); 
+                    }
                 }); 
+                
                 container.appendChild(engDiv); 
                 let arDiv = document.createElement("div"); arDiv.className = "arabic-translation"; arDiv.innerText = data.arabic; container.appendChild(arDiv); 
                 if(data.summary) { let dDiv = document.createElement("div"); dDiv.className="structured-data"; dDiv.innerHTML = "📝 " + data.summary; container.appendChild(dDiv); }
@@ -558,6 +567,7 @@ MAIN_PAGE = """
                     document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
                     chatHistory.push({"role": "assistant", "content": item.content}); } 
                 }); 
+                document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
             } else sendMsg("Welcome the student warmly.", true); 
         }
 
@@ -571,11 +581,19 @@ MAIN_PAGE = """
             
             inputField.value = ""; 
             let loadDiv = document.createElement("div"); loadDiv.className = "chat-bubble ai-bubble"; loadDiv.id = "loadingBubble"; loadDiv.innerText = "⏳..."; document.getElementById("chatBox").appendChild(loadDiv);
+            document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
             
             try { 
                 let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ message: msg, mode: document.getElementById("mode").value }) }); 
                 let data = await res.json(); document.getElementById("loadingBubble").remove(); 
                 
+                // V1.3.2 Fix: Catch API errors nicely
+                if(data.error) {
+                    let errDiv = document.createElement("div"); errDiv.className = "chat-bubble ai-bubble"; errDiv.style.background = "#ffcccc"; errDiv.innerText = "⚠️ التنبيه من السيرفر: " + data.error;
+                    document.getElementById("chatBox").appendChild(errDiv);
+                    return;
+                }
+
                 let sBanner = document.getElementById("stateBanner");
                 if(data.workflow_state !== 'FREE_CHAT') { 
                     sBanner.style.display = "block";
@@ -596,7 +614,7 @@ MAIN_PAGE = """
                     ap.play().catch(e => document.querySelectorAll(".word").forEach(w => w.classList.add("spoken"))); 
                 } 
                 wordsElements = document.querySelectorAll("#chatBox > div:last-child .english-text .word");
-            } catch (e) { document.getElementById("loadingBubble")?.remove(); } 
+            } catch (e) { document.getElementById("loadingBubble")?.remove(); alert("فشل الاتصال بالسيرفر."); } 
         }
 
         let audioPlayer = document.getElementById("audioPlayer"); 
@@ -613,7 +631,7 @@ MAIN_PAGE = """
         function skipAudio(s) { let a = document.getElementById("audioPlayer"); if (a.src && !a.paused) a.currentTime += s; }
         function togglePauseAudio() { let a = document.getElementById("audioPlayer"); if (a.paused) a.play(); else a.pause(); }
 
-        // Speech Recognition (المقاطعة الفورية)
+        // Speech Recognition
         if (window.SpeechRecognition || window.webkitSpeechRecognition) {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.continuous = true; recognition.interimResults = true;
@@ -709,7 +727,7 @@ def auth():
         elif action == 'login':
             cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,)); user = cursor.fetchone()
             if user and check_password_hash(user[1], password): session['user_id'] = user[0]; session['username'] = username; return jsonify({"success": True})
-            else: return jsonify({"success": False, "error": "بيانات خاطئة."})
+            else: return jsonify({"success": False, "error": "بيانات الدخول غير صحيحة."})
 
 @app.route("/logout")
 def logout(): session.clear(); return redirect("/")
@@ -754,9 +772,12 @@ async def generate_audio(text, voice):
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    if 'user_id' not in session: return jsonify({"error": "Unauthorized"})
+    if 'user_id' not in session: return jsonify({"error": "يرجى تسجيل الدخول أولاً."})
     try:
         api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key or not api_key.strip():
+            return jsonify({"error": "مفتاح Groq API غير موجود في إعدادات المنصة (Render). يرجى إضافته وإعادة تشغيل السيرفر."})
+
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
         user_id = session['user_id']
@@ -786,7 +807,10 @@ def chat():
         audio = asyncio.run(generate_audio(eng, voice_model))
         
         return jsonify({ "english": eng, "arabic": ar, "summary": parsed.get("summary", ""), "audio": audio, "workflow_state": current_state, "current_lesson": current_lesson_id, "xp_points": xp })
-    except Exception as e: return jsonify({"error": "Error: " + str(e)})
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
+        return jsonify({"error": "حدث خطأ غير متوقع في الاتصال بالسيرفر."})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
