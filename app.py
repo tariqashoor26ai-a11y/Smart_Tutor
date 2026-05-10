@@ -45,11 +45,74 @@ def init_db():
                             arabic TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
-        try: 
-            conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-        except: 
-            pass
+        # تحديثات قاعدة البيانات لضمان التوافقية (Regression & Structural Updates)
+        try: conn.execute("ALTER TABLE academy_chats ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        except: pass
+        try: conn.execute("ALTER TABLE users ADD COLUMN current_state TEXT DEFAULT 'FREE_CHAT'")
+        except: pass
+        try: conn.execute("ALTER TABLE users ADD COLUMN state_data TEXT DEFAULT '{}'")
+        except: pass
 init_db()
+
+# ==========================================
+# محرك المنطق المهيكل (Structured Workflow Manager)
+# ==========================================
+class WorkflowManager:
+    @staticmethod
+    def process_state(user_id, user_msg, mode, custom_curriculum):
+        with sqlite3.connect('academy.db') as conn:
+            cursor = conn.execute("SELECT current_state, state_data FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            current_state = row[0] if row and row[0] else 'FREE_CHAT'
+            try: state_data = json.loads(row[1]) if row and row[1] else {}
+            except: state_data = {}
+
+        # 1. اعتراض أوامر تغيير الحالة (Intent Routing)
+        user_msg_lower = user_msg.lower()
+        if "comprehensive english placement test" in user_msg_lower:
+            current_state = 'PLACEMENT_TEST'
+            state_data = {"step": 1, "total_steps": 5}
+        elif "deeply discuss this topic:" in user_msg_lower:
+            current_state = 'TOPIC_DISCUSSION'
+            try: topic = user_msg.split("topic: ")[1].split(".")[0]
+            except: topic = "General English"
+            state_data = {"topic": topic}
+        elif current_state != 'FREE_CHAT' and any(word in user_msg_lower for word in ["exit test", "stop", "خروج", "إنهاء الاختبار"]):
+            current_state = 'FREE_CHAT'
+            state_data = {}
+            return "CRITICAL: The user has chosen to exit the current test/topic. Acknowledge this warmly and ask what they would like to do next instead.", current_state
+
+        # 2. بناء قواعد السياق المحددة برمجياً (State Execution)
+        base_rule = "1. MUST STRICTLY adhere to Islamic Sharia and local laws.\n"
+        if custom_curriculum: base_rule += f"2. Context from uploaded curriculum: {custom_curriculum[:1500]}\n"
+
+        if current_state == 'PLACEMENT_TEST':
+            step = state_data.get("step", 1)
+            total = state_data.get("total_steps", 5)
+            if step <= total:
+                sys_msg = base_rule + f"CRITICAL MODE: PLACEMENT TEST (Question {step} of {total}). You are a Cambridge examiner. DO NOT chat freely. 1. Evaluate their previous answer briefly (in the 'summary' field). 2. Ask exactly ONE progressive English test question to determine CEFR level. Make it challenging but fair."
+                state_data["step"] = step + 1
+            else:
+                sys_msg = base_rule + "CRITICAL MODE: TEST COMPLETE. The user has finished the 5 questions. Give them their estimated CEFR level (e.g., A2, B1) based on their answers, provide a brief feedback summary, and welcome them to the academy's free chat."
+                current_state = 'FREE_CHAT' # Auto-reset after completion
+                state_data = {}
+
+        elif current_state == 'TOPIC_DISCUSSION':
+            topic = state_data.get("topic", "English")
+            sys_msg = base_rule + f"CRITICAL MODE: FOCUSED TOPIC. The user is practicing conversation strictly about: '{topic}'. You must gently steer the conversation back to '{topic}' if they stray. Ask engaging questions related ONLY to this topic to test their vocabulary."
+
+        else: # FREE_CHAT
+            role = "a fun, cheerful English teacher for kids" if mode == "child" else "an expert, professional English coach"
+            sys_msg = base_rule + f"CRITICAL MODE: FREE CHAT. You are {role}. Have a natural, warm, and human-like conversation. Use conversational fillers (e.g., 'Well,', 'You see,', 'Ah,', 'Great job!'). Use commas and exclamation marks properly for TTS pauses."
+
+        json_structure = '\nRespond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Grammar Corrections" }'
+        
+        # 3. حفظ الحالة الجديدة في قاعدة البيانات
+        with sqlite3.connect('academy.db') as conn:
+            conn.execute("UPDATE users SET current_state = ?, state_data = ? WHERE id = ?", (current_state, json.dumps(state_data), user_id))
+            conn.commit()
+
+        return sys_msg + json_structure, current_state
 
 # ==========================================
 # 1. واجهة تسجيل الدخول والتسويق (Landing Page)
@@ -243,9 +306,8 @@ MAIN_PAGE = """
         .sender-name { font-size: 12px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; display: block; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 3px;}
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
         
-        /* V1.0.5 Fix: Hidden text that reveals sequentially with light highlight */
         .word { opacity: 0; transition: opacity 0.15s ease-in, background-color 0.15s ease-in; border-radius: 4px; padding: 2px 0;}
-        .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.15); } /* Light blue highlight */
+        .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.15); }
         .word.spoken { opacity: 1; background-color: transparent; }
         
         .arabic-translation { border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 10px; opacity: 0.9;}
@@ -271,6 +333,7 @@ MAIN_PAGE = """
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); z-index: 1000;}
         #overlay.active { display: block; }
         #classroomBanner { display: none; background: #e74c3c; color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px;}
+        #stateBanner { display: none; background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 10px; font-weight: bold; border-radius: 10px; margin-bottom: 15px; cursor: pointer;}
         .break-notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #FFD200, #F7971E); color: white; padding: 15px 30px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-weight: bold; font-size: 16px; z-index: 3000; display: none;}
     </style>
 </head>
@@ -361,10 +424,11 @@ MAIN_PAGE = """
         </div>
     </div>
 
-    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.5</span></h2>
+    <h2>Smart Academy 🎓 <span style="font-size:12px; color:#bdc3c7;">v1.0.6</span></h2>
     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 10px; font-weight: bold;">مرحباً بك يا {{ username }}!</div>
     
     <div id="classroomBanner">🏫 أنت الآن داخل الفصل الافتراضي الجماعي. يرجى التحدث باحترام مع زملائك والمدرس.</div>
+    <div id="stateBanner" onclick="sendMsg('Exit test', true)">⚙️ أنت الآن في وضع خاص (اضغط هنا للإنهاء والعودة للدردشة الحرة)</div>
     
     <div class="top-bar">
         <select id="mode" onchange="applySettings()">
@@ -429,7 +493,7 @@ MAIN_PAGE = """
                 let catDiv = document.createElement("div"); catDiv.className = "topic-category"; catDiv.innerText = category; container.appendChild(catDiv);
                 topics.forEach(topic => {
                     let btn = document.createElement("div"); btn.className = "topic-item"; btn.innerText = topic;
-                    btn.onclick = () => { closeModal('topicsModal'); toggleDrawer(); sendMsg(`Let's deeply discuss this topic: ${topic}. Guide me as a Cambridge examiner.`); };
+                    btn.onclick = () => { closeModal('topicsModal'); toggleDrawer(); sendMsg(`Let's deeply discuss this topic: ${topic}.`, true); };
                     container.appendChild(btn);
                 });
             }
@@ -443,8 +507,8 @@ MAIN_PAGE = """
         function upgradeAlert() { alert("💎 هذا الملف مخصص لاشتراكات Pro و VIP فقط. يرجى ترقية حسابك للوصول إلى هذه الميزة."); closeModal('downloadsModal'); }
 
         function requestFeature(type) { 
-            let p = {"placement_test": "Act as a Cambridge certified examiner. Give me a comprehensive English placement test right now to determine my CEFR level. Ask questions one by one.", "test": "Give me a short quick English test to check my grammar."}[type];
-            if(p) sendMsg(p);
+            let p = {"placement_test": "Give me a comprehensive English placement test.", "test": "Give me a short quick English test to check my grammar."}[type];
+            if(p) sendMsg(p, true);
         }
 
         function skipAudio(seconds) { 
@@ -524,7 +588,6 @@ MAIN_PAGE = """
             } catch (e) { alert("فشل تحميل الإحصاءات"); }
         }
 
-        // V1.0.5 Fix: Added forceVisible parameter for history loading
         function appendBubble(text, isUser, data=null, senderName=null, forceVisible=false) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
@@ -562,7 +625,7 @@ MAIN_PAGE = """
                     }); 
                     document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight; 
                 } else { 
-                    let prompt = `Act as a professional Cambridge examiner and tutor. Welcome the student (${userName}) warmly in BOTH English and Arabic. Tell them we follow CEFR standards.`; 
+                    let prompt = `Welcome the student (${userName}) warmly in BOTH English and Arabic. Tell them we follow CEFR standards.`; 
                     sendMsg(prompt, true); 
                 } 
             } catch(e) {} 
@@ -594,6 +657,10 @@ MAIN_PAGE = """
                 let data = await res.json(); document.getElementById("loadingBubble")?.remove(); 
                 if(data.error) return alert("⚠️ تنبيه: " + data.error); 
                 
+                // Show/hide state banner based on workflow state returned
+                let sBanner = document.getElementById("stateBanner");
+                if(data.workflow_state !== 'FREE_CHAT' && !isClassroomMode) { sBanner.style.display = "block"; } else { sBanner.style.display = "none"; }
+
                 chatHistory.push({"role": "assistant", "content": data.english}); 
                 appendBubble("", false, data, isClassroomMode ? "المعلم الذكي 🎓" : null, false); 
                 
@@ -603,7 +670,6 @@ MAIN_PAGE = """
                     document.getElementById("pauseBtn").innerText = "⏸️"; 
                     isTeacherSpeaking = true; if(isRecording) recognition.stop(); 
                     
-                    // V1.0.5 Fix: Handle Autoplay blocks to prevent stuck invisible text
                     let playPromise = ap.play(); 
                     if (playPromise !== undefined) {
                         playPromise.catch(error => { 
@@ -831,7 +897,7 @@ def chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key or not api_key.strip():
-            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ. تأكد من إعادة تشغيل (Restart) السيرفر في Render بعد إضافته."})
+            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ."})
 
         client = Groq(api_key=api_key)
         data = request.json
@@ -845,17 +911,8 @@ def chat():
             recent_rows = cursor.fetchall()[::-1]
             history = [{"role": r[0], "content": r[1]} for r in recent_rows]
 
-        core_rules = """
-        CRITICAL RULES: 
-        1. MUST STRICTLY adhere to Islamic Sharia and local laws.
-        2. Act as a certified Cambridge/Oxford examiner and professional coach.
-        3. Make your 'english' response sound EXTREMELY natural, warm, and human. Use conversational fillers (e.g., 'Well,', 'You see,', 'Ah,', 'Great job!'). Use commas and exclamation marks properly so the TTS voice pauses naturally. Do NOT sound like a robot.
-        """
-        if custom_curriculum: core_rules += f"\\n4. Context from uploaded files: {custom_curriculum[:2500]}"
-
-        json_structure = 'Respond ONLY in valid JSON format: { "english": "Natural spoken English.", "arabic": "Arabic translation", "keywords": "Keywords", "summary": "Notes / Test Feedback / Grammar Corrections" }'
-        sys_msg = core_rules + ("\\nYou are a fun, cheerful English teacher for kids." if mode == "child" else "\\nYou are an expert, professional English coach.") + json_structure
-        
+        # V1.0.6 Fix: Execute the Workflow Manager to get tailored prompt & save state
+        sys_msg, current_state = WorkflowManager.process_state(user_id, user_msg, mode, custom_curriculum)
         voice_model = "en-US-JennyNeural" if mode == "child" else "en-GB-RyanNeural" 
 
         messages = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": user_msg}]
@@ -867,17 +924,16 @@ def chat():
         eng = parsed.get("english", ""); ar = parsed.get("arabic", "")
         
         with sqlite3.connect('academy.db') as conn:
-            if "Act as a professional Cambridge examiner" not in user_msg and "Welcome the student" not in user_msg:
+            if not user_msg.startswith("Welcome the student") and not user_msg.startswith("Give me a comprehensive English placement test") and not user_msg.startswith("Let's deeply discuss this topic:"):
                 conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
             conn.commit()
             
         audio = asyncio.run(generate_audio(eng, voice_model))
-        return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio })
+        return jsonify({ "english": eng, "arabic": ar, "keywords": parsed.get("keywords", ""), "summary": parsed.get("summary", ""), "audio": audio, "workflow_state": current_state })
     except Exception as e:
         err_str = str(e)
-        if "401" in err_str or "API Key" in err_str:
-            return jsonify({"error": "مفتاح Groq API غير صالح. يرجى التأكد من نسخه بدون مسافات إضافية والتأكد من فعاليته."})
+        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
         return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 @app.route("/classroom_chat", methods=["POST"])
@@ -886,7 +942,7 @@ def classroom_chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key or not api_key.strip():
-            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ. تأكد من إعادة تشغيل (Restart) السيرفر في Render بعد إضافته."})
+            return jsonify({"error": "تنبيه للمطور: مفتاح Groq API غير موجود أو فارغ."})
         
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
@@ -918,8 +974,7 @@ def classroom_chat():
         return jsonify({ "english": eng, "arabic": ar, "audio": audio })
     except Exception as e:
         err_str = str(e)
-        if "401" in err_str or "API Key" in err_str:
-            return jsonify({"error": "مفتاح Groq API غير صالح. يرجى التأكد من نسخه بدون مسافات إضافية والتأكد من فعاليته."})
+        if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
         return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 if __name__ == "__main__":
