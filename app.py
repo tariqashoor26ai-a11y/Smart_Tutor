@@ -18,28 +18,68 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "smart-academy-super-secret-
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com")
 FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "YOUR_FACEBOOK_APP_ID")
 
-# الهيكلية الأكاديمية (CEFR Framework)
+# ==========================================
+# V1.4.0: تحديث المناهج الأكاديمية (Full CEFR Syllabus A1 -> B2)
+# ==========================================
 FULL_SYLLABUS = {
     "A1": {
         "name": "Beginner (A1)",
         "lessons": {
-            1: {"title": "Greetings", "focus": "Verb to be"},
+            1: {"title": "Greetings", "focus": "Verb to be, basic pronouns"},
             2: {"title": "Routine", "focus": "Present simple"},
-            10: {"title": "A1 Final Review", "focus": "All A1 grammar review"}
+            3: {"title": "Food & Ordering", "focus": "Countable/Uncountable"},
+            4: {"title": "Travel & Directions", "focus": "Prepositions of place"},
+            5: {"title": "Past Experiences", "focus": "Past simple verbs"},
+            6: {"title": "Shopping", "focus": "Numbers, prices, demonstratives"},
+            7: {"title": "Health & Body", "focus": "Have got, should/shouldn't"},
+            8: {"title": "Jobs", "focus": "Present continuous, work vocab"},
+            9: {"title": "Future Plans", "focus": "Going to, will"},
+            10: {"title": "A1 Final Exam", "focus": "Comprehensive A1 Review"}
         }
     },
     "A2": {
         "name": "Elementary (A2)",
         "lessons": {
-            11: {"title": "Comparisons", "focus": "Comparative adjectives"},
-            20: {"title": "A2 Final Review", "focus": "All A2 grammar"}
+            11: {"title": "Comparisons", "focus": "Comparative and superlative adjectives"},
+            12: {"title": "Life Experiences", "focus": "Present perfect with ever/never"},
+            13: {"title": "Hobbies & Leisure", "focus": "Gerunds and infinitives"},
+            14: {"title": "Weather & Nature", "focus": "Adverbs of degree"},
+            15: {"title": "Emergencies", "focus": "Past continuous vs Past simple"},
+            16: {"title": "Education", "focus": "Must, have to, can (Obligation)"},
+            17: {"title": "Entertainment", "focus": "Relative clauses (who, which, that)"},
+            18: {"title": "Technology", "focus": "Zero and First Conditional"},
+            19: {"title": "Socializing", "focus": "Making arrangements"},
+            20: {"title": "A2 Final Exam", "focus": "Comprehensive A2 Review"}
         }
     },
     "B1": {
         "name": "Intermediate (B1)",
         "lessons": {
-            21: {"title": "Opinions", "focus": "Conditionals (If...)"},
-            30: {"title": "B1 Final Review", "focus": "All B1 grammar"}
+            21: {"title": "Opinions & Beliefs", "focus": "Second Conditional"},
+            22: {"title": "Career Goals", "focus": "Present perfect continuous"},
+            23: {"title": "Culture & Society", "focus": "Passive voice (present/past)"},
+            24: {"title": "Media & News", "focus": "Reported speech"},
+            25: {"title": "Environment", "focus": "Future continuous"},
+            26: {"title": "Mysteries", "focus": "Modals of deduction (might, can't, must have)"},
+            27: {"title": "Finance & Money", "focus": "Third Conditional"},
+            28: {"title": "Travel Stories", "focus": "Past perfect"},
+            29: {"title": "Health & Lifestyle", "focus": "Phrasal verbs"},
+            30: {"title": "B1 Final Exam", "focus": "Comprehensive B1 Review"}
+        }
+    },
+    "B2": {
+        "name": "Upper Intermediate (B2)",
+        "lessons": {
+            31: {"title": "Advanced Idioms", "focus": "Idiomatic expressions in daily life"},
+            32: {"title": "Debates & Arguments", "focus": "Linking words, expressing strong opinions"},
+            33: {"title": "Global Issues", "focus": "Advanced passive structures"},
+            34: {"title": "Nuance & Tone", "focus": "Inversion for emphasis"},
+            35: {"title": "Negotiations", "focus": "Mixed conditionals"},
+            36: {"title": "Abstract Concepts", "focus": "Cleft sentences"},
+            37: {"title": "Hypothetical Situations", "focus": "Wish, if only, would rather"},
+            38: {"title": "Presentations", "focus": "Signposting and structuring speech"},
+            39: {"title": "Professional Networking", "focus": "Advanced polite requests"},
+            40: {"title": "B2 Final Exam", "focus": "Comprehensive B2 Level Assessment"}
         }
     }
 }
@@ -47,7 +87,8 @@ FULL_SYLLABUS = {
 def get_lesson_info(lesson_id):
     if lesson_id <= 10: return "A1", FULL_SYLLABUS["A1"]["lessons"].get(lesson_id, {"title": f"Lesson {lesson_id}", "focus": "Vocabulary"})
     elif lesson_id <= 20: return "A2", FULL_SYLLABUS["A2"]["lessons"].get(lesson_id, {"title": f"Lesson {lesson_id}", "focus": "Vocabulary"})
-    else: return "B1", FULL_SYLLABUS["B1"]["lessons"].get(lesson_id, {"title": f"Lesson {lesson_id}", "focus": "Vocabulary"})
+    elif lesson_id <= 30: return "B1", FULL_SYLLABUS["B1"]["lessons"].get(lesson_id, {"title": f"Lesson {lesson_id}", "focus": "Vocabulary"})
+    else: return "B2", FULL_SYLLABUS["B2"]["lessons"].get(lesson_id, {"title": f"Lesson {lesson_id}", "focus": "Vocabulary"})
 
 def init_db():
     with sqlite3.connect('academy.db') as conn:
@@ -95,6 +136,7 @@ def init_db():
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )''')
         
+        # التحديثات التراكمية
         cols = ["created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP", "current_state TEXT DEFAULT 'FREE_CHAT'", 
                 "state_data TEXT DEFAULT '{}'", "parent_pin TEXT DEFAULT '0000'", "current_lesson_id INTEGER DEFAULT 1",
                 "xp_points INTEGER DEFAULT 0", "last_quiz_score TEXT DEFAULT 'N/A'", "is_certified INTEGER DEFAULT 0",
@@ -137,7 +179,7 @@ class WorkflowManager:
             except: topic = "General English"
             state_data = {"topic": topic}
         elif "start the next syllabus lesson" in user_msg_lower:
-            if current_lesson_id > 30: current_state = 'GRADUATED'
+            if current_lesson_id > 40: current_state = 'GRADUATED'
             else:
                 current_state = 'LESSON_MODE'
                 state_data = {"lesson_id": current_lesson_id}
@@ -148,10 +190,10 @@ class WorkflowManager:
             log_activity(user_id, "EXITED_MODE", "Returned to free chat")
             return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id, xp_points
 
-        # V1.3.4 Fix: Strict Translation Rules to KILL hallucinations permanently.
+        # V1.4.0 Strict Anti-Hallucination Translation Rules
         base_rule = """CRITICAL RULES:
 1. STRICT Law compliance.
-2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and logical. NEVER use bizarre literal translations (e.g. NEVER translate 'The cat is black' to 'حساء الأسد'). If an idiom does not translate well, translate its meaning instead.
+2. ACCURATE TRANSLATION: Your Arabic translation MUST be highly accurate and logical. NEVER use bizarre literal translations. If an idiom does not translate well, translate its meaning instead.
 3. Ensure there are spaces between words in your English output.
 """
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
@@ -173,7 +215,7 @@ class WorkflowManager:
 
         elif current_state == 'LESSON_MODE':
             level_name, lesson = get_lesson_info(current_lesson_id)
-            if current_lesson_id in [10, 20, 30]:
+            if current_lesson_id in [10, 20, 30, 40]: # V1.4.0 Updated checkpoints
                 sys_msg = base_rule + f"CRITICAL MODE: LEVEL EXAM ({level_name}). Ask 3 tough questions to verify they master {level_name}."
                 current_state = 'LEVEL_EXAM'
                 state_data = {"step": 1, "score": 0}
@@ -214,7 +256,7 @@ class WorkflowManager:
                 log_activity(user_id, "PASSED_LEVEL_EXAM", level_name)
         
         elif current_state == 'GRADUATED':
-            sys_msg = base_rule + "The student has finished all 30 lessons! Celebrate their graduation."
+            sys_msg = base_rule + "The student has finished all 40 lessons! Celebrate their B2 graduation."
 
         else: # FREE_CHAT
             role = "a fun English teacher for kids" if mode == "child" else "an expert English coach"
@@ -260,7 +302,7 @@ LOGIN_PAGE = """
                 <p style="line-height:1.8;">مستقبلك في إتقان الإنجليزية يبدأ من هنا. تدرّب مع معلم ذكاء اصطناعي تفاعلي يحاكي البشر ويصحح أخطاءك فوراً.</p>
                 <ul style="list-style:none; padding:0; line-height:2;">
                     <li>✅ محادثات صوتية كاريوكي</li>
-                    <li>✅ مناهج CEFR المعتمدة</li>
+                    <li>✅ مناهج CEFR (A1 -> B2)</li>
                     <li>✅ لوحة تقييم للآباء</li>
                 </ul>
             </div>
@@ -307,7 +349,7 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# 2. الواجهة التفاعلية (MAIN_PAGE)
+# 2. الواجهة التفاعلية (MAIN_PAGE) المكتملة والنظيفة
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -347,7 +389,7 @@ MAIN_PAGE = """
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right;}
         
         .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
-        /* V1.3.4 Fix: Karaoke words inline-block + explicit margins */
+        /* V1.4.0: Karaoke Fix */
         .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0; margin-right: 4px; display: inline-block;}
         .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.2); }
         .word.spoken { opacity: 1; background-color: transparent; }
@@ -417,7 +459,7 @@ MAIN_PAGE = """
     <div id="academicModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
-            <h2 style="color: #8e44ad;">🎓 الخطة الأكاديمية (Syllabus)</h2>
+            <h2 style="color: #8e44ad;">🎓 الخطة الأكاديمية (A1 -> B2)</h2>
             <p>نتبع المعايير الأوروبية CEFR.</p>
             <ul style="list-style:none; padding:0; text-align:right;">
                 <li style="margin-bottom:10px;"><button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%;">بدء اختبار تحديد المستوى</button></li>
@@ -435,7 +477,7 @@ MAIN_PAGE = """
     </div>
 
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.4-Core</span></h2>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.4.0-Core</span></h2>
         <div style="font-weight: bold; color: #8e44ad;">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
@@ -545,7 +587,7 @@ MAIN_PAGE = """
             } catch(e) { err.innerText = "خطأ اتصال."; }
         }
 
-        // V1.3.4 Fix: Absolute spacing to prevent text mushing
+        // V1.4.0 Explicit space implementation ensuring anti-mush mechanism
         function appendBubble(text, isUser, data=null, senderName=null) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
@@ -560,7 +602,7 @@ MAIN_PAGE = """
                 engText.split(" ").forEach(word => { 
                     if(word.trim() !== "") {
                         let span = document.createElement("span"); span.className = "word"; 
-                        span.innerHTML = word + "&nbsp;"; // Enforce non-breaking space
+                        span.innerHTML = word + "&nbsp;"; // Secure inline space
                         engDiv.appendChild(span); 
                     }
                 }); 
@@ -602,7 +644,7 @@ MAIN_PAGE = """
             try { 
                 let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ message: msg, mode: document.getElementById("mode").value }) }); 
                 
-                // V1.3.4 Fix: Frontend HTTP Error Handling Catch
+                // HTTP Error catch
                 if(!res.ok) {
                      document.getElementById("loadingBubble").remove(); 
                      appendBubble("⚠️ تنبيه: تعذر الاتصال بالسيرفر. (HTTP Error)", false, {english: "Connection Error.", arabic: "حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً."});
@@ -625,7 +667,8 @@ MAIN_PAGE = """
                     sBanner.style.background = data.workflow_state === 'LEVEL_EXAM' ? "#e74c3c" : "#8e44ad";
                 } else sBanner.style.display = "none";
 
-                document.getElementById("mainProgress").style.width = ((data.current_lesson / 30) * 100) + "%";
+                // V1.4.0 Updated Progress Bar to reflect 40 lessons max
+                document.getElementById("mainProgress").style.width = ((data.current_lesson / 40) * 100) + "%";
                 document.getElementById("xpDisplay").innerText = data.xp_points || 0;
 
                 chatHistory.push({"role": "assistant", "content": data.english}); 
@@ -812,7 +855,7 @@ def chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key or not api_key.strip():
-            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. تأكد من إضافته في إعدادات المنصة (Render)."})
+            return jsonify({"error": "مفتاح Groq API غير موجود في إعدادات المنصة (Render). يرجى إضافته وإعادة تشغيل السيرفر."})
 
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
