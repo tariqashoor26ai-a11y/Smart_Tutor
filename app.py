@@ -111,9 +111,6 @@ def log_activity(user_id, action, detail=""):
         conn.execute("INSERT INTO activity_logs (user_id, action, detail) VALUES (?, ?, ?)", (user_id, action, detail))
         conn.commit()
 
-# ==========================================
-# محرك المنطق المهيكل (Structured Workflow Manager)
-# ==========================================
 class WorkflowManager:
     @staticmethod
     def process_state(user_id, user_msg, mode, custom_curriculum):
@@ -127,6 +124,7 @@ class WorkflowManager:
 
         user_msg_lower = user_msg.lower()
         
+        # Intent Routing
         if "comprehensive english placement test" in user_msg_lower:
             current_state = 'PLACEMENT_TEST'
             state_data = {"step": 1, "total_steps": 5}
@@ -147,11 +145,11 @@ class WorkflowManager:
             log_activity(user_id, "EXITED_MODE", "Returned to free chat")
             return "CRITICAL: The user has chosen to exit the current mode. Acknowledge this warmly and return to free chat.", current_state, current_lesson_id, xp_points
 
-        # V1.3.2 Fix: Added strict translation rules to prevent hallucinations like "Lion's soup"
+        # V1.3.3 Fix: Strict Translation Rules to prevent hallucinations
         base_rule = """CRITICAL RULES:
 1. STRICT Law compliance.
-2. Human-like voice.
-3. ACCURATE TRANSLATION: Your Arabic translation must be professionally accurate, contextual, and make perfect sense. Do NOT translate idiomatically or word-for-word if it leads to nonsense (e.g., 'The cat is black' must be 'القط أسود', not random words).
+2. Human-like voice tone.
+3. ACCURATE ARABIC TRANSLATION: Your Arabic translation must be highly accurate and contextual. NEVER translate literal idioms if they don't make sense in Arabic (e.g. 'The cat is black' -> 'القط أسود'). Do not invent or guess words.
 """
         json_structure = '\nRespond ONLY in valid JSON format: { "english": "...", "arabic": "...", "keywords": "...", "summary": "...", "scores": {"fluency": 0, "grammar": 0, "vocab": 0} }'
         
@@ -248,14 +246,20 @@ LOGIN_PAGE = """
         #errorMsg { color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 10px; min-height: 18px;}
         .social-btn { width: 100%; padding: 10px; border-radius: 10px; border: none; cursor: pointer; margin-bottom: 10px;}
         .guest { background: #95a5a6; color: white; }
+        .toggle-text { margin-top: 15px; font-size: 13px; color: #7f8c8d; cursor:pointer; font-weight:bold;}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="hero-section">
             <div class="box intro-box">
-                <h1>Smart Academy 🌟</h1>
-                <p>مستقبلك في إتقان الإنجليزية يبدأ من هنا. تدرّب مع معلم ذكاء اصطناعي تفاعلي.</p>
+                <h1 style="color:#8e44ad;">Smart Academy 🌟</h1>
+                <p style="line-height:1.8;">مستقبلك في إتقان الإنجليزية يبدأ من هنا. تدرّب مع معلم ذكاء اصطناعي تفاعلي يحاكي البشر ويصحح أخطاءك فوراً.</p>
+                <ul style="list-style:none; padding:0; line-height:2;">
+                    <li>✅ محادثات صوتية كاريوكي</li>
+                    <li>✅ مناهج CEFR المعتمدة</li>
+                    <li>✅ لوحة تقييم للآباء</li>
+                </ul>
             </div>
             <div class="box auth-box" id="loginBox">
                 <h2 id="authTitle">تسجيل الدخول</h2>
@@ -263,8 +267,8 @@ LOGIN_PAGE = """
                 <div class="input-group"><input type="text" id="username" placeholder="اسم المستخدم"></div>
                 <div class="input-group"><input type="password" id="password" placeholder="كلمة المرور"></div>
                 <button class="main-btn" id="submitBtn" onclick="submitAuth()">دخول إلى الأكاديمية</button>
-                <div style="margin-top: 15px; cursor:pointer; color:#8e44ad;" onclick="toggleMode()" id="toggleDiv">إنشاء حساب جديد</div>
-                <hr>
+                <div class="toggle-text" onclick="toggleMode()" id="toggleDiv">إنشاء حساب جديد ✨</div>
+                <hr style="border:1px solid #eee; margin:20px 0;">
                 <button class="social-btn guest" onclick="guestLogin()">👤 الدخول كضيف (تجربة مجانية)</button>
             </div>
         </div>
@@ -276,7 +280,8 @@ LOGIN_PAGE = """
             isLogin = !isLogin;
             document.getElementById('authTitle').innerText = isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد';
             document.getElementById('submitBtn').innerText = isLogin ? 'دخول' : 'تسجيل';
-            document.getElementById('toggleDiv').innerText = isLogin ? 'إنشاء حساب جديد' : 'لدي حساب بالفعل';
+            document.getElementById('toggleDiv').innerText = isLogin ? 'إنشاء حساب جديد ✨' : 'لدي حساب بالفعل';
+            document.getElementById('errorMsg').innerText = '';
         }
         async function executeAuth(action, username, password) {
             let err = document.getElementById('errorMsg'); err.innerText = "جاري التحقق...";
@@ -299,7 +304,7 @@ LOGIN_PAGE = """
 """
 
 # ==========================================
-# 2. الواجهة التفاعلية (MAIN_PAGE) المكتملة والنظيفة
+# 2. الواجهة التفاعلية (MAIN_PAGE)
 # ==========================================
 MAIN_PAGE = """
 <!DOCTYPE html>
@@ -308,7 +313,6 @@ MAIN_PAGE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Academy - المدرس الذكي</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #3498db; --secondary: #2c3e50; --accent: #8e44ad; --danger: #e74c3c; --success: #2ecc71; --bg: #f5f7fa; --user-bg: #d5f5e3; --ai-bg: #e1f5fe; --chat-color: #2c3e50; --chat-size: 16px; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; text-align: center; margin: 0; padding: 20px 20px 80px 20px; background: linear-gradient(135deg, var(--bg) 0%, #c3cfe2 100%); min-height: 100vh; overflow-x: hidden;}
@@ -319,7 +323,7 @@ MAIN_PAGE = """
         .hamburger-btn { position: fixed; top: 20px; right: 20px; z-index: 1002; background: white; padding: 10px 18px; border-radius: 12px; border: 1px solid #ccc; font-weight: bold; cursor: pointer;}
         .drawer { position: fixed; top: 0; right: -320px; width: 280px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); box-shadow: -5px 0 25px rgba(0,0,0,0.1); transition: 0.4s; z-index: 1001; padding-top: 80px; display: flex; flex-direction: column; gap: 12px; padding-left: 20px; padding-right: 20px; overflow-y: auto;}
         .drawer.open { right: 0; }
-        .drawer-btn { border-radius: 15px; padding: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 12px; border: 1px solid #eee; background: #fdfdfd;}
+        .drawer-btn { border-radius: 15px; padding: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 12px; border: 1px solid #eee; background: #fdfdfd; width: 100%; text-align: right;}
         
         .top-bar { display: flex; justify-content: center; align-items: center; width: 90%; max-width: 800px; margin: 0 auto 15px auto; gap: 15px; flex-wrap: wrap; }
         select { padding: 10px 15px; border-radius: 12px; border: 2px solid #ccc; outline: none; }
@@ -338,10 +342,10 @@ MAIN_PAGE = """
         .chat-bubble { max-width: 85%; padding: 18px 22px; border-radius: 20px; font-size: var(--chat-size); color: var(--chat-color); line-height: 1.6; word-wrap: break-word;}
         .user-bubble { background: var(--user-bg); align-self: flex-start; text-align: left; direction: ltr;}
         .ai-bubble { background: var(--ai-bg); align-self: flex-end; text-align: right;}
-        .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
         
-        /* V1.3.2 Fix: التزامن التتابعي */
-        .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0; margin-right: 4px; display: inline-block;}
+        .english-text { font-size: calc(var(--chat-size) + 4px); font-weight: bold; direction: ltr; text-align: left; margin-bottom: 10px; line-height: 1.5; word-wrap: break-word;}
+        /* V1.3.3 Fix: Karaoke words spacing & styling */
+        .word { opacity: 0; transition: 0.15s; border-radius: 4px; padding: 2px 0;}
         .word.active { opacity: 1; background-color: rgba(52, 152, 219, 0.2); }
         .word.spoken { opacity: 1; background-color: transparent; }
         
@@ -359,23 +363,26 @@ MAIN_PAGE = """
         
         .progress-container { width: 100%; max-width: 900px; margin: 0 auto 10px; background: #ddd; border-radius: 10px; height: 10px; overflow: hidden; }
         .progress-bar { height: 100%; background: var(--success); width: 0%; transition: 0.5s; }
+        
+        .topic-category { font-size: 16px; font-weight: bold; color: var(--accent); margin-top: 15px; border-bottom: 2px dashed #bdc3c7; padding-bottom: 5px; width:100%; text-align:right;}
+        .topic-item { background: #f8f9fa; padding: 12px; border-radius: 12px; font-size: 13px; text-align: center; cursor: pointer; border: 1px solid #dcdde1; font-weight: bold; flex: 1 1 calc(33% - 10px); box-sizing: border-box;}
+        .topic-item:hover { background: var(--primary); color: white; transform: translateY(-2px);}
     </style>
 </head>
 <body>
     <div id="loginToast" class="toast">✅ تم الدخول بنجاح! يتم الآن تحضير الأكاديمية...</div>
     
-    <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="فتح القائمة الجانبية"><span>☰</span> الخيارات</button>
+    <button class="hamburger-btn" onclick="toggleDrawer()"><span>☰</span> الخيارات</button>
     <div id="overlay" onclick="toggleDrawer()"></div>
     
     <div id="sideDrawer" class="drawer">
         <h3>الخدمات الأكاديمية</h3>
         <button class="drawer-btn" onclick="sendMsg('Start the next syllabus lesson', true); toggleDrawer();" style="background:#8e44ad; color:white;">📖 متابعة المسار التعليمي</button>
         <button class="drawer-btn" onclick="toggleClassroomMode()">🏫 الفصل الجماعي</button>
-        <button class="drawer-btn" onclick="openModal('parentModal')">👨‍👩‍👧 لوحة الآباء</button>
+        <button class="drawer-btn" onclick="openParentModal()">👨‍👩‍👧 لوحة الآباء</button>
         <button class="drawer-btn" onclick="openModal('academicModal')">🎓 المناهج والشهادات</button>
         <button class="drawer-btn" onclick="openModal('topicsModal')">🗂️ المواضيع الحرة</button>
         <button class="drawer-btn" onclick="openModal('statsModal')">📊 الإحصاءات</button>
-        <button class="drawer-btn" onclick="openModal('settingsModal')">🎨 المظهر</button>
         <button class="drawer-btn" onclick="window.location.href='/logout'" style="color:red;">🚪 خروج</button>
     </div>
     
@@ -392,14 +399,14 @@ MAIN_PAGE = """
             <span class="close-btn" onclick="closeModal('parentModal')">&times;</span>
             <h2 style="color: #1e8449;">👨‍👩‍👧 لوحة الآباء</h2>
             <div id="parentAuthArea">
-                <input type="password" id="parentPinInput" placeholder="PIN (الافتراضي 0000)" style="padding:10px; width:90%;">
-                <button onclick="verifyParent()" style="padding:10px; margin-top:10px; width:100%;">استخراج التقرير الذكي</button>
+                <input type="password" id="parentPinInput" placeholder="PIN (الافتراضي 0000)" style="padding:10px; width:90%; border-radius:5px; border:1px solid #ccc;">
+                <button onclick="verifyParent()" class="send-btn" style="width:100%; margin-top:10px;">استخراج التقرير الذكي</button>
                 <div id="parentAuthError" style="color:red; margin-top:10px;"></div>
             </div>
             <div id="parentReportArea" style="display:none;">
                 <div style="background:#fdfefe; padding:20px; border:1px solid #e5e8e8; border-radius:10px;">
                     <h3>📝 التقييم الشامل (CEFR)</h3>
-                    <div id="aiParentSummary">⏳ جاري التحليل...</div>
+                    <div id="aiParentSummary" style="line-height:1.6;">⏳ جاري التحليل...</div>
                 </div>
             </div>
         </div>
@@ -408,43 +415,33 @@ MAIN_PAGE = """
     <div id="academicModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('academicModal')">&times;</span>
-            <h2>🎓 الخطة الأكاديمية</h2>
-            <ul>
-                <li><button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');">بدء اختبار تحديد المستوى</button></li>
-                <li>المستوى A1: 10 دروس</li>
-                <li>المستوى A2: 10 دروس</li>
-                <li>المستوى B1: 10 دروس</li>
+            <h2 style="color: #8e44ad;">🎓 الخطة الأكاديمية (Syllabus)</h2>
+            <p>نتبع المعايير الأوروبية CEFR.</p>
+            <ul style="list-style:none; padding:0; text-align:right;">
+                <li style="margin-bottom:10px;"><button onclick="sendMsg('Give me a comprehensive English placement test.', true); closeModal('academicModal');" class="send-btn" style="background:#2ecc71; width:100%;">بدء اختبار تحديد المستوى</button></li>
+                <li style="margin-bottom:10px;"><button onclick="sendMsg('Start the next syllabus lesson', true); closeModal('academicModal');" class="send-btn" style="width:100%;">استئناف الدرس المنهجي</button></li>
             </ul>
         </div>
     </div>
-    
+
     <div id="statsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('statsModal')">&times;</span>
             <h2>📊 إحصاءاتك</h2>
-            <p>إجمالي الرسائل: <span id="statTotal">0</span></p>
-            <canvas id="usageChart" style="max-height: 300px;"></canvas>
+            <p>الرسائل المتبادلة: <span id="statTotal" style="font-weight:bold;">0</span></p>
         </div>
     </div>
 
     <div id="topicsModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('topicsModal')">&times;</span>
-            <h2>اختر موضوعاً للدردشة الحرة 🎯</h2>
-            <div id="topicsList" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
-        </div>
-    </div>
-
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal('settingsModal')">&times;</span>
-            <h2>🎨 إعدادات المظهر</h2>
-            <button onclick="closeModal('settingsModal')">إغلاق</button>
+            <h2 style="color: #3498db;">اختر موضوعاً للمحادثة 🎯</h2>
+            <div id="topicsList" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top:20px;"></div>
         </div>
     </div>
 
     <div style="max-width: 900px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.2-Core</span></h2>
+        <h2>Smart Academy 🎓 <span style="font-size:12px; color:grey;">V1.3.3-Core</span></h2>
         <div style="font-weight: bold; color: #8e44ad;">مرحباً {{ username }} | XP: <span id="xpDisplay">0</span></div>
     </div>
     
@@ -461,9 +458,9 @@ MAIN_PAGE = """
     <div id="liveIndicator">🔴 يتم الاستماع...</div>
     
     <div class="input-container">
-        <button id="micBtn" class="circle-btn" onclick="toggleMic()" aria-label="تحدث">🎤</button>
-        <input type="text" id="userMsg" placeholder="اكتب رسالتك..." aria-label="الرسالة">
-        <button class="send-btn" onclick="sendMsg()" aria-label="إرسال">إرسال</button>
+        <button id="micBtn" class="circle-btn" onclick="toggleMic()">🎤</button>
+        <input type="text" id="userMsg" placeholder="اكتب رسالتك هنا...">
+        <button class="send-btn" onclick="sendMsg()">إرسال</button>
     </div>
     
     <div id="audioControls">
@@ -476,11 +473,18 @@ MAIN_PAGE = """
     <audio id="audioPlayer"></audio>
     
     <script>
+        // V1.3.3 Fix: Restored Full Topics Library
+        const topicsLibrary = {
+            "🗣️ المبتدئين (A1-A2)": ["Introducing Yourself", "Daily Routines", "Family Members", "Weather", "Food"],
+            "🌍 الثقافات (A2-B2)": ["Global Cuisines", "Traveling", "Ancient History", "Languages"],
+            "📱 التكنولوجيا (B1-C1)": ["Artificial Intelligence", "Cybersecurity", "Smartphones", "Space"],
+            "💼 الأعمال (B2-C1)": ["Job Interviews", "Time Management", "Remote Work", "Public Speaking"]
+        };
+
         let isRecording = false, recognition, isLiveMode = false, silenceTimer, final_transcript = '';
         let chatHistory = [], wordsElements = [], isTeacherSpeaking = false, userName = "{{ username }}";
-        let isClassroomMode = false, lastMessageCount = null, chartInstance = null;
+        let isClassroomMode = false, lastMessageCount = null;
 
-        // GDPR Logic
         async function checkGDPR() {
             let res = await fetch("/check_gdpr");
             let data = await res.json();
@@ -502,17 +506,37 @@ MAIN_PAGE = """
             if (window.location.search.includes("login=success")) { let t = document.getElementById("loginToast"); t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 4000); }
             checkGDPR();
             
-            // Populate Topics
-            let topics = ["Food", "Travel", "Sports", "Technology", "Jobs"];
-            let tList = document.getElementById("topicsList");
-            topics.forEach(topic => {
-                let b = document.createElement("button"); b.innerText = topic; b.style.padding="10px"; b.style.cursor="pointer";
-                b.onclick = () => { sendMsg("Let's deeply discuss this topic: " + topic, true); closeModal('topicsModal'); };
-                tList.appendChild(b);
-            });
+            // V1.3.3 Fix: Properly render categories and buttons
+            let container = document.getElementById("topicsList");
+            for (const [category, topics] of Object.entries(topicsLibrary)) {
+                let catDiv = document.createElement("div"); catDiv.className = "topic-category"; catDiv.innerText = category;
+                container.appendChild(catDiv);
+                topics.forEach(topic => {
+                    let btn = document.createElement("div"); btn.className = "topic-item"; btn.innerText = topic;
+                    btn.onclick = () => { closeModal('topicsModal'); sendMsg(`Let's deeply discuss this topic: ${topic}.`, true); };
+                    container.appendChild(btn);
+                });
+            }
         };
 
-        // Parent Logic
+        function toggleDrawer() { document.getElementById('sideDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('active'); }
+        
+        // V1.3.3 Fix: Automatically hide drawer when opening a modal to prevent UI overlap
+        function openModal(id) { 
+            document.getElementById(id).style.display = "block"; 
+            document.getElementById('sideDrawer').classList.remove('open');
+            document.getElementById('overlay').classList.remove('active');
+        } 
+        function closeModal(id) { document.getElementById(id).style.display = "none"; }
+        
+        function openParentModal() {
+            openModal('parentModal');
+            document.getElementById('parentAuthArea').style.display = "block";
+            document.getElementById('parentReportArea').style.display = "none";
+            document.getElementById('parentPinInput').value = "";
+            document.getElementById('parentAuthError').innerText = "";
+        }
+        
         async function verifyParent() {
             let pin = document.getElementById('parentPinInput').value;
             let err = document.getElementById('parentAuthError'); err.innerText = "جاري التحقق...";
@@ -522,15 +546,15 @@ MAIN_PAGE = """
                 if(data.success) {
                     document.getElementById('parentAuthArea').style.display = "none";
                     document.getElementById('parentReportArea').style.display = "block";
-                    document.getElementById('aiParentSummary').innerText = "جاري الاستخراج...";
+                    document.getElementById('aiParentSummary').innerText = "جاري استخراج التقرير بالذكاء الاصطناعي... ⏳";
                     let rRes = await fetch("/parent_dashboard", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ pin: pin, action: 'get_report' }) });
                     let rData = await rRes.json();
                     document.getElementById('aiParentSummary').innerHTML = rData.report.replace(/\\n/g, '<br>');
-                } else err.innerText = "رمز خاطئ.";
+                } else err.innerText = "الرمز غير صحيح.";
             } catch(e) { err.innerText = "خطأ اتصال."; }
         }
 
-        // Chat Logic & Karaoke
+        // V1.3.3 Fix: Appending bubbles correctly with spaces
         function appendBubble(text, isUser, data=null, senderName=null) { 
             let box = document.getElementById("chatBox"), container = document.createElement("div"); 
             container.className = isUser ? "chat-bubble user-bubble" : "chat-bubble ai-bubble"; 
@@ -542,7 +566,7 @@ MAIN_PAGE = """
                 let engDiv = document.createElement("div"); engDiv.className = "english-text"; 
                 let engText = data.english || "";
                 
-                // V1.3.2 Fix: Added document.createTextNode explicitly to force spaces and fix mushed text
+                // CRITICAL FIX: Creating explicit space nodes between word spans
                 engText.split(" ").forEach(word => { 
                     if(word.trim() !== "") {
                         let span = document.createElement("span"); span.className = "word"; span.innerText = word; 
@@ -563,9 +587,11 @@ MAIN_PAGE = """
             if (history.length > 0) { 
                 history.forEach(item => { 
                     if(item.role === 'user') { appendBubble(item.content, true); chatHistory.push({"role": "user", "content": item.content}); } 
-                    else if(item.role === 'assistant') { appendBubble("", false, {english: item.content, arabic: item.arabic}); 
-                    document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
-                    chatHistory.push({"role": "assistant", "content": item.content}); } 
+                    else if(item.role === 'assistant') { 
+                        appendBubble("", false, {english: item.content, arabic: item.arabic}); 
+                        document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
+                        chatHistory.push({"role": "assistant", "content": item.content}); 
+                    } 
                 }); 
                 document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
             } else sendMsg("Welcome the student warmly.", true); 
@@ -580,24 +606,24 @@ MAIN_PAGE = """
             } else chatHistory.push({"role": "system", "content": msg}); 
             
             inputField.value = ""; 
-            let loadDiv = document.createElement("div"); loadDiv.className = "chat-bubble ai-bubble"; loadDiv.id = "loadingBubble"; loadDiv.innerText = "⏳..."; document.getElementById("chatBox").appendChild(loadDiv);
+            let loadDiv = document.createElement("div"); loadDiv.className = "chat-bubble ai-bubble"; loadDiv.id = "loadingBubble"; loadDiv.innerText = "⏳ جاري التفكير..."; document.getElementById("chatBox").appendChild(loadDiv);
             document.getElementById("chatBox").scrollTop = document.getElementById("chatBox").scrollHeight;
             
             try { 
                 let res = await fetch("/chat", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ message: msg, mode: document.getElementById("mode").value }) }); 
                 let data = await res.json(); document.getElementById("loadingBubble").remove(); 
                 
-                // V1.3.2 Fix: Catch API errors nicely
+                // V1.3.3 Fix: Handle API key errors smoothly without crashing
                 if(data.error) {
-                    let errDiv = document.createElement("div"); errDiv.className = "chat-bubble ai-bubble"; errDiv.style.background = "#ffcccc"; errDiv.innerText = "⚠️ التنبيه من السيرفر: " + data.error;
-                    document.getElementById("chatBox").appendChild(errDiv);
+                    appendBubble("⚠️ خطأ في النظام: " + data.error, false, {english: "System Error.", arabic: "حدث خطأ. حاول مرة أخرى."});
+                    document.querySelectorAll(".word").forEach(w=>w.classList.add("spoken"));
                     return;
                 }
 
                 let sBanner = document.getElementById("stateBanner");
                 if(data.workflow_state !== 'FREE_CHAT') { 
                     sBanner.style.display = "block";
-                    sBanner.innerText = data.workflow_state === 'LEVEL_EXAM' ? "🏛️ امتحان مستوى CEFR (للتخطي اكتب Exit)" : (data.workflow_state === 'LESSON_QUIZ' ? "📝 اختبار قصير" : "🎓 درس منهجي");
+                    sBanner.innerText = data.workflow_state === 'LEVEL_EXAM' ? "🏛️ امتحان مستوى (اضغط هنا للخروج)" : (data.workflow_state === 'LESSON_QUIZ' ? "📝 كويز قصير (اضغط للخروج)" : "🎓 درس منهجي (اضغط للخروج)");
                     sBanner.style.background = data.workflow_state === 'LEVEL_EXAM' ? "#e74c3c" : "#8e44ad";
                 } else sBanner.style.display = "none";
 
@@ -631,11 +657,23 @@ MAIN_PAGE = """
         function skipAudio(s) { let a = document.getElementById("audioPlayer"); if (a.src && !a.paused) a.currentTime += s; }
         function togglePauseAudio() { let a = document.getElementById("audioPlayer"); if (a.paused) a.play(); else a.pause(); }
 
+        function toggleClassroomMode() {
+            toggleDrawer(); isClassroomMode = !isClassroomMode;
+            let banner = document.getElementById("classroomBanner");
+            if (isClassroomMode) {
+                banner.style.display = "block";
+                document.getElementById('chatBox').innerHTML = ''; chatHistory = []; lastMessageCount = 0;
+            } else {
+                banner.style.display = "none";
+                document.getElementById('chatBox').innerHTML = ''; chatHistory = []; loadPersonalChats(); 
+            }
+        }
+
         // Speech Recognition
         if (window.SpeechRecognition || window.webkitSpeechRecognition) {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.continuous = true; recognition.interimResults = true;
-            recognition.onstart = () => { isRecording = true; document.getElementById("micBtn").classList.add("recording"); };
+            recognition.onstart = () => { isRecording = true; document.getElementById("micBtn").style.background = "#2ecc71"; };
             recognition.onresult = (event) => { 
                 if(isTeacherSpeaking) return;
                 let interim = ''; 
@@ -649,7 +687,7 @@ MAIN_PAGE = """
                     silenceTimer = setTimeout(() => { if (isLiveMode && currentSpeech.length > 0) sendMsg(); }, 2500); 
                 } 
             };
-            recognition.onend = () => { isRecording = false; document.getElementById("micBtn").classList.remove("recording"); if(isLiveMode && !isTeacherSpeaking) {try{recognition.start();}catch(e){}}};
+            recognition.onend = () => { isRecording = false; document.getElementById("micBtn").style.background = "#ff4b2b"; if(isLiveMode && !isTeacherSpeaking) {try{recognition.start();}catch(e){}}};
         }
         
         async function toggleMic() { 
@@ -727,7 +765,7 @@ def auth():
         elif action == 'login':
             cursor.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,)); user = cursor.fetchone()
             if user and check_password_hash(user[1], password): session['user_id'] = user[0]; session['username'] = username; return jsonify({"success": True})
-            else: return jsonify({"success": False, "error": "بيانات الدخول غير صحيحة."})
+            else: return jsonify({"success": False, "error": "بيانات خاطئة."})
 
 @app.route("/logout")
 def logout(): session.clear(); return redirect("/")
@@ -776,7 +814,7 @@ def chat():
     try:
         api_key = os.environ.get("GROQ_API_KEY")
         if not api_key or not api_key.strip():
-            return jsonify({"error": "مفتاح Groq API غير موجود في إعدادات المنصة (Render). يرجى إضافته وإعادة تشغيل السيرفر."})
+            return jsonify({"error": "مفتاح Groq API غير صالح أو غير موجود. تأكد من إضافته في إعدادات المنصة (Render)."})
 
         client = Groq(api_key=api_key)
         user_msg = request.json.get("message", "")
@@ -798,7 +836,7 @@ def chat():
             if current_state == 'LEVEL_EXAM' and isinstance(scores, dict):
                 conn.execute("UPDATE users SET fluency_score = fluency_score + ?, grammar_score = grammar_score + ?, vocab_score = vocab_score + ? WHERE id = ?", (scores.get("fluency", 0), scores.get("grammar", 0), scores.get("vocab", 0), user_id))
             
-            if not user_msg.startswith("Welcome") and not user_msg.startswith("Start"):
+            if not user_msg.startswith("Welcome") and not user_msg.startswith("Let's deeply"):
                 conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "user", user_msg, ""))
             conn.execute("INSERT INTO academy_chats (user_id, role, content, arabic) VALUES (?, ?, ?, ?)", (user_id, "assistant", eng, ar))
             conn.commit()
@@ -810,7 +848,7 @@ def chat():
     except Exception as e:
         err_str = str(e)
         if "401" in err_str or "API Key" in err_str: return jsonify({"error": "مفتاح Groq API غير صالح."})
-        return jsonify({"error": "حدث خطأ غير متوقع في الاتصال بالسيرفر."})
+        return jsonify({"error": "حدث خطأ غير متوقع: " + err_str})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
