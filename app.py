@@ -6,7 +6,7 @@ import re
 # إعدادات التطبيق و Gemini (بافتراض وجود إعدادات SQLite والـ QA Agent Thread مسبقاً)
 app = Flask(__name__)
 app.secret_key = 'smart_academy_secure_key_123'
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+genai.configure(api_key="AIzaSyB-DGGcAPoc6LauViKqOAfYLIOo-tKK8lw")
 
 # إعداد نموذج Gemini مع تعليمات نظام صارمة (System Instructions)
 system_instruction = """
